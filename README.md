@@ -8,6 +8,7 @@ A discord bot destined for greatness.
 - [ ] [Creepy asterisks](https://www.reddit.com/r/creepyasterisks/)
 - [ ] Mock certain questions or phrases
 - [ ] "Quack" any time a user types an expletive
+- [ ] Subscribe to social media accounts (maybe a webhook would be more appropriate?)
 
 
 # References
