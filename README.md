@@ -28,7 +28,8 @@ go install github.com/TannerKvarfordt/Kard-bot
 ```
 
 In order to authenticate with Discord, Kard-bot looks for the `DISCORD_BOT_TOKEN` environment variable. 
-It is recommended to place that variable in a `.env` file at the root of the project.
+It is recommended to place that variable in a `.env` file at the root of the project. Note that existing
+environment variables take precedence over anything in the `.env` file.
 
 ```shell
 DISCORD_BOT_TOKEN="Your bot token here"
