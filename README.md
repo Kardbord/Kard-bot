@@ -9,6 +9,7 @@ A discord bot destined for greatness.
 - [ ] Mock certain questions or phrases
 - [ ] "Quack" any time a user types an expletive
 - [ ] Subscribe to social media accounts (maybe a webhook would be more appropriate?)
+- [ ] Play music via youtube à la [rythm bot](https://rythm.fm/)
 
 
 # References
