@@ -45,6 +45,7 @@ Useful resources for writing a Discord bot.
 ### Discord API Wrappers
 - [discordpy](https://github.com/Rapptz/discord.py)
 - [discordgo](https://github.com/bwmarrin/discordgo)
+- [others](https://discordapi.com/unofficial/comparison.html)
 
 ### Documentation
 - [Discord Developer Portal](https://discord.com/developers/docs/intro)
