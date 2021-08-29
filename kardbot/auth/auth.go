@@ -11,7 +11,7 @@ import (
 const BotTokenEnv = "DISCORD_BOT_TOKEN"
 var (
 	mBotToken string
-	mIntents = map[discordgo.Intent]bool{
+	mIntents = []discordgo.Intent{
 		// TODO: add intents
 	}
 )
@@ -39,22 +39,15 @@ func BotToken() string {
 
 // Returns a list of all intents
 func IntentList() []discordgo.Intent {
-	intentList := make([]discordgo.Intent, len(mIntents))
-
-	i := 0
-	for intent := range mIntents {
-		intentList[i] = intent
-		i++
-	}
-	return intentList
+	return mIntents
 }
 
 // Bitwise ORs together all intents
 func Intents() discordgo.Intent {
-	intents := discordgo.IntentsNone
-	for i := range mIntents {
-		intents |= i
+	allIntents := discordgo.IntentsNone
+	for _, intent := range mIntents {
+		allIntents |= intent
 	}
-	return intents
+	return allIntents
 }
 
