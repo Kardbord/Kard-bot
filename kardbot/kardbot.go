@@ -8,7 +8,7 @@ import (
   "syscall"
 
   "github.com/TannerKvarfordt/Kard-bot/kardbot/auth"
-  "github.com/TannerKvarfordt/Kard-bot/kardbot/ready"
+  "github.com/TannerKvarfordt/Kard-bot/kardbot/onready"
   "github.com/bwmarrin/discordgo"
 )
 
@@ -32,7 +32,7 @@ func NewKardbot() kardbot {
 func (kbot *kardbot) Run(block bool) {
   kbot.session.Identify.Intents = auth.Intents()
 
-  kbot.session.AddHandler(ready.OnReady)
+  kbot.session.AddHandler(onready.OnReady)
   kbot.session.AddHandler(sayHello)
 
   err := kbot.session.Open()

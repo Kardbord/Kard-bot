@@ -1,4 +1,4 @@
-package ready
+package onready
 
 import (
   "github.com/bwmarrin/discordgo"
