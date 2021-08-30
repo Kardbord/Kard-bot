@@ -30,8 +30,7 @@ func NewKardbot() kardbot {
 }
 
 func (kbot *kardbot) Run(block bool) {
-  kbot.session.Identify.Intents = auth.Intents()
-
+  kbot.configure()
   kbot.addHandlers()
 
   err := kbot.session.Open()
@@ -49,7 +48,24 @@ func (kbot *kardbot) Run(block bool) {
   kbot.session.Close()
 }
 
+func (kbot *kardbot) configure() {
+  kbot.session.Identify.Intents = auth.Intents()
+  kbot.session.SyncEvents = false
+  kbot.session.ShouldReconnectOnError = true
+  kbot.session.StateEnabled = true
+}
+
 func (kbot *kardbot) addHandlers() {
-  kbot.session.AddHandler(onready.OnReady)
-  kbot.session.AddHandler(onmessage.OnCreate)
+
+  // OnReady handlers
+  for _, h := range onready.OnReadyHandlers {
+    kbot.session.AddHandler(h)
+  }
+
+  // OnMessageCreate handlers
+  for _, h := range onmessage.OnCreateHandlers {
+    kbot.session.AddHandler(h)
+  }
+
+  // Add handlers for any other event type here
 }

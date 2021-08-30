@@ -1,16 +1,12 @@
 package onmessage
 
-import (
-  "github.com/bwmarrin/discordgo"
-)
+import "github.com/bwmarrin/discordgo"
 
-// Any callbacks that happen onMessageCreate go here
-var mOnCreate = [...]func(*discordgo.Session, *discordgo.MessageCreate) {
+type onCreateHandler = func(*discordgo.Session, *discordgo.MessageCreate)
+
+// Any callbacks that happen onMessageCreate belong in this list.
+// It is the duty of each individual function to decide whether or not to run.
+// These callbacks must be able to safely execute asynchronously.
+var OnCreateHandlers = [...]onCreateHandler{
   Greeting,
-}
-
-func OnCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
-  for _, f := range mOnCreate {
-    f(s, m)
-  }
 }
