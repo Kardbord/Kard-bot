@@ -1,17 +1,19 @@
 package kardbot
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/TannerKvarfordt/Kard-bot/kardbot/auth"
+	"github.com/TannerKvarfordt/Kard-bot/kardbot/ready"
 	"github.com/bwmarrin/discordgo"
 )
 
 type kardbot struct {
-	dgSession *discordgo.Session
+	session *discordgo.Session
 }
 
 func NewKardbot() kardbot {
@@ -23,21 +25,37 @@ func NewKardbot() kardbot {
 		log.Fatal("failed to create discordgo session")
 	}
 	return kardbot{
-		dgSession: dg,
+		session: dg,
 	}
 }
 
-func (kbot *kardbot) Run() {
-	kbot.dgSession.Identify.Intents = auth.Intents()
-	err := kbot.dgSession.Open()
+func (kbot *kardbot) Run(block bool) {
+	kbot.session.Identify.Intents = auth.Intents()
+
+	kbot.session.AddHandler(ready.OnReady)
+	kbot.session.AddHandler(sayHello)
+
+	err := kbot.session.Open()
+	log.Printf("Bot is now running. Press CTRL-C to exit.")
 	if err != nil {
 		log.Fatal("failed to open Discord session: ", err)
 	}
 
-	log.Println("Kardbot is now running. Press CTRL-C to exit.")
-	sc := make(chan os.Signal, 1)
-	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
-	<-sc
+	if block {
+		sc := make(chan os.Signal, 1)
+		signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
+		<-sc
+	}
 
-	kbot.dgSession.Close()
+	kbot.session.Close()
+}
+
+func sayHello(s *discordgo.Session, m *discordgo.MessageCreate) {
+	if m.Author.ID == s.State.User.ID {
+		return
+	}
+
+	if m.Content == fmt.Sprintf("Hello %s!", s.State.User.Username) {
+		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Hello %s!", m.Author.Username))
+	}
 }

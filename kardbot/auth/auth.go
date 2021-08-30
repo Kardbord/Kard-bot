@@ -9,10 +9,12 @@ import (
 )
 
 const BotTokenEnv = "DISCORD_BOT_TOKEN"
+
 var (
 	mBotToken string
-	mIntents = []discordgo.Intent{
+	mIntents  = []discordgo.Intent{
 		// TODO: add intents
+		discordgo.IntentsAllWithoutPrivileged,
 	}
 )
 
@@ -20,7 +22,7 @@ var (
 func init() {
 	// This will only add new environment variables,
 	// and will NOT overwrite existing ones.
-	_ = godotenv.Load(/*.env by default*/)
+	_ = godotenv.Load( /*.env by default*/ )
 
 	var tokenFound bool
 	mBotToken, tokenFound = os.LookupEnv(BotTokenEnv)
@@ -50,4 +52,3 @@ func Intents() discordgo.Intent {
 	}
 	return allIntents
 }
-

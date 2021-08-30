@@ -2,7 +2,7 @@ package main
 
 import "github.com/TannerKvarfordt/Kard-bot/kardbot"
 
-func main()  {
+func main() {
 	kbot := kardbot.NewKardbot()
-	kbot.Run()
+	kbot.Run(true)
 }
