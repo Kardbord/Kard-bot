@@ -10,7 +10,7 @@ func fromSelf(s *discordgo.Session, m *discordgo.MessageCreate) bool {
   return m.Author.ID == s.State.User.ID
 }
 
-func Greeting(s *discordgo.Session, m *discordgo.MessageCreate) {
+func greeting(s *discordgo.Session, m *discordgo.MessageCreate) {
   if fromSelf(s, m) {
     return
   }
@@ -20,7 +20,7 @@ func Greeting(s *discordgo.Session, m *discordgo.MessageCreate) {
   }
 }
 
-func Farewell(s *discordgo.Session, m *discordgo.MessageCreate) {
+func farewell(s *discordgo.Session, m *discordgo.MessageCreate) {
   if fromSelf(s, m) {
     return
   }
