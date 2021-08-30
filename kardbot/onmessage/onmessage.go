@@ -9,4 +9,5 @@ type onCreateHandler = func(*discordgo.Session, *discordgo.MessageCreate)
 // These callbacks must be able to safely execute asynchronously.
 var OnCreateHandlers = [...]onCreateHandler{
   Greeting,
+  Farewell,
 }
