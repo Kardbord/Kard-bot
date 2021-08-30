@@ -1,13 +1,13 @@
 package kardbot
 
 import (
-  "fmt"
   "log"
   "os"
   "os/signal"
   "syscall"
 
   "github.com/TannerKvarfordt/Kard-bot/kardbot/auth"
+  "github.com/TannerKvarfordt/Kard-bot/kardbot/onmessage"
   "github.com/TannerKvarfordt/Kard-bot/kardbot/onready"
   "github.com/bwmarrin/discordgo"
 )
@@ -32,8 +32,7 @@ func NewKardbot() kardbot {
 func (kbot *kardbot) Run(block bool) {
   kbot.session.Identify.Intents = auth.Intents()
 
-  kbot.session.AddHandler(onready.OnReady)
-  kbot.session.AddHandler(sayHello)
+  kbot.addHandlers()
 
   err := kbot.session.Open()
   log.Printf("Bot is now running. Press CTRL-C to exit.")
@@ -50,12 +49,7 @@ func (kbot *kardbot) Run(block bool) {
   kbot.session.Close()
 }
 
-func sayHello(s *discordgo.Session, m *discordgo.MessageCreate) {
-  if m.Author.ID == s.State.User.ID {
-    return
-  }
-
-  if m.Content == fmt.Sprintf("Hello %s!", s.State.User.Username) {
-    s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Hello %s!", m.Author.Username))
-  }
+func (kbot *kardbot) addHandlers() {
+  kbot.session.AddHandler(onready.OnReady)
+  kbot.session.AddHandler(onmessage.OnCreate)
 }
