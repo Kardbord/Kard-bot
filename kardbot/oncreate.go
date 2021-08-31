@@ -5,7 +5,6 @@ import (
 	"log"
 	"math/rand"
 	"regexp"
-	"strings"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -30,6 +29,14 @@ var (
 		"See you",
 		"See ya",
 	}
+
+	// Any callbacks that happen onMessageCreate belong in this list.
+	// It is the duty of each individual function to decide whether or not to run.
+	// These callbacks must be able to safely execute asynchronously.
+	onCreateHandlers = [...]onCreateHandler{
+		{greeting, fmt.Sprintf("Returns your salutations when you greet the bot with %v", greetings)},
+		{farewell, fmt.Sprintf("Returns your valediction when you tell the bot %v", farewells)},
+	}
 )
 
 type onCreateHandlerf = func(*discordgo.Session, *discordgo.MessageCreate)
@@ -37,14 +44,6 @@ type onCreateHandlerf = func(*discordgo.Session, *discordgo.MessageCreate)
 type onCreateHandler struct {
 	handler onCreateHandlerf
 	help    string
-}
-
-// Any callbacks that happen onMessageCreate belong in this list.
-// It is the duty of each individual function to decide whether or not to run.
-// These callbacks must be able to safely execute asynchronously.
-var onCreateHandlers = [...]onCreateHandler{
-	{greeting, fmt.Sprintf("Returns your salutations when you greet the bot with %v", greetings)},
-	{farewell, fmt.Sprintf("Returns your valediction when you tell the bot %v", farewells)},
 }
 
 func fromSelf(s *discordgo.Session, m *discordgo.MessageCreate) bool {
@@ -95,37 +94,4 @@ func farewell(s *discordgo.Session, m *discordgo.MessageCreate) {
 			fmt.Sprintf("%s %s!", farewells[rand.Intn(len(farewells))], m.Author.Username),
 		)
 	}
-}
-
-// Some characters are optional when matching the bot name.
-// This function returns a regexp string to appropriately
-// match the bot name, including any optional characters.
-func buildBotNameRegexp(botName string) string {
-	// TODO: make these configurable
-	optionalRunes := []rune{
-		'-',
-		'_',
-	}
-	botNameExp := botName
-	for _, r := range optionalRunes {
-		botNameExp = strings.ReplaceAll(botNameExp, string(r), fmt.Sprintf("%s?", string(r)))
-	}
-	log.Println("Built bot exp=", botNameExp)
-	return botNameExp
-}
-
-// Returns a regexp alternate group of the provided
-// strings. For example, input of [a ,b] would result
-// in a return value of "(a|b)".
-func buildRegexAltGroup(alts []string) string {
-	altGroup := "("
-	for i, alt := range alts {
-		altGroup += alt
-		if i+1 < len(alts) {
-			altGroup += "|"
-		}
-	}
-	altGroup += ")"
-	log.Println("Built altgroup=", altGroup)
-	return altGroup
 }
