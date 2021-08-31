@@ -1,4 +1,4 @@
-package auth
+package kardbot
 
 import (
 	"log"
@@ -8,14 +8,13 @@ import (
 	"github.com/joho/godotenv"
 )
 
-const BotTokenEnv = "DISCORD_BOT_TOKEN"
+const (
+	BotTokenEnv = "DISCORD_BOT_TOKEN"
+	Intents     = discordgo.IntentsAllWithoutPrivileged
+)
 
 var (
 	mBotToken string
-	mIntents  = []discordgo.Intent{
-		// TODO: add intents
-		discordgo.IntentsAllWithoutPrivileged,
-	}
 )
 
 // Retrieves the bot's auth token from the environment
@@ -32,23 +31,4 @@ func init() {
 	} else if mBotToken == "" {
 		log.Fatalf("%s is the empty string", BotTokenEnv)
 	}
-}
-
-// Returns the bot's auth token
-func BotToken() string {
-	return mBotToken
-}
-
-// Returns a list of all intents
-func IntentList() []discordgo.Intent {
-	return mIntents
-}
-
-// Bitwise ORs together all intents
-func Intents() discordgo.Intent {
-	allIntents := discordgo.IntentsNone
-	for _, intent := range mIntents {
-		allIntents |= intent
-	}
-	return allIntents
 }

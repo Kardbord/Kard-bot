@@ -1,4 +1,4 @@
-package onmessage
+package kardbot
 
 import (
 	"fmt"

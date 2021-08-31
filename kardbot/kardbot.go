@@ -6,9 +6,6 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/TannerKvarfordt/Kard-bot/kardbot/auth"
-	"github.com/TannerKvarfordt/Kard-bot/kardbot/onmessage"
-	"github.com/TannerKvarfordt/Kard-bot/kardbot/onready"
 	"github.com/bwmarrin/discordgo"
 )
 
@@ -17,7 +14,7 @@ type kardbot struct {
 }
 
 func NewKardbot() kardbot {
-	dg, err := discordgo.New("Bot " + auth.BotToken())
+	dg, err := discordgo.New("Bot " + mBotToken)
 	if err != nil {
 		log.Fatal("discordgo error: ", err)
 	}
@@ -49,7 +46,7 @@ func (kbot *kardbot) Run(block bool) {
 }
 
 func (kbot *kardbot) configure() {
-	kbot.session.Identify.Intents = auth.Intents()
+	kbot.session.Identify.Intents = Intents
 	kbot.session.SyncEvents = false
 	kbot.session.ShouldReconnectOnError = true
 	kbot.session.StateEnabled = true
@@ -58,13 +55,13 @@ func (kbot *kardbot) configure() {
 func (kbot *kardbot) addHandlers() {
 
 	// OnReady handlers
-	for _, h := range onready.OnReadyHandlers {
-		kbot.session.AddHandler(h)
+	for _, h := range onReadyHandlers {
+		kbot.session.AddHandler(h.handler)
 	}
 
 	// OnMessageCreate handlers
-	for _, h := range onmessage.OnCreateHandlers {
-		kbot.session.AddHandler(h)
+	for _, h := range onCreateHandlers {
+		kbot.session.AddHandler(h.handler)
 	}
 
 	// Add handlers for any other event type here

@@ -1,4 +1,4 @@
-package onmessage
+package kardbot
 
 import (
 	"fmt"
@@ -16,7 +16,7 @@ type onCreateHandler struct {
 // Any callbacks that happen onMessageCreate belong in this list.
 // It is the duty of each individual function to decide whether or not to run.
 // These callbacks must be able to safely execute asynchronously.
-var OnCreateHandlers = [...]onCreateHandler{
+var onCreateHandlers = [...]onCreateHandler{
 	{greeting, fmt.Sprintf("Returns your salutations when you greet the bot with %v", greetings)},
 	{farewell, fmt.Sprintf("Returns your valediction when you tell the bot %v", farewells)},
 }
