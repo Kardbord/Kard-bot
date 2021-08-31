@@ -10,6 +10,28 @@ import (
   "github.com/bwmarrin/discordgo"
 )
 
+var (
+  // Possible greetings the bot will respond to
+  // TODO: make these configurable
+  greetings = []string{
+    "Hello",
+    "Hi",
+    "Greetings",
+    "Salutations",
+  }
+
+  // Possible farewells the bot will respond to
+  // TODO: make these configurable
+  farewells = []string{
+    "Goodbye",
+    "Farewell",
+    "So long",
+    "Bye",
+    "See you",
+    "See ya",
+  }
+)
+
 func fromSelf(s *discordgo.Session, m *discordgo.MessageCreate) bool {
   return m.Author.ID == s.State.User.ID
 }
@@ -19,14 +41,6 @@ func greeting(s *discordgo.Session, m *discordgo.MessageCreate) {
     return
   }
 
-  // Possible greetings the bot will respond to
-  // TODO: make these configurable
-  greetings := []string{
-    "Hello",
-    "Hi",
-    "Greetings",
-		"Salutations",
-  }
   greetingGroup := buildRegexAltGroup(greetings)
 
   matched, err := regexp.MatchString(
@@ -50,16 +64,6 @@ func farewell(s *discordgo.Session, m *discordgo.MessageCreate) {
     return
   }
 
-  // Possible farewells the bot will respond to
-  // TODO: make these configurable
-  farewells := []string{
-    "Goodbye",
-    "Farewell",
-    "So long",
-		"Bye",
-		"See you",
-		"See ya",
-  }
   farewellGroup := buildRegexAltGroup(farewells)
 
   matched, err := regexp.MatchString(
