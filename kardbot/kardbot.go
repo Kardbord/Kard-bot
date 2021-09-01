@@ -13,6 +13,7 @@ type kardbot struct {
 	session *discordgo.Session
 }
 
+// NewKardbot retuns a new bot instance.
 func NewKardbot() kardbot {
 	dg, err := discordgo.New("Bot " + mBotToken)
 	if err != nil {
@@ -26,6 +27,7 @@ func NewKardbot() kardbot {
 	}
 }
 
+// Start the bot
 func (kbot *kardbot) Run(block bool) {
 	kbot.configure()
 	kbot.addHandlers()
@@ -35,14 +37,21 @@ func (kbot *kardbot) Run(block bool) {
 	if err != nil {
 		log.Fatal("failed to open Discord session: ", err)
 	}
+	defer func() {
+		if block {
+			sc := make(chan os.Signal, 1)
+			signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
+			<-sc
+			kbot.Stop()
+		}
+	}()
 
-	if block {
-		sc := make(chan os.Signal, 1)
-		signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
-		<-sc
-	}
+}
 
-	kbot.session.Close()
+// Stop and clean up. Not necessary to call if
+// Run was called with block=true.
+func (kbot *kardbot) Stop() {
+	_ = kbot.session.Close()
 }
 
 func (kbot *kardbot) configure() {

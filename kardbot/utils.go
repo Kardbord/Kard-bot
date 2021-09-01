@@ -2,7 +2,6 @@ package kardbot
 
 import (
 	"fmt"
-	"log"
 	"strings"
 )
 
@@ -19,7 +18,6 @@ func buildBotNameRegexp(botName string) string {
 	for _, r := range optionalRunes {
 		botNameExp = strings.ReplaceAll(botNameExp, string(r), fmt.Sprintf("%s?", string(r)))
 	}
-	log.Println("Built bot exp=", botNameExp)
 	return botNameExp
 }
 
@@ -35,6 +33,5 @@ func buildRegexAltGroup(alts []string) string {
 		}
 	}
 	altGroup += ")"
-	log.Println("Built altgroup=", altGroup)
 	return altGroup
 }
