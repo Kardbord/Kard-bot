@@ -56,12 +56,12 @@ func (kbot *kardbot) addHandlers() {
 
 	// OnReady handlers
 	for _, h := range onReadyHandlers {
-		kbot.session.AddHandler(h.handler)
+		kbot.session.AddHandler(h)
 	}
 
 	// OnMessageCreate handlers
 	for _, h := range onCreateHandlers {
-		kbot.session.AddHandler(h.handler)
+		kbot.session.AddHandler(h)
 	}
 
 	// Add handlers for any other event type here
