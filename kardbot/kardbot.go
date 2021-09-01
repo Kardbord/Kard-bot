@@ -7,10 +7,12 @@ import (
 	"syscall"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/lus/dgc"
 )
 
 type kardbot struct {
 	session *discordgo.Session
+	router  *dgc.Router
 }
 
 // NewKardbot retuns a new bot instance.
@@ -27,7 +29,14 @@ func NewKardbot() kardbot {
 	}
 }
 
-// Start the bot
+// Start the bot.
+//
+// The "block" argument indicates whether or
+// not this call should block the current
+// goroutine until a terminating signal is
+// received. If set to true, Stop will be
+// called on the bot object when the signal
+// is received.
 func (kbot *kardbot) Run(block bool) {
 	kbot.configure()
 	kbot.addHandlers()
@@ -46,6 +55,7 @@ func (kbot *kardbot) Run(block bool) {
 		}
 	}()
 
+	kbot.registerCommands()
 }
 
 // Stop and clean up. Not necessary to call if
@@ -74,4 +84,25 @@ func (kbot *kardbot) addHandlers() {
 	}
 
 	// Add handlers for any other event type here
+}
+
+func (kbot *kardbot) registerCommands() {
+	kbot.router = dgc.Create(&dgc.Router{
+		// TODO: make these configurable
+		Prefixes:         []string{"!"},
+		IgnorePrefixCase: true,
+		BotsAllowed:      false,
+		Commands:         []*dgc.Command{},
+		Middlewares:      []dgc.Middleware{},
+		PingHandler:      func(ctx *dgc.Ctx) { ctx.RespondText("Pong!") },
+	})
+
+	kbot.router.RegisterDefaultHelpCommand(kbot.session, nil)
+
+	for _, cmd := range mCommands {
+		kbot.router.RegisterCmd(&cmd)
+	}
+
+	kbot.router.Initialize(kbot.session)
+
 }
