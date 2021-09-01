@@ -3,7 +3,7 @@ A discord bot destined for greatness.
 
 # Features
 - [x] Respond to user greetings and goodbyes
-- [ ] DnD dice roller
+- [x] DnD dice roller
 - [ ] Copy-pastas when requested and/or when triggered
 - [ ] [Uwu-ifier](https://lingojam.com/uwu-ify)
 - [ ] [Creepy asterisks](https://www.reddit.com/r/creepyasterisks/)
