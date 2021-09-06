@@ -101,7 +101,8 @@ func (kbot *kardbot) registerCommands() {
 	kbot.router.RegisterDefaultHelpCommand(kbot.session, nil)
 
 	for _, cmd := range mCommands {
-		kbot.router.RegisterCmd(&cmd)
+		log.Debug("Registering cmd:", cmd.Name)
+		kbot.router.RegisterCmd(cmd)
 	}
 
 	kbot.router.Initialize(kbot.session)
