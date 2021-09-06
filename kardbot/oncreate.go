@@ -2,9 +2,10 @@ package kardbot
 
 import (
 	"fmt"
-	"log"
 	"math/rand"
 	"regexp"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -57,7 +58,7 @@ func greeting(s *discordgo.Session, m *discordgo.MessageCreate) {
 		m.Content,
 	)
 	if err != nil {
-		log.Println("Regex error: ", err)
+		log.Errorln("Regex error: ", err)
 		return
 	}
 	if matched {
@@ -80,7 +81,7 @@ func farewell(s *discordgo.Session, m *discordgo.MessageCreate) {
 		m.Content,
 	)
 	if err != nil {
-		log.Println("Regex error: ", err)
+		log.Errorln("Regex error: ", err)
 		return
 	}
 	if matched {

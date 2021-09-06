@@ -3,6 +3,8 @@ package kardbot
 import (
 	"fmt"
 	"strings"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // Some characters are optional when matching the bot name.
@@ -18,6 +20,7 @@ func buildBotNameRegexp(botName string) string {
 	for _, r := range optionalRunes {
 		botNameExp = strings.ReplaceAll(botNameExp, string(r), fmt.Sprintf("%s?", string(r)))
 	}
+	log.Trace("Built bot name regex:", botNameExp)
 	return botNameExp
 }
 
@@ -33,5 +36,6 @@ func buildRegexAltGroup(alts []string) string {
 		}
 	}
 	altGroup += ")"
+	log.Trace("Built alt group regex:", altGroup)
 	return altGroup
 }

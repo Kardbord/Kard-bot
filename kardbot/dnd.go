@@ -2,11 +2,12 @@ package kardbot
 
 import (
 	"fmt"
-	"log"
 	"math/rand"
 	"regexp"
 	"strconv"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/lus/dgc"
 )
@@ -19,23 +20,23 @@ func init() {
 func rollDice(ctx *dgc.Ctx) {
 	args, err := getArgsExpectCount(ctx, 2, true)
 	if err != nil {
-		log.Println(err)
+		log.Error(err)
 		return
 	}
 
 	sides, err := parseDieSides(args.Get(1).Raw())
 	if err != nil {
-		log.Println(err)
+		log.Error(err)
 		return
 	}
 
 	count, err := args.Get(0).AsInt()
 	if err != nil {
-		log.Printf("could not get arg[0]=%s as int - %v", args.Get(0).Raw(), err)
+		log.Errorf("could not get arg[0]=%s as int - %v", args.Get(0).Raw(), err)
 		return
 	}
 	if count < 1 {
-		log.Printf("cannot roll a die <1 times")
+		log.Error("cannot roll a die <1 times")
 		return
 	}
 

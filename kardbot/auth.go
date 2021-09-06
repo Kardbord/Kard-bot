@@ -1,8 +1,9 @@
 package kardbot
 
 import (
-	"log"
 	"os"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/joho/godotenv"

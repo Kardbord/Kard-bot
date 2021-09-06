@@ -1,10 +1,11 @@
 package kardbot
 
 import (
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/lus/dgc"
@@ -42,7 +43,7 @@ func (kbot *kardbot) Run(block bool) {
 	kbot.addHandlers()
 
 	err := kbot.session.Open()
-	log.Printf("Bot is now running. Press CTRL-C to exit.")
+	log.Print("Bot is now running. Press CTRL-C to exit.")
 	if err != nil {
 		log.Fatal("failed to open Discord session: ", err)
 	}
