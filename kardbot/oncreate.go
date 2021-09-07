@@ -48,6 +48,11 @@ func msgIsFromSelf(s *discordgo.Session, m *discordgo.MessageCreate) bool {
 
 func greeting(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if msgIsFromSelf(s, m) {
+		log.Trace("Ignoring message from self")
+		return
+	}
+	if m.Author.Bot {
+		log.Trace("Ignoring message from bot")
 		return
 	}
 
@@ -71,6 +76,11 @@ func greeting(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 func farewell(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if msgIsFromSelf(s, m) {
+		log.Trace("Ignoring message from self")
+		return
+	}
+	if m.Author.Bot {
+		log.Trace("Ignoring message from bot")
 		return
 	}
 
