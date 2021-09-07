@@ -10,12 +10,14 @@ import (
 )
 
 const (
-	BotTokenEnv = "DISCORD_BOT_TOKEN"
+	BotTokenEnv = "KARDBOT_TOKEN"
+	BotOwnerEnv = "KARDBOT_OWNER_ID"
 	Intents     = discordgo.IntentsAllWithoutPrivileged
 )
 
 var (
 	mBotToken string
+	mOwnerID  string
 )
 
 // Retrieves the bot's auth token from the environment
@@ -24,12 +26,19 @@ func init() {
 	// and will NOT overwrite existing ones.
 	_ = godotenv.Load( /*.env by default*/ )
 
-	var tokenFound bool
-	mBotToken, tokenFound = os.LookupEnv(BotTokenEnv)
-
+	botToken, tokenFound := os.LookupEnv(BotTokenEnv)
 	if !tokenFound {
 		log.Fatalf("%s not found in environment", BotTokenEnv)
-	} else if mBotToken == "" {
+	} else if botToken == "" {
 		log.Fatalf("%s is the empty string", BotTokenEnv)
 	}
+	mBotToken = botToken
+
+	ownerID, ownerFound := os.LookupEnv(BotOwnerEnv)
+	if !ownerFound {
+		log.Warnf("%s not found in environment. No commands requiring this privilege can be executed.", BotOwnerEnv)
+	} else if ownerID == "" {
+		log.Warnf("%s is the empty string. No commands requiring this privilege can be executed.", BotOwnerEnv)
+	}
+	mOwnerID = ownerID
 }

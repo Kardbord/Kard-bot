@@ -43,10 +43,10 @@ func (kbot *kardbot) Run(block bool) {
 	kbot.addHandlers()
 
 	err := kbot.session.Open()
-	log.Print("Bot is now running. Press CTRL-C to exit.")
 	if err != nil {
 		log.Fatal("failed to open Discord session: ", err)
 	}
+	log.Print("Bot is now running. Press CTRL-C to exit.")
 	defer func() {
 		if block {
 			sc := make(chan os.Signal, 1)

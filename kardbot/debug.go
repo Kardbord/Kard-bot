@@ -29,8 +29,15 @@ func getLogLevelKeys() []string {
 	return keys
 }
 
-// TODO: check that user is allowed to update log level
 func updateLogLevel(ctx *dgc.Ctx) {
+	if isOwner, err := authorIsOwner(ctx); err != nil {
+		log.Error(err)
+		return
+	} else if !isOwner {
+		log.Warnf("User %s (%s) does not have privilege to update log level", ctx.Event.Author.Username, ctx.Event.Author.ID)
+		return
+	}
+
 	args, err := getArgsExpectCount(ctx, 1, true)
 	if err != nil {
 		log.Error(err)
