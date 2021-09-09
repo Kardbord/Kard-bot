@@ -9,19 +9,22 @@ import (
 	"github.com/lus/dgc"
 )
 
-var logLevelMap = map[string]log.Level{
-	"panic":   log.PanicLevel,
-	"fatal":   log.FatalLevel,
-	"error":   log.ErrorLevel,
-	"err":     log.ErrorLevel,
-	"warning": log.WarnLevel,
-	"warn":    log.WarnLevel,
-	"info":    log.InfoLevel,
-	"debug":   log.DebugLevel,
-	"trace":   log.TraceLevel,
+func getLogLevelMap() map[string]log.Level {
+	return map[string]log.Level{
+		"panic":   log.PanicLevel,
+		"fatal":   log.FatalLevel,
+		"error":   log.ErrorLevel,
+		"err":     log.ErrorLevel,
+		"warning": log.WarnLevel,
+		"warn":    log.WarnLevel,
+		"info":    log.InfoLevel,
+		"debug":   log.DebugLevel,
+		"trace":   log.TraceLevel,
+	}
 }
 
 func getLogLevelKeys() []string {
+	logLevelMap := getLogLevelMap()
 	keys := make([]string, 0, len(logLevelMap))
 	for k := range logLevelMap {
 		keys = append(keys, k)
@@ -45,7 +48,7 @@ func updateLogLevel(ctx *dgc.Ctx) {
 	}
 	levelStr := strings.ToLower(args.Get(0).Raw())
 
-	if l, ok := logLevelMap[levelStr]; ok {
+	if l, ok := getLogLevelMap()[levelStr]; ok {
 		info := fmt.Sprintf(`Set logging level to "%s"`, levelStr)
 		log.Info(info)
 		ctx.RespondText(info)

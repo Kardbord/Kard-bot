@@ -18,7 +18,7 @@ type kardbot struct {
 
 // NewKardbot retuns a new bot instance.
 func NewKardbot() kardbot {
-	dg, err := discordgo.New("Bot " + mBotToken)
+	dg, err := discordgo.New("Bot " + getBotToken())
 	if err != nil {
 		log.Fatal("discordgo error: ", err)
 	}
@@ -75,12 +75,12 @@ func (kbot *kardbot) configure() {
 func (kbot *kardbot) addHandlers() {
 
 	// OnReady handlers
-	for _, h := range onReadyHandlers {
+	for _, h := range onReadyHandlers() {
 		kbot.session.AddHandler(h)
 	}
 
 	// OnMessageCreate handlers
-	for _, h := range onCreateHandlers {
+	for _, h := range onCreateHandlers() {
 		kbot.session.AddHandler(h)
 	}
 
@@ -100,7 +100,7 @@ func (kbot *kardbot) registerCommands() {
 
 	kbot.router.RegisterDefaultHelpCommand(kbot.session, nil)
 
-	for _, cmd := range mCommands {
+	for _, cmd := range getCommands() {
 		log.Debug("Registering cmd:", cmd.Name)
 		kbot.router.RegisterCmd(cmd)
 	}

@@ -30,17 +30,19 @@ var (
 		"See you",
 		"See ya",
 	}
-
-	// Any callbacks that happen onMessageCreate belong in this list.
-	// It is the duty of each individual function to decide whether or not to run.
-	// These callbacks must be able to safely execute asynchronously.
-	onCreateHandlers = [...]onCreateHandler{
-		greeting,
-		farewell,
-	}
 )
 
 type onCreateHandler = func(*discordgo.Session, *discordgo.MessageCreate)
+
+// Any callbacks that happen onMessageCreate belong in this list.
+// It is the duty of each individual function to decide whether or not to run.
+// These callbacks must be able to safely execute asynchronously.
+func onCreateHandlers() []onCreateHandler {
+	return []onCreateHandler{
+		greeting,
+		farewell,
+	}
+}
 
 func msgIsFromSelf(s *discordgo.Session, m *discordgo.MessageCreate) bool {
 	return m.Author.ID == s.State.User.ID

@@ -38,7 +38,7 @@ func getArgsExpectCount(ctx *dgc.Ctx, expected int, exact bool) (*dgc.Arguments,
 }
 
 func authorIsOwner(ctx *dgc.Ctx) (bool, error) {
-	if mOwnerID == "" {
+	if getOwnerID() == "" {
 		return false, fmt.Errorf("owner ID is not set")
 	}
 	if ctx == nil {
@@ -50,7 +50,7 @@ func authorIsOwner(ctx *dgc.Ctx) (bool, error) {
 	if ctx.Event.Author == nil {
 		return false, fmt.Errorf("author is nil")
 	}
-	if ctx.Event.Author.ID == mOwnerID {
+	if ctx.Event.Author.ID == getOwnerID() {
 		return true, nil
 	}
 	return false, nil

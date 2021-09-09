@@ -16,8 +16,8 @@ const (
 )
 
 var (
-	mBotToken string
-	mOwnerID  string
+	getBotToken func() string
+	getOwnerID  func() string
 )
 
 // Retrieves the bot's auth token from the environment
@@ -26,19 +26,19 @@ func init() {
 	// and will NOT overwrite existing ones.
 	_ = godotenv.Load( /*.env by default*/ )
 
-	botToken, tokenFound := os.LookupEnv(BotTokenEnv)
+	token, tokenFound := os.LookupEnv(BotTokenEnv)
 	if !tokenFound {
 		log.Fatalf("%s not found in environment", BotTokenEnv)
-	} else if botToken == "" {
+	} else if token == "" {
 		log.Fatalf("%s is the empty string", BotTokenEnv)
 	}
-	mBotToken = botToken
+	getBotToken = func() string { return token }
 
-	ownerID, ownerFound := os.LookupEnv(BotOwnerEnv)
+	owner, ownerFound := os.LookupEnv(BotOwnerEnv)
 	if !ownerFound {
 		log.Warnf("%s not found in environment. No commands requiring this privilege can be executed.", BotOwnerEnv)
-	} else if ownerID == "" {
+	} else if owner == "" {
 		log.Warnf("%s is the empty string. No commands requiring this privilege can be executed.", BotOwnerEnv)
 	}
-	mOwnerID = ownerID
+	getOwnerID = func() string { return owner }
 }
