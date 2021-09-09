@@ -2,10 +2,16 @@ package kardbot
 
 import (
 	"fmt"
+	"math/rand"
 	"strings"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 )
+
+func init() {
+	rand.Seed(time.Now().UnixNano())
+}
 
 // Some characters are optional when matching the bot name.
 // This function returns a regexp string to appropriately
@@ -38,4 +44,13 @@ func buildRegexAltGroup(alts []string) string {
 	altGroup += ")"
 	log.Trace("Built alt group regex:", altGroup)
 	return altGroup
+}
+
+// Return a non-negative random number in the inclusive range [min, max].
+// If max <= min, returns the maximum uint value and an error.
+func randFromRange(min, max uint) (uint, error) {
+	if max <= min {
+		return ^uint(0), fmt.Errorf("max (%d) cannot be less than or equal to min (%d)", max, min)
+	}
+	return uint(rand.Intn(int((max-min)+1))) + min, nil
 }

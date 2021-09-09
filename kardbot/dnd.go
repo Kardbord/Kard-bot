@@ -2,21 +2,19 @@ package kardbot
 
 import (
 	"fmt"
-	"math/rand"
 	"regexp"
 	"strconv"
-	"time"
 
 	log "github.com/sirupsen/logrus"
 
 	"github.com/lus/dgc"
 )
 
-func init() {
-	rand.Seed(time.Now().UnixNano())
-}
+const (
+	MinDieSides = 2 // What the hell would a 1-sided die be? A black hole?
+	DieStartVal = 1 // Dice numbering starts at this value
+)
 
-// TODO: add a unit test for this method
 func rollDice(ctx *dgc.Ctx) {
 	args, err := getArgsExpectCount(ctx, 2, true)
 	if err != nil {
@@ -41,9 +39,13 @@ func rollDice(ctx *dgc.Ctx) {
 	}
 
 	output := fmt.Sprintf("Rolling %d D%d's...\n", count, sides)
-	total := 0
+	total := uint(0)
 	for i := 0; i < count; i++ {
-		roll := rand.Intn(sides) + 1
+		roll, err := randFromRange(DieStartVal, sides)
+		if err != nil {
+			log.Error(err)
+			return
+		}
 		total += roll
 		output += fmt.Sprintf("%d\n", roll)
 	}
@@ -51,13 +53,15 @@ func rollDice(ctx *dgc.Ctx) {
 		output += fmt.Sprintf("Total: %d", total)
 	}
 
+	// TODO: limit response text to 2000 characters (Discord imposed limit)
 	ctx.RespondText(output)
 }
 
 // Parse number of sides on dice from a string of the form
 // D{NUM} or just {NUM}
-func parseDieSides(rawDieSides string) (int, error) {
-	matched, err := regexp.MatchString("^(?i)d?([2-9]{1}|[0-9]{2,})$", rawDieSides)
+func parseDieSides(rawDieSides string) (uint, error) {
+	// This regex disallows negative numbers
+	matched, err := regexp.MatchString("^(?i)d?[0-9]+$", rawDieSides)
 	if err != nil {
 		return 0, fmt.Errorf("regexp err: %v", err)
 	}
@@ -75,6 +79,9 @@ func parseDieSides(rawDieSides string) (int, error) {
 	if err != nil {
 		return 0, fmt.Errorf("could not convert %s to int", dieSidesParsed)
 	}
+	if sides < MinDieSides {
+		return 0, fmt.Errorf("%d is not a valid number of sides", sides)
+	}
 
-	return sides, nil
+	return uint(sides), nil
 }
