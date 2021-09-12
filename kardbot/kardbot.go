@@ -88,6 +88,7 @@ func initialize() {
 	}
 
 	configure()
+	validateConfig()
 	addHandlers()
 
 	err = bot().Session.Open()
@@ -103,6 +104,46 @@ func configure() {
 	bot().Session.StateEnabled = true
 
 	json.Unmarshal(rawJSONConfig(), bot())
+}
+
+func validateConfig() {
+	// Validate Session
+	if bot().Session == nil {
+		log.Fatal("Session is nil.")
+	}
+	if !bot().Session.ShouldReconnectOnError {
+		log.Warn("discordgo session will not reconnect on error.")
+	}
+	if bot().Session.SyncEvents {
+		log.Warn("Session events are being executed synchronously, which may result in slower responses. Consider disabling this if command can safely be executed asynchronously.")
+	}
+	if bot().Session.Identify.Intents == discordgo.IntentsNone {
+		log.Warn("No intents registered with the discordgo API, which may result in decreased functionality.")
+	}
+
+	// Validate Router
+	if bot().Router == nil {
+		log.Fatal("Command router is nil.")
+	}
+	if bot().Router.Commands == nil {
+		log.Fatal("Router.Commands is nil.")
+	}
+	if len(bot().Router.Prefixes) == 0 {
+		log.Warn("No command prefixes registered. Commands will not work.")
+	}
+	if bot().Router.BotsAllowed {
+		log.Warn("Command router allows other bots to issue commands.")
+	}
+
+	// Validate greetings
+	if bot().greetingCount() == 0 {
+		log.Fatal("No greetings configured.")
+	}
+
+	// Validate farewells
+	if bot().farewellCount() == 0 {
+		log.Fatal("No farewells configured.")
+	}
 }
 
 func addHandlers() {
