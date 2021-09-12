@@ -30,7 +30,7 @@ func rollDice(ctx *dgc.Ctx) {
 
 	count, err := args.Get(0).AsInt()
 	if err != nil {
-		log.Errorf("could not get arg[0]=%s as int - %v", args.Get(0).Raw(), err)
+		log.Error(err)
 		return
 	}
 	if count < 1 {
@@ -63,7 +63,7 @@ func parseDieSides(rawDieSides string) (uint, error) {
 	// This regex disallows negative numbers
 	matched, err := regexp.MatchString("^(?i)d?[0-9]+$", rawDieSides)
 	if err != nil {
-		return 0, fmt.Errorf("regexp err: %v", err)
+		return 0, err
 	}
 	if !matched {
 		// Invalid die sides provided
@@ -72,7 +72,7 @@ func parseDieSides(rawDieSides string) (uint, error) {
 	// Strip non-numeric characters
 	reg, err := regexp.Compile("[^0-9]+")
 	if err != nil {
-		return 0, fmt.Errorf("regexp err: %v", err)
+		return 0, err
 	}
 	dieSidesParsed := reg.ReplaceAllString(rawDieSides, "")
 	sides, err := strconv.Atoi(dieSidesParsed)

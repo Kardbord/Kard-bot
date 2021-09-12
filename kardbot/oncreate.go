@@ -42,7 +42,7 @@ func greeting(s *discordgo.Session, m *discordgo.MessageCreate) {
 		m.Content,
 	)
 	if err != nil {
-		log.Errorln("Regex error: ", err)
+		log.Error(err)
 		return
 	}
 	if matched {
@@ -70,7 +70,7 @@ func farewell(s *discordgo.Session, m *discordgo.MessageCreate) {
 		m.Content,
 	)
 	if err != nil {
-		log.Errorln("Regex error: ", err)
+		log.Error(err)
 		return
 	}
 	if matched {
