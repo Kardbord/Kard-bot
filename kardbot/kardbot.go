@@ -63,8 +63,7 @@ func BlockThenStop() {
 	Stop()
 }
 
-// Stop and clean up. Not necessary to call if
-// Run was called with block=true.
+// Stop and clean up.
 func Stop() {
 	_ = bot().Session.Close()
 }
