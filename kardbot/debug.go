@@ -4,10 +4,24 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/bwmarrin/discordgo"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/lus/dgc"
 )
+
+// Map logrus log levels to discordgo log levels
+func logrusToDiscordGo() map[log.Level]int {
+	return map[log.Level]int{
+		log.PanicLevel: discordgo.LogError,
+		log.FatalLevel: discordgo.LogError,
+		log.ErrorLevel: discordgo.LogError,
+		log.WarnLevel:  discordgo.LogWarning,
+		log.InfoLevel:  discordgo.LogInformational,
+		log.DebugLevel: discordgo.LogInformational,
+		log.TraceLevel: discordgo.LogDebug,
+	}
+}
 
 func updateLogLevel(ctx *dgc.Ctx) {
 	if isOwner, err := authorIsOwner(ctx); err != nil {
@@ -30,6 +44,9 @@ func updateLogLevel(ctx *dgc.Ctx) {
 		log.Info(info)
 		ctx.RespondText(info)
 		log.SetLevel(lvl)
+		if bot().EnableDGLogging {
+			ctx.Session.LogLevel = logrusToDiscordGo()[lvl]
+		}
 	} else {
 		log.Error(err)
 	}

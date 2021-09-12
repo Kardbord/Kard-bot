@@ -27,6 +27,9 @@ type kardbot struct {
 	Router    *dgc.Router
 	Greetings []string `json:"greetings"`
 	Farewells []string `json:"farewells"`
+
+	// TODO: add a subcommand to loglevel to set this
+	EnableDGLogging bool `json:"enable-dg-logging"`
 }
 
 // bot() is a getter for the global kardbot instance
@@ -104,6 +107,10 @@ func configure() {
 	bot().Session.StateEnabled = true
 
 	json.Unmarshal(rawJSONConfig(), bot())
+
+	if bot().EnableDGLogging {
+		bot().Session.LogLevel = logrusToDiscordGo()[log.GetLevel()]
+	}
 }
 
 func validateConfig() {

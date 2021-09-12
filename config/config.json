@@ -19,5 +19,6 @@
     "Bye",
     "See you",
     "See ya"
-  ]
+  ],
+  "enable-dg-logging": false
 }
