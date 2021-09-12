@@ -11,100 +11,108 @@ import (
 	"github.com/lus/dgc"
 )
 
+// Pointer to the single kardbot instance global to the package
+var gbot *kardbot = nil
+
 type kardbot struct {
 	session *discordgo.Session
 	router  *dgc.Router
 }
 
-// NewKardbot retuns a new bot instance.
-func NewKardbot() kardbot {
-	dg, err := discordgo.New("Bot " + getBotToken())
-	if err != nil {
-		log.Fatal("discordgo error: ", err)
+// bot() is a getter for the global kardbot instance
+func bot() *kardbot {
+	if gbot == nil {
+		// The only time gbot should be nil is if Run() has not been called.
+		// If Run() has not been called, no bot code should be running and
+		// this case should not be hit.
+		log.Fatal("No kardbot initialized. This should never happen.")
 	}
-	if dg == nil {
-		log.Fatal("failed to create discordgo session")
-	}
-	return kardbot{
-		session: dg,
-	}
+	return gbot
 }
 
-// Start the bot.
-//
-// The "block" argument indicates whether or
-// not this call should block the current
-// goroutine until a terminating signal is
-// received. If set to true, Stop will be
-// called on the bot object when the signal
-// is received.
-func (kbot *kardbot) Run(block bool) {
-	kbot.configure()
-	kbot.addHandlers()
-
-	err := kbot.session.Open()
-	if err != nil {
-		log.Fatal("failed to open Discord session: ", err)
-	}
+// Run initializes and starts the bot.
+func Run() {
+	initialize()
 	log.Print("Bot is now running. Press CTRL-C to exit.")
-	defer func() {
-		if block {
-			sc := make(chan os.Signal, 1)
-			signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
-			<-sc
-			kbot.Stop()
-		}
-	}()
+}
 
-	kbot.registerCommands()
+// Block the current goroutine until a terminatiing signal is received
+func Block() {
+	sc := make(chan os.Signal, 1)
+	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
+	<-sc
+}
+
+// BlockAndStop blocks the current goroutine until a terminatiing signal is received.
+// When the signal is received, stop and clean up the bot.
+func BlockAndStop() {
+	Block()
+	Stop()
 }
 
 // Stop and clean up. Not necessary to call if
 // Run was called with block=true.
-func (kbot *kardbot) Stop() {
-	_ = kbot.session.Close()
+func Stop() {
+	_ = bot().session.Close()
 }
 
-func (kbot *kardbot) configure() {
-	kbot.session.Identify.Intents = Intents
-	kbot.session.SyncEvents = false
-	kbot.session.ShouldReconnectOnError = true
-	kbot.session.StateEnabled = true
+// Initialize the single global bot instance
+func initialize() {
+	dgs, err := discordgo.New("Bot " + getBotToken())
+	if err != nil {
+		log.Fatal("discordgo error: ", err)
+	}
+	if dgs == nil {
+		log.Fatal("failed to create discordgo session")
+	}
+
+	gbot = &kardbot{
+		session: dgs,
+		router: dgc.Create(&dgc.Router{
+			// TODO: make these configurable
+			Prefixes:         []string{"!"},
+			IgnorePrefixCase: true,
+			BotsAllowed:      false,
+			Commands:         []*dgc.Command{},
+			Middlewares:      []dgc.Middleware{},
+			PingHandler:      func(ctx *dgc.Ctx) { ctx.RespondText("Pong!") },
+		}),
+	}
+
+	configure()
+	addHandlers()
+
+	err = bot().session.Open()
+	if err != nil {
+		log.Fatal("failed to open Discord session: ", err)
+	}
 }
 
-func (kbot *kardbot) addHandlers() {
+func configure() {
+	bot().session.Identify.Intents = Intents
+	bot().session.SyncEvents = false
+	bot().session.ShouldReconnectOnError = true
+	bot().session.StateEnabled = true
+}
+
+func addHandlers() {
+	// Command handlers
+	bot().router.RegisterDefaultHelpCommand(bot().session, nil)
+	for _, cmd := range getCommands() {
+		log.Debug("Registering cmd:", cmd.Name)
+		bot().router.RegisterCmd(cmd)
+	}
+	bot().router.Initialize(bot().session)
 
 	// OnReady handlers
 	for _, h := range onReadyHandlers() {
-		kbot.session.AddHandler(h)
+		bot().session.AddHandler(h)
 	}
 
 	// OnMessageCreate handlers
 	for _, h := range onCreateHandlers() {
-		kbot.session.AddHandler(h)
+		bot().session.AddHandler(h)
 	}
 
 	// Add handlers for any other event type here
-}
-
-func (kbot *kardbot) registerCommands() {
-	kbot.router = dgc.Create(&dgc.Router{
-		// TODO: make these configurable
-		Prefixes:         []string{"!"},
-		IgnorePrefixCase: true,
-		BotsAllowed:      false,
-		Commands:         []*dgc.Command{},
-		Middlewares:      []dgc.Middleware{},
-		PingHandler:      func(ctx *dgc.Ctx) { ctx.RespondText("Pong!") },
-	})
-
-	kbot.router.RegisterDefaultHelpCommand(kbot.session, nil)
-
-	for _, cmd := range getCommands() {
-		log.Debug("Registering cmd:", cmd.Name)
-		kbot.router.RegisterCmd(cmd)
-	}
-
-	kbot.router.Initialize(kbot.session)
-
 }

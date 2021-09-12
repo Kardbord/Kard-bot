@@ -24,7 +24,7 @@ func init() {
 }
 
 func main() {
-	kbot := kardbot.NewKardbot()
-	log.RegisterExitHandler(kbot.Stop)
-	kbot.Run(true)
+	log.RegisterExitHandler(kardbot.Stop)
+	kardbot.Run()
+	kardbot.BlockAndStop()
 }
