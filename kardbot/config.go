@@ -12,7 +12,7 @@ import (
 
 // Returns the raw bytes contained in jsonConfigFile
 // so that other components can unmarshal it as desired.
-var rawJSONConfig func() []byte
+var RawJSONConfig func() []byte
 
 // The config file is expected to live at under
 // projectRoot/config
@@ -38,5 +38,5 @@ func init() {
 		log.Fatal(err)
 	}
 
-	rawJSONConfig = func() []byte { return rawJSON }
+	RawJSONConfig = func() []byte { return rawJSON }
 }

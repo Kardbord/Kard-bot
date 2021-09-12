@@ -105,7 +105,7 @@ func configure() {
 	bot().Session.ShouldReconnectOnError = true
 	bot().Session.StateEnabled = true
 
-	json.Unmarshal(rawJSONConfig(), bot())
+	json.Unmarshal(RawJSONConfig(), bot())
 
 	if bot().EnableDGLogging {
 		bot().Session.LogLevel = logrusToDiscordGo()[log.GetLevel()]

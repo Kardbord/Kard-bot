@@ -20,5 +20,6 @@
     "See you",
     "See ya"
   ],
-  "enable-dg-logging": false
+  "enable-dg-logging": false,
+  "default-log-level": "info"
 }
