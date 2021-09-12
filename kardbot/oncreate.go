@@ -38,7 +38,7 @@ func greeting(s *discordgo.Session, m *discordgo.MessageCreate) {
 	greetingGroup := buildRegexAltGroup(bot().Greetings)
 
 	matched, err := regexp.MatchString(
-		fmt.Sprintf("^(?i)%s %s[!.]*$", greetingGroup, buildBotNameRegexp(s.State.User.Username)),
+		fmt.Sprintf("^(?i)%s %s[!.\\s]*$", greetingGroup, buildBotNameRegexp(s.State.User.Username, s.State.User.ID)),
 		m.Content,
 	)
 	if err != nil {
@@ -66,7 +66,7 @@ func farewell(s *discordgo.Session, m *discordgo.MessageCreate) {
 	farewellGroup := buildRegexAltGroup(bot().Farewells)
 
 	matched, err := regexp.MatchString(
-		fmt.Sprintf("^(?i)%s %s[!.]*$", farewellGroup, buildBotNameRegexp(s.State.User.Username)),
+		fmt.Sprintf("^(?i)%s %s[!.\\s]*$", farewellGroup, buildBotNameRegexp(s.State.User.Username, s.State.User.ID)),
 		m.Content,
 	)
 	if err != nil {

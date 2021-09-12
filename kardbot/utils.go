@@ -11,16 +11,19 @@ import (
 // Some characters are optional when matching the bot name.
 // This function returns a regexp string to appropriately
 // match the bot name, including any optional characters.
-func buildBotNameRegexp(botName string) string {
+func buildBotNameRegexp(botName, botID string) string {
 	// TODO: make these configurable
 	optionalRunes := []rune{
 		'-',
 		'_',
 	}
+
 	botNameExp := botName
 	for _, r := range optionalRunes {
 		botNameExp = strings.ReplaceAll(botNameExp, string(r), fmt.Sprintf("%s?", string(r)))
 	}
+	// Checks for possible '@' mentions
+	botNameExp = "(" + botNameExp + "|<@!" + botID + ">" + "|<@" + botID + ">" + ")"
 	log.Trace("Built bot name regex:", botNameExp)
 	return botNameExp
 }
