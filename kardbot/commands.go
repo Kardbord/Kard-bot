@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/lus/dgc"
+	log "github.com/sirupsen/logrus"
 )
 
 func getCommands() []*dgc.Command {
@@ -26,7 +27,7 @@ func getCommands() []*dgc.Command {
 		{
 			Name:        "loglevel",
 			Aliases:     []string{},
-			Description: fmt.Sprintf("Update the log level of the bot.\nOnly works for whitelisted users.\nValid log levels: %v", getLogLevelKeys()),
+			Description: fmt.Sprintf("Update the log level of the bot.\nOnly works for whitelisted users.\nValid log levels: %v", log.AllLevels),
 			Usage:       "loglevel LEVEL",
 			Example:     "loglevel trace",
 			Flags:       []string{},

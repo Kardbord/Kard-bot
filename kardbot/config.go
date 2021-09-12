@@ -3,10 +3,11 @@ package kardbot
 import (
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
 	"runtime"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // Returns the raw bytes contained in jsonConfigFile
