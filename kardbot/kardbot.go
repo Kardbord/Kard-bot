@@ -2,6 +2,7 @@ package kardbot
 
 import (
 	"encoding/json"
+	"fmt"
 	"math/rand"
 	"os"
 	"os/signal"
@@ -84,7 +85,9 @@ func initialize() {
 			BotsAllowed:      false,
 			Commands:         []*dgc.Command{},
 			Middlewares:      []dgc.Middleware{},
-			PingHandler:      func(ctx *dgc.Ctx) { ctx.RespondText("Pong!") },
+			PingHandler: func(ctx *dgc.Ctx) {
+				ctx.RespondText(fmt.Sprintf("%s %s!", bot().randomGreeting(), ctx.Event.Author.Username))
+			},
 		}),
 	}
 
