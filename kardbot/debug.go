@@ -45,6 +45,7 @@ func updateLogLevel(ctx *dgc.Ctx) {
 		ctx.RespondText(info)
 		log.SetLevel(lvl)
 		if bot().EnableDGLogging {
+			// TODO: make this thread safe somehow (logrus is already thread safe)
 			ctx.Session.LogLevel = logrusToDiscordGo()[lvl]
 		}
 	} else {
