@@ -1,4 +1,11 @@
 {
+  "router": {
+    "prefixes": [
+      "!"
+    ],
+    "ignoreprefixcase": true,
+    "botsallowed": false
+  },
   "greetings": [
     "Hello",
     "Hi",

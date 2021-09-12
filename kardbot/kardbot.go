@@ -79,12 +79,8 @@ func initialize() {
 	gbot = &kardbot{
 		Session: dgs,
 		Router: dgc.Create(&dgc.Router{
-			// TODO: make these configurable
-			Prefixes:         []string{"!"},
-			IgnorePrefixCase: true,
-			BotsAllowed:      false,
-			Commands:         []*dgc.Command{},
-			Middlewares:      []dgc.Middleware{},
+			Commands:    []*dgc.Command{},
+			Middlewares: []dgc.Middleware{},
 			PingHandler: func(ctx *dgc.Ctx) {
 				ctx.RespondText(fmt.Sprintf("%s %s!", bot().randomGreeting(), ctx.Event.Author.Username))
 			},
