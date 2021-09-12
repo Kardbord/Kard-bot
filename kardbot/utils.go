@@ -12,11 +12,7 @@ import (
 // This function returns a regexp string to appropriately
 // match the bot name, including any optional characters.
 func buildBotNameRegexp(botName, botID string) string {
-	// TODO: make these configurable
-	optionalRunes := []rune{
-		'-',
-		'_',
-	}
+	optionalRunes := []rune{'-'}
 
 	botNameExp := botName
 	for _, r := range optionalRunes {
