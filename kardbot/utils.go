@@ -4,14 +4,9 @@ import (
 	"fmt"
 	"math/rand"
 	"strings"
-	"time"
 
 	log "github.com/sirupsen/logrus"
 )
-
-func init() {
-	rand.Seed(time.Now().UnixNano())
-}
 
 // Some characters are optional when matching the bot name.
 // This function returns a regexp string to appropriately

@@ -2,34 +2,11 @@ package kardbot
 
 import (
 	"fmt"
-	"math/rand"
 	"regexp"
 
 	log "github.com/sirupsen/logrus"
 
 	"github.com/bwmarrin/discordgo"
-)
-
-var (
-	// Possible greetings the bot will respond to
-	// TODO: make these configurable
-	greetings = []string{
-		"Hello",
-		"Hi",
-		"Greetings",
-		"Salutations",
-	}
-
-	// Possible farewells the bot will respond to
-	// TODO: make these configurable
-	farewells = []string{
-		"Goodbye",
-		"Farewell",
-		"So long",
-		"Bye",
-		"See you",
-		"See ya",
-	}
 )
 
 type onCreateHandler = func(*discordgo.Session, *discordgo.MessageCreate)
@@ -58,7 +35,7 @@ func greeting(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
-	greetingGroup := buildRegexAltGroup(greetings)
+	greetingGroup := buildRegexAltGroup(bot().Greetings)
 
 	matched, err := regexp.MatchString(
 		fmt.Sprintf("^(?i)%s %s[!.]*$", greetingGroup, buildBotNameRegexp(s.State.User.Username)),
@@ -71,7 +48,7 @@ func greeting(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if matched {
 		s.ChannelMessageSend(
 			m.ChannelID,
-			fmt.Sprintf("%s %s!", greetings[rand.Intn(len(greetings))], m.Author.Username),
+			fmt.Sprintf("%s %s!", bot().randomGreeting(), m.Author.Username),
 		)
 	}
 }
@@ -86,7 +63,7 @@ func farewell(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
-	farewellGroup := buildRegexAltGroup(farewells)
+	farewellGroup := buildRegexAltGroup(bot().Farewells)
 
 	matched, err := regexp.MatchString(
 		fmt.Sprintf("^(?i)%s %s[!.]*$", farewellGroup, buildBotNameRegexp(s.State.User.Username)),
@@ -99,7 +76,7 @@ func farewell(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if matched {
 		s.ChannelMessageSend(
 			m.ChannelID,
-			fmt.Sprintf("%s %s!", farewells[rand.Intn(len(farewells))], m.Author.Username),
+			fmt.Sprintf("%s %s!", bot().randomFarewell(), m.Author.Username),
 		)
 	}
 }

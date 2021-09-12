@@ -1,3 +1,16 @@
 {
-
+  "greetings": [
+    "Hello",
+    "Hi",
+    "Greetings",
+    "Salutations"
+  ],
+  "farewells": [
+    "Goodbye",
+    "Farewell",
+    "So long",
+    "Bye",
+    "See you",
+    "See ya"
+  ]
 }
