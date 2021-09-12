@@ -19,8 +19,7 @@ func init() {
 			return "", fmt.Sprintf("%s:%d", filename, f.Line)
 		},
 	})
-	// TODO: make this configurable
-	log.SetLevel(log.DebugLevel)
+	log.SetLevel(log.InfoLevel)
 }
 
 func main() {
