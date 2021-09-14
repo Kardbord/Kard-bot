@@ -39,6 +39,7 @@ func rollDice(ctx *dgc.Ctx) {
 	}
 
 	output := fmt.Sprintf("Rolling %d D%d's...\n", count, sides)
+	printIndividualRolls := count*len(strconv.Itoa(int(sides)))+len(output) < int(MaxDiscordMsgLen)
 	total := uint(0)
 	for i := 0; i < count; i++ {
 		roll, err := randFromRange(DieStartVal, sides)
@@ -47,13 +48,18 @@ func rollDice(ctx *dgc.Ctx) {
 			return
 		}
 		total += roll
-		output += fmt.Sprintf("%d\n", roll)
+		if printIndividualRolls {
+			output += fmt.Sprintf("%d\n", roll)
+		}
 	}
 	if count > 1 {
 		output += fmt.Sprintf("Total: %d", total)
 	}
 
-	// TODO: limit response text to 2000 characters (Discord imposed limit)
+	// Cheap sanity check in case the above logic did not catch a message that is too large
+	if len(output) > int(MaxDiscordMsgLen) {
+		output = fmt.Sprintf("Rolling %d D%d's...\nTotal: %d", count, sides, total)
+	}
 	ctx.RespondText(output)
 }
 

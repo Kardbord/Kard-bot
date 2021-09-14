@@ -8,6 +8,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+const MaxDiscordMsgLen uint = 2000
+
 // Some characters are optional when matching the bot name.
 // This function returns a regexp string to appropriately
 // match the bot name, including any optional characters.
