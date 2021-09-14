@@ -1,4 +1,7 @@
 package kardbot
+// TODO: move this to its own package so that
+//       RawJSONConfig is available to kardbot
+//       package.
 
 import (
 	"fmt"
