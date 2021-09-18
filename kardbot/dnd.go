@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	MinDieSides = 2 // What the hell would a 1-sided die be? A black hole?
-	DieStartVal = 1 // Dice numbering starts at this value
+	MinDieSides uint = 2 // What the hell would a 1-sided die be? A black hole?
+	DieStartVal uint = 1 // Dice numbering starts at this value
 )
 
 func rollDice(ctx *dgc.Ctx) {
@@ -41,16 +41,26 @@ func rollDice(ctx *dgc.Ctx) {
 	output := fmt.Sprintf("Rolling %d D%d's...\n", count, sides)
 	printIndividualRolls := count*len(strconv.Itoa(int(sides)))+len(output) < int(MaxDiscordMsgLen)
 	total := uint(0)
-	for i := 0; i < count; i++ {
-		roll, err := randFromRange(DieStartVal, sides)
+	if printIndividualRolls {
+		for i := 0; i < count; i++ {
+			roll, err := randFromRange(DieStartVal, sides)
+			if err != nil {
+				log.Error(err)
+				return
+			}
+			total += roll
+			if printIndividualRolls {
+				output += fmt.Sprintf("%d\n", roll)
+			}
+		}
+	} else {
+		// No need to track individual dice rolls if we are only printing a total
+		roll, err := randFromRange(DieStartVal*uint(count), sides*uint(count))
 		if err != nil {
 			log.Error(err)
 			return
 		}
-		total += roll
-		if printIndividualRolls {
-			output += fmt.Sprintf("%d\n", roll)
-		}
+		total = roll
 	}
 	if count > 1 {
 		output += fmt.Sprintf("Total: %d", total)
@@ -85,7 +95,7 @@ func parseDieSides(rawDieSides string) (uint, error) {
 	if err != nil {
 		return 0, fmt.Errorf("could not convert %s to int", dieSidesParsed)
 	}
-	if sides < MinDieSides {
+	if sides < int(MinDieSides) {
 		return 0, fmt.Errorf("%d is not a valid number of sides", sides)
 	}
 
