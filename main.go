@@ -9,6 +9,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/TannerKvarfordt/Kard-bot/kardbot"
+	"github.com/TannerKvarfordt/Kard-bot/kardbot/config"
 )
 
 func init() {
@@ -25,7 +26,7 @@ func init() {
 		DefaultLogLvl string `json:"default-log-level"`
 	}{"info"}
 
-	err := json.Unmarshal(kardbot.RawJSONConfig(), &cfg)
+	err := json.Unmarshal(config.RawJSONConfig(), &cfg)
 	if err != nil {
 		log.Fatal(err)
 	}

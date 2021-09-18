@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/TannerKvarfordt/Kard-bot/kardbot/config"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/bwmarrin/discordgo"
@@ -105,7 +106,7 @@ func configure() {
 	bot().Session.ShouldReconnectOnError = true
 	bot().Session.StateEnabled = true
 
-	json.Unmarshal(RawJSONConfig(), bot())
+	json.Unmarshal(config.RawJSONConfig(), bot())
 
 	if bot().EnableDGLogging {
 		bot().Session.LogLevel = logrusToDiscordGo()[log.GetLevel()]

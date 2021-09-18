@@ -1,7 +1,9 @@
-package kardbot
-// TODO: move this to its own package so that
-//       RawJSONConfig is available to kardbot
-//       package.
+package config
+
+// TODO: Make this a go library with its own repo? This has potential to be useful for
+//       other projects. It would be nice to aggregate all provided config, possibly
+//       multiple files, of a given format (e.g., JSON) as a single byte slice.
+//       Could also provide helper methods to populate structs with config data.
 
 import (
 	"fmt"
@@ -28,7 +30,7 @@ func init() {
 	}
 	basepath := filepath.Dir(b)
 
-	filepath := fmt.Sprintf("%s/../config/%s", basepath, configFilename)
+	filepath := fmt.Sprintf("%s/../../config/%s", basepath, configFilename)
 
 	fd, err := os.Open(filepath)
 	if err != nil {
