@@ -68,6 +68,7 @@ func rollDice(ctx *dgc.Ctx) {
 
 	// Cheap sanity check in case the above logic did not catch a message that is too large
 	if len(output) > int(MaxDiscordMsgLen) {
+		log.Warnf("There is a bug in msg length validation when rolling %d D%d's", count, sides)
 		output = fmt.Sprintf("Rolling %d D%d's...\nTotal: %d", count, sides, total)
 	}
 	ctx.RespondText(output)
