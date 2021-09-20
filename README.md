@@ -18,7 +18,7 @@ This bot is not currently hosted anywhere. If you want to use it, you can always
 
 # Hosting Installation
 Hosting this bot requires a Discord Bot Token. You can generate one by visiting the [Discord Developer Portal](https://discord.com/developers/),
-and then creating a new application with an accompanying bot. Be sure to give the bot its needed permissions in the OAuth2 section, and then invite it
+and then creating a new application with an accompanying bot. Give the bot its needed permissions in the OAuth2 section **(Be sure to tick the "applications.commands" box!)**, and then invite it
 to your server(s) using the link that is generated for you.
 
 For now, you will have to build the Kard-bot binary yourself. Free-time permitting, I may provide a released version or docker image. 
@@ -50,7 +50,7 @@ Useful resources for writing a Discord bot.
 ### Discord API Wrappers
 - [discordpy](https://github.com/Rapptz/discord.py)
 - [discordgo](https://github.com/bwmarrin/discordgo)
-  - [dgc](https://github.com/lus/dgc)
+  - ~~[dgc](https://github.com/lus/dgc)~~ will be deprecated April 2022 due to Discord API updates :(
 - [others](https://discordapi.com/unofficial/comparison.html)
 
 ### Documentation

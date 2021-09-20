@@ -6,8 +6,6 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	log "github.com/sirupsen/logrus"
-
-	"github.com/lus/dgc"
 )
 
 // Map logrus log levels to discordgo log levels
@@ -23,30 +21,41 @@ func logrusToDiscordGo() map[log.Level]int {
 	}
 }
 
-func updateLogLevel(ctx *dgc.Ctx) {
-	if isOwner, err := authorIsOwner(ctx); err != nil {
-		log.Error(err)
-		return
-	} else if !isOwner {
-		log.Warnf("User %s (%s) does not have privilege to update log level", ctx.Event.Author.Username, ctx.Event.Author.ID)
-		return
-	}
-
-	args, err := getArgsExpectCount(ctx, 1, true)
+func updateLogLevel(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	// TODO: move this check into a helper function
+	author, authorID, err := getInteractionCreateAuthorNameAndID(i)
 	if err != nil {
 		log.Error(err)
 		return
 	}
-	levelStr := strings.ToLower(args.Get(0).Raw())
+	if authorID == s.State.User.ID {
+		log.Trace("Ignoring message from self")
+		return
+	}
+
+	if isOwner, err := authorIsOwner(i); err != nil {
+		log.Error(err)
+		return
+	} else if !isOwner {
+		log.Warnf("User %s (%s) does not have privilege to update log level", author, authorID)
+		return
+	}
+
+	levelStr := strings.ToLower(i.ApplicationCommandData().Options[0].StringValue())
 
 	if lvl, err := log.ParseLevel(levelStr); err == nil {
 		info := fmt.Sprintf(`Set logging level to "%s"`, levelStr)
 		log.Info(info)
-		ctx.RespondText(info)
+		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: info,
+			},
+		})
 		log.SetLevel(lvl)
 		if bot().EnableDGLogging {
 			// TODO: make this thread safe somehow (logrus is already thread safe)
-			ctx.Session.LogLevel = logrusToDiscordGo()[lvl]
+			s.LogLevel = logrusToDiscordGo()[lvl]
 		}
 	} else {
 		log.Error(err)

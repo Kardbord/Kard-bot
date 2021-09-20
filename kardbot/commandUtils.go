@@ -1,57 +1,76 @@
 package kardbot
 
 import (
+	"errors"
 	"fmt"
 
-	"github.com/lus/dgc"
+	"github.com/bwmarrin/discordgo"
 )
 
-// Retrieve args from context and validate they are not nil.
-func getArgs(ctx *dgc.Ctx) (*dgc.Arguments, error) {
-	if ctx == nil {
-		return nil, fmt.Errorf("nil context provided")
-	}
-	if ctx.Arguments == nil {
-		return nil, fmt.Errorf("context arguments were nil")
-	}
-	return ctx.Arguments, nil
-}
-
-// Retrieve args from context and validate that they are not nil.
-// Also validate that the expected number of arguments are present.
-// If the "exact" argument is true, the number of present arguments
-// must exactly match the number found. Otherwise, there must be
-// at least as many arguments as expected.
-func getArgsExpectCount(ctx *dgc.Ctx, expected int, exact bool) (*dgc.Arguments, error) {
-	args, err := getArgs(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	err = fmt.Errorf("unexpected arg count, expected: %d, actual: %d", expected, ctx.Arguments.Amount())
-	if exact && ctx.Arguments.Amount() != expected {
-		return nil, err
-	} else if ctx.Arguments.Amount() < expected {
-		return nil, err
-	}
-	return args, nil
-}
-
-func authorIsOwner(ctx *dgc.Ctx) (bool, error) {
+// TODO: also add authorIsSelf method for slash commands
+func authorIsOwner(i *discordgo.InteractionCreate) (bool, error) {
 	if getOwnerID() == "" {
-		return false, fmt.Errorf("owner ID is not set")
+		return false, errors.New("owner ID is not set")
 	}
-	if ctx == nil {
-		return false, fmt.Errorf("context is nil")
+	if i == nil {
+		return false, errors.New("context is nil")
 	}
-	if ctx.Event == nil {
-		return false, fmt.Errorf("event is nil")
+
+	if i.Member != nil {
+		if i.Member.User == nil {
+			return false, errors.New("member.user is nil")
+		}
+		return i.Member.User.ID == getOwnerID(), nil
+	} else if i.User != nil {
+		return i.User.ID == getOwnerID(), nil
+	} else {
+		return false, errors.New("member and user are nil")
 	}
-	if ctx.Event.Author == nil {
-		return false, fmt.Errorf("author is nil")
+}
+
+func getInteractionCreateAuthorName(i *discordgo.InteractionCreate) (string, error) {
+	if i == nil {
+		return "", errors.New("context is nil")
 	}
-	if ctx.Event.Author.ID == getOwnerID() {
-		return true, nil
+
+	if i.Member != nil {
+		if i.Member.User == nil {
+			return "", errors.New("member.user is nil")
+		}
+		return i.Member.User.Username, nil
+	} else if i.User != nil {
+		return i.User.Username, nil
+	} else {
+		return "", errors.New("member and user are nil")
 	}
-	return false, nil
+}
+
+func getInteractionCreateAuthorID(i *discordgo.InteractionCreate) (string, error) {
+	if i == nil {
+		return "", errors.New("context is nil")
+	}
+
+	if i.Member != nil {
+		if i.Member.User == nil {
+			return "", errors.New("member.user is nil")
+		}
+		return i.Member.User.ID, nil
+	} else if i.User != nil {
+		return i.User.ID, nil
+	} else {
+		return "", errors.New("member and user are nil")
+	}
+}
+
+func getInteractionCreateAuthorNameAndID(i *discordgo.InteractionCreate) (string, string, error) {
+	id, err1 := getInteractionCreateAuthorID(i)
+	uname, err2 := getInteractionCreateAuthorName(i)
+	if err1 != nil && err2 != nil {
+		return uname, id, fmt.Errorf("error 1:%v\n\terror 2:%v", err1, err2)
+	} else if err1 != nil {
+		return uname, id, err1
+	} else if err2 != nil {
+		return uname, id, err2
+	}
+	return uname, id, nil
 }

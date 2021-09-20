@@ -5,44 +5,45 @@ import (
 	"regexp"
 	"strconv"
 
+	"github.com/bwmarrin/discordgo"
 	log "github.com/sirupsen/logrus"
-
-	"github.com/lus/dgc"
 )
 
 const (
-	MinDieSides uint = 2 // What the hell would a 1-sided die be? A black hole?
-	DieStartVal uint = 1 // Dice numbering starts at this value
+	MinDieSides uint64 = 2 // What the hell would a 1-sided die be? A black hole?
+	DieStartVal uint64 = 1 // Dice numbering starts at this value
 )
 
-func rollDice(ctx *dgc.Ctx) {
-	args, err := getArgsExpectCount(ctx, 2, true)
-	if err != nil {
+func rollDice(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	// TODO: move this check into a helper function
+	if authorID, err := getInteractionCreateAuthorID(i); err == nil {
+		if authorID == s.State.User.ID {
+			log.Trace("Ignoring message from self")
+			return
+		}
+	} else {
 		log.Error(err)
 		return
 	}
 
-	sides, err := parseDieSides(args.Get(1).Raw())
-	if err != nil {
-		log.Error(err)
-		return
-	}
-
-	count, err := args.Get(0).AsInt()
-	if err != nil {
-		log.Error(err)
-		return
-	}
+	// TODO: will this panic if a non-int arg is provided?
+	count := i.ApplicationCommandData().Options[0].UintValue()
 	if count < 1 {
 		log.Error("cannot roll a die <1 times")
 		return
 	}
 
+	sides, err := parseDieSides(i.ApplicationCommandData().Options[1].StringValue())
+	if err != nil {
+		log.Error(err)
+		return
+	}
+
 	output := fmt.Sprintf("Rolling %d D%d's...\n", count, sides)
-	printIndividualRolls := count*len(strconv.Itoa(int(sides)))+len(output) < int(MaxDiscordMsgLen)
-	total := uint(0)
+	printIndividualRolls := count*uint64(len(strconv.FormatUint(sides, 10)))+uint64(len(output)) < MaxDiscordMsgLen
+	total := uint64(0)
 	if printIndividualRolls {
-		for i := 0; i < count; i++ {
+		for i := uint64(0); i < count; i++ {
 			roll, err := randFromRange(DieStartVal, sides)
 			if err != nil {
 				log.Error(err)
@@ -55,7 +56,7 @@ func rollDice(ctx *dgc.Ctx) {
 		}
 	} else {
 		// No need to track individual dice rolls if we are only printing a total
-		roll, err := randFromRange(DieStartVal*uint(count), sides*uint(count))
+		roll, err := randFromRange(DieStartVal*count, sides*count)
 		if err != nil {
 			log.Error(err)
 			return
@@ -68,15 +69,20 @@ func rollDice(ctx *dgc.Ctx) {
 
 	// Cheap sanity check in case the above logic did not catch a message that is too large
 	if len(output) > int(MaxDiscordMsgLen) {
-		log.Warnf("There is a bug in msg length validation when rolling %d D%d's", count, sides)
+		log.Warnf("There is a bug in msg length validation when rolling %d D%d's. Possible overflow?", count, sides)
 		output = fmt.Sprintf("Rolling %d D%d's...\nTotal: %d", count, sides, total)
 	}
-	ctx.RespondText(output)
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Content: output,
+		},
+	})
 }
 
 // Parse number of sides on dice from a string of the form
 // D{NUM} or just {NUM}
-func parseDieSides(rawDieSides string) (uint, error) {
+func parseDieSides(rawDieSides string) (uint64, error) {
 	// This regex disallows negative numbers
 	matched, err := regexp.MatchString("^(?i)d?[0-9]+$", rawDieSides)
 	if err != nil {
@@ -92,13 +98,13 @@ func parseDieSides(rawDieSides string) (uint, error) {
 		return 0, err
 	}
 	dieSidesParsed := reg.ReplaceAllString(rawDieSides, "")
-	sides, err := strconv.Atoi(dieSidesParsed)
+	sides, err := strconv.ParseUint(dieSidesParsed, 10, 64)
 	if err != nil {
 		return 0, fmt.Errorf("could not convert %s to int", dieSidesParsed)
 	}
-	if sides < int(MinDieSides) {
+	if sides < MinDieSides {
 		return 0, fmt.Errorf("%d is not a valid number of sides", sides)
 	}
 
-	return uint(sides), nil
+	return sides, nil
 }

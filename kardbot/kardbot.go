@@ -2,7 +2,6 @@ package kardbot
 
 import (
 	"encoding/json"
-	"fmt"
 	"math/rand"
 	"os"
 	"os/signal"
@@ -13,7 +12,6 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/lus/dgc"
 )
 
 func init() {
@@ -25,9 +23,14 @@ var gbot *kardbot = nil
 
 type kardbot struct {
 	Session   *discordgo.Session
-	Router    *dgc.Router
 	Greetings []string `json:"greetings"`
 	Farewells []string `json:"farewells"`
+
+	// Guilds with which to explicitly register slash commands.
+	// Global commands take up to an hour (read, up to 24 hours)
+	// to register. Specifying guilds allows slash commands to register
+	// instantly.
+	SlashGuilds []string `json:"slash-cmd-guilds"`
 
 	// TODO: add a subcommand to loglevel to set this
 	EnableDGLogging bool `json:"enable-dg-logging"`
@@ -81,23 +84,20 @@ func initialize() {
 
 	gbot = &kardbot{
 		Session: dgs,
-		Router: dgc.Create(&dgc.Router{
-			Commands:    []*dgc.Command{},
-			Middlewares: []dgc.Middleware{},
-			PingHandler: func(ctx *dgc.Ctx) {
-				ctx.RespondText(fmt.Sprintf("%s %s!", bot().randomGreeting(), ctx.Event.Author.Username))
-			},
-		}),
 	}
 
 	configure()
-	validateConfig()
-	addHandlers()
+	addOnReadyHandlers()
+	prepInteractionHandlers()
 
 	err = bot().Session.Open()
 	if err != nil {
 		log.Fatal(err)
 	}
+	validateInitialization()
+
+	addOnCreateHandlers()
+	addInteractionHandlers()
 }
 
 func configure() {
@@ -113,10 +113,16 @@ func configure() {
 	}
 }
 
-func validateConfig() {
+func validateInitialization() {
 	// Validate Session
 	if bot().Session == nil {
 		log.Fatal("Session is nil.")
+	}
+	if bot().Session.State == nil {
+		log.Fatal("State is nil")
+	}
+	if bot().Session.State.User == nil {
+		log.Fatal("User is nil")
 	}
 	if !bot().Session.ShouldReconnectOnError {
 		log.Warn("discordgo session will not reconnect on error.")
@@ -128,18 +134,17 @@ func validateConfig() {
 		log.Warn("No intents registered with the discordgo API, which may result in decreased functionality.")
 	}
 
-	// Validate Router
-	if bot().Router == nil {
-		log.Fatal("Command router is nil.")
+	if bot().Session.State.User.ID == getOwnerID() {
+		// Owner has privilege to run any and all bot commands.
+		// Giving a bot the reins to its own destiny is how you get Skynet in the long term.
+		// In the short term, it might lead to weird edge cases I didn't think of, so I'm
+		// disallowing it for now. :)
+		log.Fatal("Bot is listed as its own owner")
 	}
-	if bot().Router.Commands == nil {
-		log.Fatal("Router.Commands is nil.")
-	}
-	if len(bot().Router.Prefixes) == 0 {
-		log.Warn("No command prefixes registered. Commands will not work.")
-	}
-	if bot().Router.BotsAllowed {
-		log.Warn("Command router allows other bots to issue commands.")
+
+	// Validate SlashGuilds
+	if len(bot().SlashGuilds) == 0 {
+		log.Warn("No guilds are explicitly configured to register slash commands with. Any new commands may take awhile to register.")
 	}
 
 	// Validate greetings
@@ -153,26 +158,41 @@ func validateConfig() {
 	}
 }
 
-func addHandlers() {
-	// Command handlers
-	bot().Router.RegisterDefaultHelpCommand(bot().Session, nil)
-	for _, cmd := range getCommands() {
-		log.Debug("Registering cmd:", cmd.Name)
-		bot().Router.RegisterCmd(cmd)
-	}
-	bot().Router.Initialize(bot().Session)
+func prepInteractionHandlers() {
+	bot().Session.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+		if h, ok := getCommandImpls()[i.ApplicationCommandData().Name]; ok {
+			h(s, i)
+		}
+	})
+}
 
-	// OnReady handlers
+func addInteractionHandlers() {
+	for _, cmd := range getCommands() {
+		// Register commands with any guilds explicitly listed
+		for _, guildID := range bot().SlashGuilds {
+			if guildID == "" {
+				continue
+			}
+			// TODO: register commands globally unless a flag is set that indicates the command should only
+			//       be registered with explicitly configured guilds.
+			_, err := bot().Session.ApplicationCommandCreate(bot().Session.State.User.ID, guildID, cmd)
+			if err != nil {
+				log.Fatalf("Cannot create '%v' command: %v", cmd.Name, err)
+			}
+		}
+	}
+}
+
+func addOnReadyHandlers() {
 	for _, h := range onReadyHandlers() {
 		bot().Session.AddHandler(h)
 	}
+}
 
-	// OnMessageCreate handlers
+func addOnCreateHandlers() {
 	for _, h := range onCreateHandlers() {
 		bot().Session.AddHandler(h)
 	}
-
-	// Add handlers for any other event type here
 }
 
 func (kbot *kardbot) greetingCount() int {

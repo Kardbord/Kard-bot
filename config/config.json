@@ -1,11 +1,4 @@
 {
-  "router": {
-    "prefixes": [
-      "!"
-    ],
-    "ignoreprefixcase": true,
-    "botsallowed": false
-  },
   "greetings": [
     "Hello",
     "Hi",
@@ -21,5 +14,6 @@
     "See ya"
   ],
   "enable-dg-logging": false,
-  "default-log-level": "info"
+  "default-log-level": "info",
+  "slash-cmd-guilds": null
 }
