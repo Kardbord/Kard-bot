@@ -41,6 +41,19 @@ func getCommands() []*discordgo.ApplicationCommand {
 				},
 			},
 		},
+		{
+			Name:        "pasta",
+			Description: "Serves you a delicious pasta!",
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Type:        discordgo.ApplicationCommandOptionString,
+					Name:        "selection",
+					Description: "Your choice of delicious pasta!",
+					Required:    true,
+					Choices:     pastaOptions(),
+				},
+			},
+		},
 	}
 }
 
@@ -48,5 +61,6 @@ func getCommandImpls() map[string]onInteractionHandler {
 	return map[string]onInteractionHandler{
 		"roll":     rollDice,
 		"loglevel": updateLogLevel,
+		"pasta":    servePasta,
 	}
 }

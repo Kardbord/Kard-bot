@@ -1,4 +1,10 @@
 {
+  "pastas": [
+    {
+      "name": "bee-movie",
+      "file": "pasta/beemovie.txt"
+    }
+  ],
   "greetings": [
     "Hello",
     "Hi",
