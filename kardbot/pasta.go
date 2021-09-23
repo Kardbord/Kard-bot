@@ -38,7 +38,7 @@ type pasta struct {
 	File string `json:"file"`
 }
 
-func pastaOptions() []*discordgo.ApplicationCommandOptionChoice {
+func pastaChoices() []*discordgo.ApplicationCommandOptionChoice {
 	options := make([]*discordgo.ApplicationCommandOptionChoice, len(pastaMenu()))
 
 	i := 0

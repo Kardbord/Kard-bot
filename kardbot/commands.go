@@ -1,11 +1,6 @@
 package kardbot
 
-import (
-	"fmt"
-
-	"github.com/bwmarrin/discordgo"
-	log "github.com/sirupsen/logrus"
-)
+import "github.com/bwmarrin/discordgo"
 
 type onInteractionHandler func(*discordgo.Session, *discordgo.InteractionCreate)
 
@@ -36,8 +31,9 @@ func getCommands() []*discordgo.ApplicationCommand {
 				{
 					Type:        discordgo.ApplicationCommandOptionString,
 					Name:        "level",
-					Description: fmt.Sprintf("One of the following values: %v", log.AllLevels),
+					Description: "Level at which to log.",
 					Required:    true,
+					Choices:     logLevelChoices(),
 				},
 			},
 		},
@@ -50,7 +46,7 @@ func getCommands() []*discordgo.ApplicationCommand {
 					Name:        "selection",
 					Description: "Your choice of delicious pasta!",
 					Required:    true,
-					Choices:     pastaOptions(),
+					Choices:     pastaChoices(),
 				},
 			},
 		},

@@ -61,3 +61,17 @@ func updateLogLevel(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		log.Error(err)
 	}
 }
+
+func logLevelChoices() []*discordgo.ApplicationCommandOptionChoice {
+	choices := make([]*discordgo.ApplicationCommandOptionChoice, len(log.AllLevels))
+
+	i := 0
+	for _, lvl := range log.AllLevels {
+		choices[i] = &discordgo.ApplicationCommandOptionChoice{
+			Name:  lvl.String(),
+			Value: lvl.String(),
+		}
+		i++
+	}
+	return choices
+}
