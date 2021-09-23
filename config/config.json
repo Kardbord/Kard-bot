@@ -3,6 +3,22 @@
     {
       "name": "bee-movie",
       "file": "pasta/beemovie.txt"
+    },
+    {
+      "name": "amogus",
+      "file": "pasta/amogus.txt"
+    },
+    {
+      "name": "fitnessgram",
+      "file": "pasta/fitnessgram.txt"
+    },
+    {
+      "name": "rekt",
+      "file": "pasta/rekt.txt"
+    },
+    {
+      "name": "table-flip",
+      "file": "pasta/tableflip.txt"
     }
   ],
   "greetings": [
