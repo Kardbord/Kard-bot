@@ -64,19 +64,19 @@ func (p *pasta) makePasta() (string, error) {
 	}
 	defer func() { _ = fd.Close() }()
 
-	buf := make([]byte, MaxDiscordMsgLen-3)
+	const bufSize = MaxDiscordMsgLen - 3
+	buf := make([]byte, bufSize)
 
 	n, err := fd.Read(buf)
-	if err == io.EOF {
-		// We read the entire copy-pasta into the buffer
+	if err == io.EOF || err == nil {
+		if n == int(bufSize) {
+			// TODO: support multi-page pastas. Toggle pages with a button.
+			return string(buf[:n]) + "...", nil
+		}
 		return string(buf[:n]), nil
-	} else if err != nil {
+	} else {
 		// Something went wrong while reading the file
 		return "", err
-	} else {
-		// We did not read the entire copy-pasta into the buffer, add ellipsis
-		// TODO: Allow multi-page pastas for pastas that are over the discord message size limit; toggle pages via a button
-		return string(buf[:n]) + "...", nil
 	}
 }
 
