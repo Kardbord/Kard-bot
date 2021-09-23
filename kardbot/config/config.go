@@ -9,8 +9,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"path/filepath"
-	"runtime"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -24,13 +22,7 @@ var RawJSONConfig func() []byte
 const configFilename = "config.json"
 
 func init() {
-	_, b, _, ok := runtime.Caller(0)
-	if !ok {
-		log.Fatal("Could not retrieve project root")
-	}
-	basepath := filepath.Dir(b)
-
-	filepath := fmt.Sprintf("%s/../../config/%s", basepath, configFilename)
+	filepath := fmt.Sprintf("config/%s", configFilename)
 
 	fd, err := os.Open(filepath)
 	if err != nil {
