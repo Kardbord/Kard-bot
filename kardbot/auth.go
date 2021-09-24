@@ -48,7 +48,7 @@ func init() {
 	if !testbedFound {
 		log.Warnf("%s not found in environment", TestbedGuildEnv)
 	} else if testbed == "" {
-		log.Warnf("%s is the empty string. Commands will not be registered with a testbed guild.")
+		log.Warnf("%s is the empty string. Commands will not be registered with a testbed guild.", TestbedGuildEnv)
 	}
 	getTestBedGuild = func() string { return testbed }
 }
