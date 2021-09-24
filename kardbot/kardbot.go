@@ -110,6 +110,9 @@ func configure() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	if getTestBedGuild() != "" {
+		bot().SlashGuilds = append(bot().SlashGuilds, getTestBedGuild())
+	}
 
 	if bot().EnableDGLogging {
 		bot().Session.LogLevel = logrusToDiscordGo()[log.GetLevel()]
@@ -147,7 +150,7 @@ func validateInitialization() {
 
 	// Validate SlashGuilds
 	if len(bot().SlashGuilds) == 0 {
-		log.Warn("No guilds are explicitly configured to register slash commands with. Any new commands may take awhile to register.")
+		log.Warn("No guilds are configured to register slash commands with.")
 	}
 
 	// Validate greetings
@@ -174,6 +177,7 @@ func addInteractionHandlers() {
 		// Register commands with any guilds explicitly listed
 		for _, guildID := range bot().SlashGuilds {
 			if guildID == "" {
+				log.Warn("Empty string specified as slash guild implies global command. Kard-bot does not support this at this time.")
 				continue
 			}
 			// TODO: register commands globally unless a flag is set that indicates the command should only

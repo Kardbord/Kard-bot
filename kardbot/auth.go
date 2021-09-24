@@ -10,14 +10,16 @@ import (
 )
 
 const (
-	BotTokenEnv = "KARDBOT_TOKEN"
-	BotOwnerEnv = "KARDBOT_OWNER_ID"
-	Intents     = discordgo.IntentsAllWithoutPrivileged
+	BotTokenEnv     = "KARDBOT_TOKEN"
+	BotOwnerEnv     = "KARDBOT_OWNER_ID"
+	TestbedGuildEnv = "KARDBOT_TESTBED_GUILD"
+	Intents         = discordgo.IntentsAllWithoutPrivileged
 )
 
 var (
-	getBotToken func() string
-	getOwnerID  func() string
+	getBotToken     = func() string { return "" }
+	getOwnerID      = func() string { return "" }
+	getTestBedGuild = func() string { return "" }
 )
 
 // Retrieves the bot's auth token from the environment
@@ -41,4 +43,12 @@ func init() {
 		log.Warnf("%s is the empty string. No commands requiring this privilege can be executed.", BotOwnerEnv)
 	}
 	getOwnerID = func() string { return owner }
+
+	testbed, testbedFound := os.LookupEnv(TestbedGuildEnv)
+	if !testbedFound {
+		log.Warnf("%s not found in environment", TestbedGuildEnv)
+	} else if testbed == "" {
+		log.Warnf("%s is the empty string. Commands will not be registered with a testbed guild.")
+	}
+	getTestBedGuild = func() string { return testbed }
 }
