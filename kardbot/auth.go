@@ -19,7 +19,7 @@ const (
 var (
 	getBotToken     = func() string { return "" }
 	getOwnerID      = func() string { return "" }
-	getTestBedGuild = func() string { return "" }
+	getTestbedGuild = func() string { return "" }
 )
 
 // Retrieves the bot's auth token from the environment
@@ -50,5 +50,5 @@ func init() {
 	} else if testbed == "" {
 		log.Warnf("%s is the empty string. Commands will not be registered with a testbed guild.", TestbedGuildEnv)
 	}
-	getTestBedGuild = func() string { return testbed }
+	getTestbedGuild = func() string { return testbed }
 }

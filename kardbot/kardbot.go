@@ -110,7 +110,7 @@ func configure() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if getTestBedGuild() != "" {
+	if getTestbedGuild() != "" {
 		bot().SlashGuilds = append(bot().SlashGuilds, getTestBedGuild())
 	}
 

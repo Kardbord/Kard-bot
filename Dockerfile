@@ -12,5 +12,6 @@ COPY pasta/ ./pasta
 
 RUN go mod download
 RUN go build -o ./Kard-bot
+RUN go test -v ./...
 
 CMD [ "./Kard-bot" ]
