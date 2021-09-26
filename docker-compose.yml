@@ -1,0 +1,11 @@
+version: "3.9"
+services:
+  kardbot:
+    image: kard-bot:alpha
+    build: .
+    volumes:
+      - ./config:/app/config
+    environment:
+      - KARDBOT_TOKEN=${KARDBOT_TOKEN}
+      - KARDBOT_OWNER_ID=${KARDBOT_OWNER_ID}
+      - KARDBOT_TESTBED_GUILD=${KARDBOT_TESTBED_GUILD}
