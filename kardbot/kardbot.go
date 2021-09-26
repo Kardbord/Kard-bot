@@ -86,61 +86,61 @@ func initialize() {
 		Session: dgs,
 	}
 
-	configure()
-	addOnReadyHandlers()
-	prepInteractionHandlers()
+	bot().configure()
+	bot().addOnReadyHandlers()
+	bot().prepInteractionHandlers()
 
 	err = bot().Session.Open()
 	if err != nil {
 		log.Fatal(err)
 	}
-	validateInitialization()
+	bot().validateInitialization()
 
-	addOnCreateHandlers()
-	addInteractionHandlers(true)
+	bot().addOnCreateHandlers()
+	bot().addInteractionHandlers(true)
 }
 
-func configure() {
-	bot().Session.Identify.Intents = Intents
-	bot().Session.SyncEvents = false
-	bot().Session.ShouldReconnectOnError = true
-	bot().Session.StateEnabled = true
+func (kbot *kardbot) configure() {
+	kbot.Session.Identify.Intents = Intents
+	kbot.Session.SyncEvents = false
+	kbot.Session.ShouldReconnectOnError = true
+	kbot.Session.StateEnabled = true
 
-	err := json.Unmarshal(config.RawJSONConfig(), bot())
+	err := json.Unmarshal(config.RawJSONConfig(), kbot)
 	if err != nil {
 		log.Fatal(err)
 	}
 	if getTestbedGuild() != "" {
-		bot().SlashGuilds = append(bot().SlashGuilds, getTestbedGuild())
+		kbot.SlashGuilds = append(kbot.SlashGuilds, getTestbedGuild())
 	}
 
-	if bot().EnableDGLogging {
-		bot().Session.LogLevel = logrusToDiscordGo()[log.GetLevel()]
+	if kbot.EnableDGLogging {
+		kbot.Session.LogLevel = logrusToDiscordGo()[log.GetLevel()]
 	}
 }
 
-func validateInitialization() {
+func (kbot *kardbot) validateInitialization() {
 	// Validate Session
-	if bot().Session == nil {
+	if kbot.Session == nil {
 		log.Fatal("Session is nil.")
 	}
-	if bot().Session.State == nil {
+	if kbot.Session.State == nil {
 		log.Fatal("State is nil")
 	}
-	if bot().Session.State.User == nil {
+	if kbot.Session.State.User == nil {
 		log.Fatal("User is nil")
 	}
-	if !bot().Session.ShouldReconnectOnError {
+	if !kbot.Session.ShouldReconnectOnError {
 		log.Warn("discordgo session will not reconnect on error.")
 	}
-	if bot().Session.SyncEvents {
+	if kbot.Session.SyncEvents {
 		log.Warn("Session events are being executed synchronously, which may result in slower responses. Consider disabling this if command can safely be executed asynchronously.")
 	}
-	if bot().Session.Identify.Intents == discordgo.IntentsNone {
+	if kbot.Session.Identify.Intents == discordgo.IntentsNone {
 		log.Warn("No intents registered with the discordgo API, which may result in decreased functionality.")
 	}
 
-	if bot().Session.State.User.ID == getOwnerID() {
+	if kbot.Session.State.User.ID == getOwnerID() {
 		// Owner has privilege to run any and all bot commands.
 		// Giving a bot the reins to its own destiny is how you get Skynet in the long term.
 		// In the short term, it might lead to weird edge cases I didn't think of, so I'm
@@ -149,41 +149,41 @@ func validateInitialization() {
 	}
 
 	// Validate SlashGuilds
-	if len(bot().SlashGuilds) == 0 {
+	if len(kbot.SlashGuilds) == 0 {
 		log.Warn("No guilds are configured to register slash commands with.")
 	}
 
 	// Validate greetings
-	if bot().greetingCount() == 0 {
+	if kbot.greetingCount() == 0 {
 		log.Fatal("No greetings configured.")
 	}
 
 	// Validate farewells
-	if bot().farewellCount() == 0 {
+	if kbot.farewellCount() == 0 {
 		log.Fatal("No farewells configured.")
 	}
 }
 
-func prepInteractionHandlers() {
-	bot().Session.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+func (kbot *kardbot) prepInteractionHandlers() {
+	kbot.Session.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		if h, ok := getCommandImpls()[i.ApplicationCommandData().Name]; ok {
 			h(s, i)
 		}
 	})
 }
 
-func addInteractionHandlers(unregisterAllPrevCmds bool) {
+func (kbot *kardbot) addInteractionHandlers(unregisterAllPrevCmds bool) {
 	if unregisterAllPrevCmds {
-		bot().unregisterAllCommands()
+		kbot.unregisterAllCommands()
 	}
 
-	for _, guildID := range bot().SlashGuilds {
+	for _, guildID := range kbot.SlashGuilds {
 		if guildID == "" {
 			log.Warn("Empty string specified as slash guild implies global command. Kard-bot does not support this at this time.")
 			continue
 		}
 		for _, cmd := range getCommands() {
-			_, err := bot().Session.ApplicationCommandCreate(bot().Session.State.User.ID, guildID, cmd)
+			_, err := kbot.Session.ApplicationCommandCreate(kbot.Session.State.User.ID, guildID, cmd)
 			if err != nil {
 				log.Fatalf("Cannot create '%v' command: %v", cmd.Name, err)
 			}
@@ -191,15 +191,15 @@ func addInteractionHandlers(unregisterAllPrevCmds bool) {
 	}
 }
 
-func addOnReadyHandlers() {
+func (kbot *kardbot) addOnReadyHandlers() {
 	for _, h := range onReadyHandlers() {
-		bot().Session.AddHandler(h)
+		kbot.Session.AddHandler(h)
 	}
 }
 
-func addOnCreateHandlers() {
+func (kbot *kardbot) addOnCreateHandlers() {
 	for _, h := range onCreateHandlers() {
-		bot().Session.AddHandler(h)
+		kbot.Session.AddHandler(h)
 	}
 }
 
