@@ -97,7 +97,7 @@ func initialize() {
 	validateInitialization()
 
 	addOnCreateHandlers()
-	addInteractionHandlers()
+	addInteractionHandlers(true)
 }
 
 func configure() {
@@ -172,16 +172,17 @@ func prepInteractionHandlers() {
 	})
 }
 
-func addInteractionHandlers() {
-	for _, cmd := range getCommands() {
-		// Register commands with any guilds explicitly listed
-		for _, guildID := range bot().SlashGuilds {
-			if guildID == "" {
-				log.Warn("Empty string specified as slash guild implies global command. Kard-bot does not support this at this time.")
-				continue
-			}
-			// TODO: register commands globally unless a flag is set that indicates the command should only
-			//       be registered with explicitly configured guilds.
+func addInteractionHandlers(unregisterAllPrevCmds bool) {
+	if unregisterAllPrevCmds {
+		bot().unregisterAllCommands()
+	}
+
+	for _, guildID := range bot().SlashGuilds {
+		if guildID == "" {
+			log.Warn("Empty string specified as slash guild implies global command. Kard-bot does not support this at this time.")
+			continue
+		}
+		for _, cmd := range getCommands() {
 			_, err := bot().Session.ApplicationCommandCreate(bot().Session.State.User.ID, guildID, cmd)
 			if err != nil {
 				log.Fatalf("Cannot create '%v' command: %v", cmd.Name, err)
@@ -216,4 +217,26 @@ func (kbot *kardbot) randomGreeting() string {
 
 func (kbot *kardbot) randomFarewell() string {
 	return kbot.Farewells[rand.Intn(kbot.farewellCount())]
+}
+
+func (kbot *kardbot) unregisterAllCommands() {
+	// Unregister global commands
+	if cmds, err := kbot.Session.ApplicationCommands(kbot.Session.State.User.ID, ""); err == nil {
+		for _, cmd := range cmds {
+			_ = kbot.Session.ApplicationCommandDelete(bot().Session.State.User.ID, "", cmd.ID)
+		}
+	} else {
+		log.Warn(err)
+	}
+
+	// Unregister guild commands
+	for _, guildID := range kbot.SlashGuilds {
+		if cmds, err := kbot.Session.ApplicationCommands(kbot.Session.State.User.ID, guildID); err == nil {
+			for _, cmd := range cmds {
+				_ = kbot.Session.ApplicationCommandDelete(bot().Session.State.User.ID, guildID, cmd.ID)
+			}
+		} else {
+			log.Warn(err)
+		}
+	}
 }
