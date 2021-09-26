@@ -111,7 +111,7 @@ func configure() {
 		log.Fatal(err)
 	}
 	if getTestbedGuild() != "" {
-		bot().SlashGuilds = append(bot().SlashGuilds, getTestBedGuild())
+		bot().SlashGuilds = append(bot().SlashGuilds, getTestbedGuild())
 	}
 
 	if bot().EnableDGLogging {
