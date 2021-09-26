@@ -12,6 +12,7 @@ COPY pasta/ ./pasta
 
 RUN go mod download
 RUN go build -o ./Kard-bot
+ENV CGO_ENABLED=0
 RUN go test -v ./...
 
 CMD [ "./Kard-bot" ]
