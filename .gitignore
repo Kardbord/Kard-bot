@@ -1,3 +1,5 @@
 .vscode/
 .env
 Kard-bot
+*.tgz
+*.tar.gz
