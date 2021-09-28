@@ -26,7 +26,6 @@ func rollDice(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		return
 	}
 
-	// TODO: will this panic if a non-int arg is provided?
 	count := i.ApplicationCommandData().Options[0].UintValue()
 	if count < 1 {
 		log.Error("cannot roll a die <1 times")
