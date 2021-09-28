@@ -4,7 +4,8 @@ A Discord bot destined for greatness.
 # Features
 - [x] Respond to user greetings and goodbyes
 - [x] DnD dice roller
-- [ ] Copy-pastas when requested and/or when triggered
+- [x] Copy-pastas when requested and/or when triggered
+- [x] Reddit Roulette
 - [ ] [Uwu-ifier](https://lingojam.com/uwu-ify)
 - [ ] [Creepy asterisks](https://www.reddit.com/r/creepyasterisks/)
 - [ ] Mock certain questions or phrases

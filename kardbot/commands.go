@@ -50,13 +50,35 @@ func getCommands() []*discordgo.ApplicationCommand {
 				},
 			},
 		},
+		{
+			Name:        "reddit-roulette",
+			Description: "Retrieve a random reddit post",
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Name:        redditRouletteSubCmdAny,
+					Description: "Retrieve a random reddit post. May be NSFW.",
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+				},
+				{
+					Name:        redditRouletteSubCmdSFW,
+					Description: "Retrieve a random reddit post that is not marked as NSFW",
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+				},
+				{
+					Name:        redditRouletteSubCmdNSFW,
+					Description: "Retrieve a random reddit post that is marked as NSFW.",
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+				},
+			},
+		},
 	}
 }
 
 func getCommandImpls() map[string]onInteractionHandler {
 	return map[string]onInteractionHandler{
-		"roll":     rollDice,
-		"loglevel": updateLogLevel,
-		"pasta":    servePasta,
+		"roll":            rollDice,
+		"loglevel":        updateLogLevel,
+		"pasta":           servePasta,
+		"reddit-roulette": redditRoulette,
 	}
 }

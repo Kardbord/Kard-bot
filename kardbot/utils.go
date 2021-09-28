@@ -50,3 +50,7 @@ func randFromRange(min, max uint64) (uint64, error) {
 	}
 	return uint64(rand.Intn(int((max-min)+1))) + min, nil
 }
+
+func randomBoolean() bool {
+	return rand.Int31()&0x01 == 0
+}
