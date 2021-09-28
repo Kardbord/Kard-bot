@@ -1,5 +1,9 @@
+<div style="text-align:center">
+<img src="Robo_cat.png" alt="drawing" width="250"/>
+</div>
+
 # Kard-bot
-A Discord bot destined for greatness.
+A discord bot destined for greatness.
 
 # Features
 - [x] Respond to user greetings and goodbyes
