@@ -10,6 +10,7 @@ A discord bot destined for greatness.
 - [x] DnD dice roller
 - [x] Copy-pastas when requested and/or when triggered
 - [x] Reddit Roulette
+- [ ] Let users know when it is Wednesday
 - [ ] [Uwu-ifier](https://lingojam.com/uwu-ify)
 - [ ] [Creepy asterisks](https://www.reddit.com/r/creepyasterisks/)
 - [ ] Mock certain questions or phrases
