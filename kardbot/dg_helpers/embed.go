@@ -36,6 +36,31 @@ func (e *Embed) SetTitle(name string) *Embed {
 	return e
 }
 
+func (e *Embed) SetType(t discordgo.EmbedType) *Embed {
+	e.Type = t
+	return e
+}
+
+// SetVideo sets the video URL, and optionally video width and height
+func (e *Embed) SetVideo(url string, args ...int) *Embed {
+	if url == "" {
+		return e
+	}
+
+	e.Video = &discordgo.MessageEmbedVideo{
+		URL: url,
+	}
+
+	if len(args) > 0 {
+		e.Video.Width = args[0]
+	}
+	if len(args) > 1 {
+		e.Video.Height = args[1]
+	}
+
+	return e
+}
+
 //SetDescription [desc]
 func (e *Embed) SetDescription(description string) *Embed {
 	if len(description) > 2048 {

@@ -54,3 +54,12 @@ func randFromRange(min, max uint64) (uint64, error) {
 func randomBoolean() bool {
 	return rand.Int31()&0x01 == 0
 }
+
+func isHTTPS(url string) bool {
+	// Tried to get smart about this and use the http
+	// package to resolve the final, redirected URL, but
+	// doing so was causing us to miss our discord interaction
+	// response window. So for now this dumb check will have to
+	// suffice.
+	return strings.HasPrefix(url, "https://")
+}

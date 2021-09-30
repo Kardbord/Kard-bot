@@ -73,34 +73,32 @@ func redditRoulette(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		return
 	}
 
-	embed, _ := buildRedditPostEmbed(post)
-	if embed == nil {
-		log.Error("Embed is nil")
+	embed, err := buildRedditPostEmbed(post)
+	if err != nil {
+		log.Error(err)
 		return
 	}
-	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+	if embed == nil {
+		log.Error("embed is nil")
+		return
+	}
+
+	err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			Embeds: []*discordgo.MessageEmbed{embed},
 		},
 	})
+	if err != nil {
+		log.Error(err)
+	}
 }
 
 func buildRedditPostEmbed(post *reddit.Post) (*discordgo.MessageEmbed, error) {
 	if post == nil {
 		return nil, fmt.Errorf("post is nil")
 	}
-
-	var imageURL = ""
-	// TODO: make valid image file extensions configurable
-	if matched, err := regexp.MatchString(`^https://([^\s]+(\.(?i)(jpg|png|gif|bmp|jpeg))$)`, post.URL); err != nil {
-		log.Error(err)
-	} else if matched {
-		imageURL = post.URL
-	}
-
 	hexColor, _ := strconv.ParseInt(strings.Replace(colorful.FastHappyColor().Hex(), "#", "", -1), 16, 32)
-
 	var voteEmoji = ""
 	if post.Score > 0 {
 		voteEmoji = "👍"
@@ -110,16 +108,65 @@ func buildRedditPostEmbed(post *reddit.Post) (*discordgo.MessageEmbed, error) {
 
 	embed := dg_helpers.NewEmbed().
 		SetTitle(post.Title).
-		SetDescription(post.Body).
-		AddField("Author and Subreddit:", fmt.Sprintf("u/%s on %s", post.Author, post.SubredditNamePrefixed)).
-		AddField("Score:", fmt.Sprintf("%s %d (%d%% upvoted)", voteEmoji, post.Score, int(post.UpvoteRatio*100))).
-		AddField("Comments:", fmt.Sprintf("🗨️ %d", post.NumberOfComments)).
+		SetDescription(fmt.Sprintf("%s by u/%s", post.SubredditNamePrefixed, post.Author)).
+		SetFooter(fmt.Sprintf("%s %d (%d%% upvoted) 💬 %d", voteEmoji, post.Score, int(post.UpvoteRatio*100), post.NumberOfComments)).
 		SetColor(int(hexColor)).
-		SetURL(fmt.Sprintf("https://www.reddit.com%v", post.Permalink)).
-		SetImage(imageURL).
-		SetAuthor().Truncate().MessageEmbed
+		SetURL(fmt.Sprintf("https://www.reddit.com%s", post.Permalink)).
+		SetType(discordgo.EmbedTypeRich).
+		Truncate()
 
-	return embed, nil
+	if post.Body != "" {
+		embed.AddField("-", post.Body)
+	}
+
+	embedRedditMedia(post, embed)
+	return embed.MessageEmbed, nil
+}
+
+// Compile these regexps at init time so we don't have to
+// do it every time.
+var (
+	isImageRegex = func() *regexp.Regexp { return nil }
+	isGifvRegex  = func() *regexp.Regexp { return nil }
+	isVideoRegex = func() *regexp.Regexp { return nil }
+)
+
+func init() {
+	imgRegex := regexp.MustCompile(`^([^\s]+(\.(?i)(jpg|jpeg|png|gif))$)`)
+	isImageRegex = func() *regexp.Regexp { return imgRegex }
+
+	gifvRegex := regexp.MustCompile(`^([^\s]+(\.(?i)(gifv))$)`)
+	isGifvRegex = func() *regexp.Regexp { return gifvRegex }
+
+	videoRegex := regexp.MustCompile(`^([^\s]+(\.(?i)(webm|mp4|wav))$)`)
+	isVideoRegex = func() *regexp.Regexp { return videoRegex }
+}
+
+func embedRedditMedia(post *reddit.Post, embed *dg_helpers.Embed) {
+	if post == nil {
+		log.Error("post is nil")
+		return
+	}
+	if embed == nil {
+		log.Error("embed is nil")
+		return
+	}
+	if !isHTTPS(post.URL) {
+		log.Warn("link is not https, won't embed", post.URL)
+		return
+	}
+
+	if isImageRegex().MatchString(post.URL) {
+		log.Debug("Embedding image", post.URL)
+		embed.SetImage(post.URL)
+	} else if isGifvRegex().MatchString(post.URL) {
+		// TODO: should gifv's be embedded as videos?
+		log.Debug("Embedding GIFV", post.URL)
+		embed.SetImage(post.URL)
+	} else if isVideoRegex().MatchString(post.URL) {
+		log.Debug("Embedding video", post.URL)
+		embed.SetVideo(post.URL)
+	}
 }
 
 func getRandomSubredditSFW() (*reddit.Subreddit, error) {
