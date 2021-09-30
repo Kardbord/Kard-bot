@@ -3,6 +3,7 @@ package kardbot
 import (
 	"fmt"
 	"math/rand"
+	"net/http"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
@@ -56,10 +57,11 @@ func randomBoolean() bool {
 }
 
 func isHTTPS(url string) bool {
-	// Tried to get smart about this and use the http
-	// package to resolve the final, redirected URL, but
-	// doing so was causing us to miss our discord interaction
-	// response window. So for now this dumb check will have to
-	// suffice.
-	return strings.HasPrefix(url, "https://")
+	resp, err := http.Get(url)
+	if err != nil {
+		log.Warn(err)
+		return false
+	}
+	// final URL resolved
+	return strings.HasPrefix(resp.Request.URL.String(), "https://")
 }
