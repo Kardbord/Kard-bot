@@ -112,11 +112,11 @@ func buildRedditPostEmbed(post *reddit.Post) (*discordgo.MessageEmbed, error) {
 		SetTitle(post.Title).
 		SetDescription(post.Body).
 		AddField("Author and Subreddit:", fmt.Sprintf("u/%s on %s", post.Author, post.SubredditNamePrefixed)).
-		AddField("Permalink: ", fmt.Sprintf("[%s](https://www.reddit.com%v)", post.Title, post.Permalink)).
-		SetImage(imageURL).
 		AddField("Score:", fmt.Sprintf("%s %d (%d%% upvoted)", voteEmoji, post.Score, int(post.UpvoteRatio*100))).
 		AddField("Comments:", fmt.Sprintf("🗨️ %d", post.NumberOfComments)).
 		SetColor(int(hexColor)).
+		SetURL(fmt.Sprintf("https://www.reddit.com%v", post.Permalink)).
+		SetImage(imageURL).
 		SetAuthor().Truncate().MessageEmbed
 
 	return embed, nil
