@@ -180,7 +180,7 @@ func getRandomSubredditNSFW() (*reddit.Subreddit, error) {
 }
 
 func getRandomSubreddit() (*reddit.Subreddit, error) {
-	if randomBoolean() {
+	if RandomBoolean() {
 		return getRandomSubredditNSFW()
 	}
 	return getRandomSubredditSFW()
@@ -204,11 +204,19 @@ func getTopPosts(count int, subreddit string) ([]*reddit.Post, error) {
 // the 'nsfw' parameter. If the 'nsfw' parameter
 // is nil, no check is done.
 func getRandomRedditPost(nsfw *bool) (*reddit.Post, error) {
+	if nsfw == nil {
+		post, _, err := redditClient().Post.Random(redditCtx())
+		return post.Post, err
+	}
+
+	// No way as far as I can tell to get a random post that is
+	// guaranteed SFW or NSFW, but you can do so for subreddits.
+	// Get a random SFW or NSFW sub, retrieve the top posts, then
+	// shuffle them and iterate until a post is found matching the
+	// sfw/nsfw criteria.
 	var sub *reddit.Subreddit
 	var err error
-	if nsfw == nil {
-		sub, err = getRandomSubreddit()
-	} else if *nsfw {
+	if *nsfw {
 		sub, err = getRandomSubredditNSFW()
 	} else {
 		sub, err = getRandomSubredditSFW()
@@ -232,9 +240,6 @@ func getRandomRedditPost(nsfw *bool) (*reddit.Post, error) {
 		posts[i], posts[j] = posts[j], posts[i]
 	})
 
-	if nsfw == nil {
-		return posts[0], nil
-	}
 	for _, post := range posts {
 		if post.NSFW == *nsfw {
 			return post, nil
