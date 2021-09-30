@@ -11,6 +11,7 @@ A discord bot destined for greatness.
 - [x] Copy-pastas when requested and/or when triggered
 - [x] Reddit Roulette
 - [ ] Let users know when it is Wednesday
+- [ ] Inform users when Kard-bot is updated
 - [ ] [Uwu-ifier](https://lingojam.com/uwu-ify)
 - [ ] [Creepy asterisks](https://www.reddit.com/r/creepyasterisks/)
 - [ ] Mock certain questions or phrases
