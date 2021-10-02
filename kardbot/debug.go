@@ -57,7 +57,6 @@ func updateLogLevel(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		})
 		log.SetLevel(lvl)
 		if bot().EnableDGLogging {
-			// TODO: make this thread safe somehow (logrus is already thread safe)
 			s.LogLevel = logrusToDiscordGo()[lvl]
 		}
 	} else {

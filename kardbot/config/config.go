@@ -1,10 +1,5 @@
 package config
 
-// TODO: Make this a go library with its own repo? This has potential to be useful for
-//       other projects. It would be nice to aggregate all provided config, possibly
-//       multiple files, of a given format (e.g., JSON) as a single byte slice.
-//       Could also provide helper methods to populate structs with config data.
-
 import (
 	"fmt"
 	"io/ioutil"

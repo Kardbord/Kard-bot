@@ -32,7 +32,6 @@ type kardbot struct {
 	// instantly.
 	SlashGuilds []string `json:"slash-cmd-guilds"`
 
-	// TODO: add a subcommand to loglevel to set this
 	EnableDGLogging bool `json:"enable-dg-logging"`
 }
 

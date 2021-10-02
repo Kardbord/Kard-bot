@@ -70,7 +70,6 @@ func (p *pasta) makePasta() (string, error) {
 	n, err := fd.Read(buf)
 	if err == io.EOF || err == nil {
 		if n == int(bufSize) {
-			// TODO: support multi-page pastas. Toggle pages with a button.
 			return string(buf[:n]) + "...", nil
 		}
 		return string(buf[:n]), nil
