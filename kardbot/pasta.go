@@ -81,13 +81,10 @@ func (p *pasta) makePasta() (string, error) {
 }
 
 func servePasta(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	// TODO: move this check into a helper function
-	_, authorID, err := getInteractionCreateAuthorNameAndID(i)
-	if err != nil {
+	if isSelf, err := authorIsSelf(s, i); err != nil {
 		log.Error(err)
 		return
-	}
-	if authorID == s.State.User.ID {
+	} else if isSelf {
 		log.Trace("Ignoring message from self")
 		return
 	}

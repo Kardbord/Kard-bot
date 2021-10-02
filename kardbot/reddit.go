@@ -39,14 +39,11 @@ func init() {
 }
 
 func redditRoulette(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	// TODO: move this check into a helper function
-	if authorID, err := getInteractionCreateAuthorID(i); err == nil {
-		if authorID == s.State.User.ID {
-			log.Trace("Ignoring message from self")
-			return
-		}
-	} else {
+	if isSelf, err := authorIsSelf(s, i); err != nil {
 		log.Error(err)
+		return
+	} else if isSelf {
+		log.Trace("Ignoring message from self")
 		return
 	}
 
@@ -177,13 +174,6 @@ func getRandomSubredditSFW() (*reddit.Subreddit, error) {
 func getRandomSubredditNSFW() (*reddit.Subreddit, error) {
 	sub, _, err := redditClient().Subreddit.RandomNSFW(redditCtx())
 	return sub, err
-}
-
-func getRandomSubreddit() (*reddit.Subreddit, error) {
-	if RandomBoolean() {
-		return getRandomSubredditNSFW()
-	}
-	return getRandomSubredditSFW()
 }
 
 func getTopPosts(count int, subreddit string) ([]*reddit.Post, error) {

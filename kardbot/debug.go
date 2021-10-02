@@ -22,14 +22,17 @@ func logrusToDiscordGo() map[log.Level]int {
 }
 
 func updateLogLevel(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	// TODO: move this check into a helper function
+	if isSelf, err := authorIsSelf(s, i); err != nil {
+		log.Error(err)
+		return
+	} else if isSelf {
+		log.Trace("Ignoring message from self")
+		return
+	}
+
 	author, authorID, err := getInteractionCreateAuthorNameAndID(i)
 	if err != nil {
 		log.Error(err)
-		return
-	}
-	if authorID == s.State.User.ID {
-		log.Trace("Ignoring message from self")
 		return
 	}
 

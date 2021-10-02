@@ -15,14 +15,11 @@ const (
 )
 
 func rollDice(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	// TODO: move this check into a helper function
-	if authorID, err := getInteractionCreateAuthorID(i); err == nil {
-		if authorID == s.State.User.ID {
-			log.Trace("Ignoring message from self")
-			return
-		}
-	} else {
+	if isSelf, err := authorIsSelf(s, i); err != nil {
 		log.Error(err)
+		return
+	} else if isSelf {
+		log.Trace("Ignoring message from self")
 		return
 	}
 

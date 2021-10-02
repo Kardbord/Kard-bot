@@ -7,7 +7,17 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
-// TODO: also add authorIsSelf method for slash commands
+func authorIsSelf(s *discordgo.Session, i *discordgo.InteractionCreate) (bool, error) {
+	if s == nil || i == nil {
+		return false, fmt.Errorf("interaction or session is nil")
+	}
+	_, authorID, err := getInteractionCreateAuthorNameAndID(i)
+	if err != nil {
+		return false, err
+	}
+	return authorID == s.State.User.ID, nil
+}
+
 func authorIsOwner(i *discordgo.InteractionCreate) (bool, error) {
 	if getOwnerID() == "" {
 		return false, errors.New("owner ID is not set")
