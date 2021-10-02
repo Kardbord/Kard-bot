@@ -159,7 +159,7 @@ func embedRedditMedia(post *reddit.Post, embed *dg_helpers.Embed) {
 	} else if isGifvRegex().MatchString(post.URL) {
 		// TODO: should gifv's be embedded as videos?
 		log.Debug("Embedding GIFV", post.URL)
-		embed.SetImage(post.URL)
+		embed.SetVideo(post.URL)
 	} else if isVideoRegex().MatchString(post.URL) {
 		log.Debug("Embedding video", post.URL)
 		embed.SetVideo(post.URL)
