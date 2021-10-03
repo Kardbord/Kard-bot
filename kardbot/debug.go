@@ -49,15 +49,18 @@ func updateLogLevel(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	if lvl, err := log.ParseLevel(levelStr); err == nil {
 		info := fmt.Sprintf(`Set logging level to "%s"`, levelStr)
 		log.Info(info)
-		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		log.SetLevel(lvl)
+		if bot().EnableDGLogging {
+			s.LogLevel = logrusToDiscordGo()[lvl]
+		}
+		err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
 				Content: info,
 			},
 		})
-		log.SetLevel(lvl)
-		if bot().EnableDGLogging {
-			s.LogLevel = logrusToDiscordGo()[lvl]
+		if err != nil {
+			log.Error(err)
 		}
 	} else {
 		log.Error(err)

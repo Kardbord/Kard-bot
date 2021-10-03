@@ -46,10 +46,13 @@ func greeting(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 	if matched {
-		s.ChannelMessageSend(
+		_, err := s.ChannelMessageSend(
 			m.ChannelID,
 			fmt.Sprintf("%s %s!", bot().randomGreeting(), m.Author.Username),
 		)
+		if err != nil {
+			log.Error(err)
+		}
 	}
 }
 
@@ -74,9 +77,12 @@ func farewell(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 	if matched {
-		s.ChannelMessageSend(
+		_, err := s.ChannelMessageSend(
 			m.ChannelID,
 			fmt.Sprintf("%s %s!", bot().randomFarewell(), m.Author.Username),
 		)
+		if err != nil {
+			log.Error(err)
+		}
 	}
 }

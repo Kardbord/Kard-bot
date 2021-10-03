@@ -68,12 +68,15 @@ func rollDice(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		log.Warnf("There is a bug in msg length validation when rolling %d D%d's. Possible overflow?", count, sides)
 		output = fmt.Sprintf("Rolling %d D%d's...\nTotal: %d", count, sides, total)
 	}
-	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+	err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			Content: output,
 		},
 	})
+	if err != nil {
+		log.Error(err)
+	}
 }
 
 // Parse number of sides on dice from a string of the form

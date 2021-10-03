@@ -2,6 +2,7 @@ package kardbot
 
 import (
 	"github.com/bwmarrin/discordgo"
+	log "github.com/sirupsen/logrus"
 )
 
 type onReadyHandler = func(*discordgo.Session, *discordgo.Ready)
@@ -16,5 +17,8 @@ func onReadyHandlers() []onReadyHandler {
 }
 
 func onReady(s *discordgo.Session, r *discordgo.Ready) {
-	s.UpdateListeningStatus("you")
+	err := s.UpdateListeningStatus("you")
+	if err != nil {
+		log.Error(err)
+	}
 }
