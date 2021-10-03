@@ -79,24 +79,26 @@ func rollDice(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	}
 }
 
+var dieSidesRegex = func() *regexp.Regexp { return nil }
+
+func init() {
+	r := regexp.MustCompile("^(?i)d?[0-9]+$")
+	dieSidesRegex = func() *regexp.Regexp {
+		return r
+	}
+}
+
 // Parse number of sides on dice from a string of the form
 // D{NUM} or just {NUM}
 func parseDieSides(rawDieSides string) (uint64, error) {
 	// This regex disallows negative numbers
-	matched, err := regexp.MatchString("^(?i)d?[0-9]+$", rawDieSides)
-	if err != nil {
-		return 0, err
-	}
+	matched := dieSidesRegex().MatchString(rawDieSides)
 	if !matched {
 		// Invalid die sides provided
 		return 0, fmt.Errorf("invalid argument provided: %s", rawDieSides)
 	}
 	// Strip non-numeric characters
-	reg, err := regexp.Compile("[^0-9]+")
-	if err != nil {
-		return 0, err
-	}
-	dieSidesParsed := reg.ReplaceAllString(rawDieSides, "")
+	dieSidesParsed := isNotNumericRegex().ReplaceAllString(rawDieSides, "")
 	sides, err := strconv.ParseUint(dieSidesParsed, 10, 64)
 	if err != nil {
 		return 0, fmt.Errorf("could not convert %s to int", dieSidesParsed)

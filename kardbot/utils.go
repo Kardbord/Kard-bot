@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 	"net/http"
+	"regexp"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
@@ -64,4 +65,11 @@ func isHTTPS(url string) bool {
 	}
 	// final URL resolved
 	return strings.HasPrefix(resp.Request.URL.String(), "https://")
+}
+
+var isNotNumericRegex = func() *regexp.Regexp { return nil }
+
+func init() {
+	r := regexp.MustCompile("[^0-9]+")
+	isNotNumericRegex = func() *regexp.Regexp { return r }
 }
