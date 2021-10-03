@@ -58,16 +58,40 @@ func getCommands() []*discordgo.ApplicationCommand {
 					Name:        redditRouletteSubCmdAny,
 					Description: "Retrieve a random reddit post. May be NSFW.",
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionString,
+							Name:        "subreddits",
+							Description: "Subreddits from which you want the random post to be retrieved, separated by spaces",
+							Required:    false,
+						},
+					},
 				},
 				{
 					Name:        redditRouletteSubCmdSFW,
 					Description: "Retrieve a random reddit post that is not marked as NSFW",
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionString,
+							Name:        "subreddits",
+							Description: "Subreddits from which you want the random post to be retrieved, separated by spaces",
+							Required:    false,
+						},
+					},
 				},
 				{
 					Name:        redditRouletteSubCmdNSFW,
 					Description: "Retrieve a random reddit post that is marked as NSFW.",
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionString,
+							Name:        "subreddits",
+							Description: "Subreddits from which you want the random post to be retrieved, separated by spaces",
+							Required:    false,
+						},
+					},
 				},
 			},
 		},

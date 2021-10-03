@@ -47,17 +47,25 @@ func redditRoulette(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		return
 	}
 
+	// retrieve optional "subreddits" argument
+	var subreddits []string
+	if len(i.ApplicationCommandData().Options[0].Options) > 0 {
+		subreddits = strings.Fields(i.ApplicationCommandData().Options[0].Options[0].StringValue())
+	} else {
+		subreddits = []string{"all"}
+	}
+
 	var post *reddit.Post
 	var err error
 	switch i.ApplicationCommandData().Options[0].Name {
 	case redditRouletteSubCmdAny:
-		post, err = getRandomRedditPost(nil)
+		post, err = getRandomRedditPost(nil, subreddits...)
 	case redditRouletteSubCmdSFW:
 		nsfw := false
-		post, err = getRandomRedditPost(&nsfw)
+		post, err = getRandomRedditPost(&nsfw, subreddits...)
 	case redditRouletteSubCmdNSFW:
 		nsfw := true
-		post, err = getRandomRedditPost(&nsfw)
+		post, err = getRandomRedditPost(&nsfw, subreddits...)
 	default:
 		log.Error("Reached unreachable case...")
 	}
@@ -154,13 +162,12 @@ func embedRedditMedia(post *reddit.Post, embed *dg_helpers.Embed) {
 	}
 
 	if isImageRegex().MatchString(post.URL) {
-		log.Debug("Embedding image", post.URL)
+		log.Debug("Embedding image ", post.URL)
 		embed.SetImage(post.URL)
 	} else if isGifvRegex().MatchString(post.URL) {
-		log.Debug("Embedding GIFV", post.URL)
-		embed.SetVideo(post.URL)
+		log.Debug("Not embedding GIFV ", post.URL)
 	} else if isVideoRegex().MatchString(post.URL) {
-		log.Debug("Embedding video", post.URL)
+		log.Debug("Embedding video ", post.URL)
 		embed.SetVideo(post.URL)
 	}
 }
@@ -173,6 +180,15 @@ func getRandomSubredditSFW() (*reddit.Subreddit, error) {
 func getRandomSubredditNSFW() (*reddit.Subreddit, error) {
 	sub, _, err := redditClient().Subreddit.RandomNSFW(redditCtx())
 	return sub, err
+}
+
+func getRandomSubredditFromList(subreddits ...string) (*reddit.Subreddit, error) {
+	if len(subreddits) == 0 {
+		return nil, fmt.Errorf("empty subreddit list provided")
+	}
+	srStr := subreddits[rand.Intn(len(subreddits))]
+	sr, _, err := redditClient().Subreddit.Get(redditCtx(), srStr)
+	return sr, err
 }
 
 func getTopPosts(count int, subreddit string) ([]*reddit.Post, error) {
@@ -192,10 +208,24 @@ func getTopPosts(count int, subreddit string) ([]*reddit.Post, error) {
 // Ensures post is marked sfw or nsfw based on
 // the 'nsfw' parameter. If the 'nsfw' parameter
 // is nil, no check is done.
-func getRandomRedditPost(nsfw *bool) (*reddit.Post, error) {
+func getRandomRedditPost(nsfw *bool, subreddits ...string) (*reddit.Post, error) {
+	if len(subreddits) == 0 {
+		return nil, fmt.Errorf(`at least one subreddit, or "all" must be provided`)
+	}
 	if nsfw == nil {
-		post, _, err := redditClient().Post.Random(redditCtx())
-		return post.Post, err
+		post, _, err := redditClient().Post.RandomFromSubreddits(redditCtx(), subreddits...)
+		if err != nil {
+			return nil, err
+		}
+		return post.Post, nil
+	}
+
+	allSubsEligible := false
+	for i := range subreddits {
+		if subreddits[i] == "all" {
+			allSubsEligible = true
+			break
+		}
 	}
 
 	// No way as far as I can tell to get a random post that is
@@ -205,7 +235,9 @@ func getRandomRedditPost(nsfw *bool) (*reddit.Post, error) {
 	// sfw/nsfw criteria.
 	var sub *reddit.Subreddit
 	var err error
-	if *nsfw {
+	if !allSubsEligible {
+		sub, err = getRandomSubredditFromList(subreddits...)
+	} else if *nsfw {
 		sub, err = getRandomSubredditNSFW()
 	} else {
 		sub, err = getRandomSubredditSFW()
