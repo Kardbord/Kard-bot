@@ -9,7 +9,13 @@ import (
 
 	"github.com/TannerKvarfordt/Kard-bot/kardbot/config"
 	"github.com/bwmarrin/discordgo"
+	owoify_go "github.com/deadshot465/owoify-go"
 	log "github.com/sirupsen/logrus"
+)
+
+const (
+	pastaOptionUwu = "uwu"
+	pastaOptionTTS = "tts"
 )
 
 // Returns a map of pasta names to pasta objects.
@@ -103,28 +109,49 @@ func servePasta(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	}
 
 	selection := i.ApplicationCommandData().Options[0].StringValue()
+	content := ""
 	if p, ok := pastaMenu()[selection]; ok {
-		content, err := p.makePasta()
+		var err error
+		content, err = p.makePasta()
 		if err != nil {
 			log.Error(err)
 			return
 		}
-
-		tts := false
-		if len(i.ApplicationCommandData().Options) > 1 {
-			tts = i.ApplicationCommandData().Options[1].BoolValue()
-		}
-		err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Content: content,
-				TTS:     tts,
-			},
-		})
-		if err != nil {
-			log.Error(err)
-		}
 	} else {
 		log.Error("invalid selection: ", selection)
+	}
+
+	tts := false
+	uwulvl := ""
+	for j := 2; j > 0; j-- {
+		if len(i.ApplicationCommandData().Options) > j {
+			for k := 1; k <= j; k++ {
+				switch i.ApplicationCommandData().Options[k].Name {
+				case pastaOptionTTS:
+					tts = i.ApplicationCommandData().Options[k].BoolValue()
+				case pastaOptionUwu:
+					uwulvl = i.ApplicationCommandData().Options[k].StringValue()
+				}
+			}
+			break
+		}
+	}
+
+	if uwulvl != "" {
+		content = owoify_go.Owoify(content, uwulvl)
+		if len(content) > int(MaxDiscordMsgLen) {
+			content = firstN(content, int(MaxDiscordMsgLen)-3) + "..."
+		}
+	}
+
+	err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Content: content,
+			TTS:     tts,
+		},
+	})
+	if err != nil {
+		log.Error(err)
 	}
 }

@@ -50,9 +50,16 @@ func getCommands() []*discordgo.ApplicationCommand {
 				},
 				{
 					Type:        discordgo.ApplicationCommandOptionBoolean,
-					Name:        "tts",
+					Name:        pastaOptionTTS,
 					Description: "Read the copy-pasta aloud to everyone viewing the channel using text-to-speech",
 					Required:    false,
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionString,
+					Name:        pastaOptionUwu,
+					Description: "Sprinkle a healthy dose of UwU on your pasta!",
+					Required:    false,
+					Choices:     uwuChoices(),
 				},
 			},
 		},
