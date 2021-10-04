@@ -23,6 +23,7 @@ A discord bot destined for greatness.
 - [ ] Play music via youtube à la [rythm bot](https://rythm.fm/)
 - [ ] Configurably replace words with other words
 - [ ] Search and link to DnD wiki articles
+- [ ] Allow users to query Google; provide direct links to top results and a link to all results
 
 # Installation
 
