@@ -68,6 +68,7 @@ func redditRoulette(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		post, err = getRandomRedditPost(&nsfw, subreddits...)
 	default:
 		log.Error("Reached unreachable case...")
+		return
 	}
 	if err != nil {
 		log.Error(err)
