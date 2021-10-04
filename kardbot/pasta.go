@@ -110,10 +110,15 @@ func servePasta(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			return
 		}
 
+		tts := false
+		if len(i.ApplicationCommandData().Options) > 1 {
+			tts = i.ApplicationCommandData().Options[1].BoolValue()
+		}
 		err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
 				Content: content,
+				TTS:     tts,
 			},
 		})
 		if err != nil {

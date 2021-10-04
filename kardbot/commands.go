@@ -48,6 +48,12 @@ func getCommands() []*discordgo.ApplicationCommand {
 					Required:    true,
 					Choices:     pastaChoices(),
 				},
+				{
+					Type:        discordgo.ApplicationCommandOptionBoolean,
+					Name:        "tts",
+					Description: "Read the copy-pasta aloud to everyone viewing the channel using text-to-speech",
+					Required:    false,
+				},
 			},
 		},
 		{
