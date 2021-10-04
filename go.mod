@@ -4,6 +4,7 @@ go 1.17
 
 require (
 	github.com/bwmarrin/discordgo v0.23.3-0.20210821175000-0fad116c6c2a
+	github.com/deadshot465/owoify-go v1.0.1
 	github.com/joho/godotenv v1.3.0
 	github.com/lucasb-eyer/go-colorful v1.2.0
 	github.com/sirupsen/logrus v1.8.1

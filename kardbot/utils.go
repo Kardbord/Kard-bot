@@ -73,3 +73,15 @@ func init() {
 	r := regexp.MustCompile("[^0-9]+")
 	isNotNumericRegex = func() *regexp.Regexp { return r }
 }
+
+// Taken from https://stackoverflow.com/questions/41602230
+func firstN(s string, n int) string {
+	i := 0
+	for j := range s {
+		if i == n {
+			return s[:j]
+		}
+		i++
+	}
+	return s
+}
