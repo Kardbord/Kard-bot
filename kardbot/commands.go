@@ -167,6 +167,10 @@ func getCommands() []*discordgo.ApplicationCommand {
 				},
 			},
 		},
+		{
+			Name:        "help",
+			Description: "Get helpful information about the bot.",
+		},
 	}
 }
 
@@ -177,5 +181,6 @@ func getCommandImpls() map[string]onInteractionHandler {
 		"pasta":           servePasta,
 		"reddit-roulette": redditRoulette,
 		"uwu":             uwuify,
+		"help":            botInfo,
 	}
 }
