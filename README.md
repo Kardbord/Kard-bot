@@ -19,6 +19,7 @@ A discord bot destined for greatness.
 - [ ] Subscribe to social media accounts (maybe a webhook would be more appropriate?)
 - [ ] Play music via youtube à la [rythm bot](https://rythm.fm/)
 - [ ] Configurably replace words with other words
+- [ ] Search and link to DnD wiki articles
 
 # Installation
 This bot is not currently hosted anywhere. If you want to use it, you can always try [hosting it yourself](#hosting-installation)! :)
