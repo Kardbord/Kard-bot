@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"math/rand"
 	"os"
 
 	"github.com/TannerKvarfordt/Kard-bot/kardbot/config"
@@ -11,8 +12,13 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// returns a map of pasta names to pasta objects
+// Returns a map of pasta names to pasta objects.
+// Includes the "random" option.
 var pastaMenu func() map[string]pasta
+
+// Returns a list of paths to pasta files.
+// Does not include the "random" option
+var pastaList func() []string
 
 func init() {
 	cfg := struct {
@@ -24,13 +30,18 @@ func init() {
 	}
 
 	var pastas = make(map[string]pasta)
-	for _, p := range cfg.Pastas {
+	var pastaFiles = make([]string, len(cfg.Pastas))
+	for i, p := range cfg.Pastas {
 		pastas[p.Name] = p
+		pastaFiles[i] = p.File
 	}
 	if len(pastas) == 0 {
 		log.Warn("No pastas found in config :(")
 	}
+	// Random is a special case
+	pastas["random"] = pasta{Name: "random", File: pastaFiles[rand.Intn(len(pastaFiles))]}
 	pastaMenu = func() map[string]pasta { return pastas }
+	pastaList = func() []string { return pastaFiles }
 }
 
 type pasta struct {
@@ -55,6 +66,9 @@ func pastaChoices() []*discordgo.ApplicationCommandOptionChoice {
 
 // Load and return the copy pasta based on the pasta's member fields
 func (p *pasta) makePasta() (string, error) {
+	if p.Name == "random" {
+		p.File = pastaList()[rand.Intn(len(pastaList()))]
+	}
 	fd, err := os.Open(p.File)
 	if err != nil {
 		return "", err
