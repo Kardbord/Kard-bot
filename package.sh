@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC2155
 
 REPO="kardbot"
 DOCKERHUB_USER="tkvarfordt"
@@ -98,9 +99,29 @@ function prompt_continue() {
   [[ $REPLY =~ ^[Yy]$ ]] || exit 0
 }
 
+function branch_status() {
+  if ! git diff-index --cached --quiet HEAD; then
+    echo uncommitted-changes
+  else
+    local a="main" b="origin/main"
+    local base=$( git merge-base $a $b )
+    local aref=$( git rev-parse  $a )
+    local bref=$( git rev-parse  $b )
+    if [[ $aref == "$bref" ]]; then
+      echo up-to-date
+    elif [[ $aref == "$base" ]]; then
+      echo behind
+    elif [[ $bref == "$base" ]]; then
+      echo ahead
+    else
+      echo diverged
+    fi
+  fi
+}
 git fetch > /dev/null
-if git merge-base --is-ancestor main origin/main; then
-  prompt_continue "Local repo is not up to date with the remote, do you want to continue?"
+status=$(branch_status)
+if [[ "${status}" != "up-to-date" ]]; then
+  fail "local branch differs from the remote with status: ${status}"
 fi
 
 function build_release() {
@@ -142,7 +163,7 @@ if [ "${latest_tag}" == "" ]; then
   exit 0
 fi
 
-[[ "${latest_tag}" =~ ^v[0-9]+.[0-9]+.[0-9]+.* ]] || fail "Latest found tag does not appear to be a SemVer, there is a problem with this script."
+[[ "${latest_tag}" =~ ^v[0-9]+.[0-9]+.[0-9]+.* ]] || fail "Latest found tag (${latest_tag}) does not appear to be a SemVer, there is a problem with this script."
 
 function parse_semver() {
   local token="$1"
@@ -167,7 +188,7 @@ mapfile -d ' ' -t v < <(parse_semver "${latest_tag}")
 MAJOR=${v[0]}
 MINOR=${v[1]}
 PATCH=${v[2]}
-[[ $((MAJOR+MINOR+PATCH)) -eq 0 ]] || fail "Latest found tag does not appear to be a SemVer, there is a problem with this script."
+[[ $((MAJOR+MINOR+PATCH)) -ne 0 ]] || fail "Latest found tag (${latest_tag}) does not appear to be a SemVer, there is a problem with this script."
 
 if [ ${ISMAJOR} -eq 1 ]; then
   MAJOR=$((MAJOR+1))
@@ -180,7 +201,6 @@ elif [ ${ISPATCH} -eq 1 ]; then
   PATCH=$((PATCH+1))
 fi
 
-# TODO: update docker-compose.yml automatically?
 fulltag="v${MAJOR}.${MINOR}.${PATCH}${USERTAG}"
 if ! grep -q "${fulltag}" docker-compose.yml; then
   fail "Looks like docker-compose.yml hasn't been updated in preparation for version ${fulltag} yet."
