@@ -1,8 +1,8 @@
 version: "3.9"
 services:
   kardbot:
-    image: tkvarfordt/kardbot:v0.0.1-alpha
-    container_name: kardbot-v0.0.1-alpha
+    image: tkvarfordt/kardbot:v1.0.0-beta
+    container_name: kardbot-v1.0.0-beta
     volumes:
       - ./config:/app/config
     environment:
