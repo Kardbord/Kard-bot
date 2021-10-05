@@ -147,7 +147,6 @@ function build_release() {
   rm -f "${imagefile}"
   if [ "${SHOULDPUSH}" -eq 1 ]; then
     git push origin "${tag}" || fail "Failed to push tag \"${tag}\"to GitHub"
-    docker push "${DOCKERHUB_USER}/${image}" || fail "Failed to push ${image}"
     echo "Successfully created release ${releasefile} and pushed ${tag} to GitHub and ${image} to Dockerhub."
     echo "You should create an official release on the GitHub using ${releasefile}."
   else
