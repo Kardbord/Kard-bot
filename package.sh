@@ -121,7 +121,7 @@ function branch_status() {
 git fetch > /dev/null
 status=$(branch_status)
 if [[ "${status}" != "up-to-date" ]]; then
-  fail "local branch differs from the remote with status: ${status}"
+  prompt_continue "Local branch differs from the remote with status: ${status}. Do you want to continue?"
 fi
 
 function build_release() {
@@ -135,7 +135,7 @@ function build_release() {
   git tag "${tag}" -m "${REPO} release ${tag}" || fail "Failed to create git tag ${tag}"
 
   local imagefile="${image}.tar.gz"
-  docker build --tag "${DOCKERHUB_USER}/${image}" . || fail "Docker build failed!"
+  docker buildx build --push --platform linux/arm/v7,linux/arm64,linux/amd64 --tag "${DOCKERHUB_USER}/${image}" . || fail "Docker build failed!"
   docker save "${DOCKERHUB_USER}/${image}" | gzip -9 > "${imagefile}" || fail "Failed to save docker image"
 
   local releasefile="${REPO}-${tag}.tar"
