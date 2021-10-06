@@ -68,7 +68,13 @@ func BlockThenStop() {
 
 // Stop and clean up.
 func Stop() {
-	_ = bot().Session.Close()
+	log.Info("Closing session")
+	err := bot().Session.Close()
+	if err != nil {
+		log.Errorf("Session closed with error: %v", err)
+	} else {
+		log.Info("Session closed")
+	}
 }
 
 // Initialize the single global bot instance
@@ -80,23 +86,30 @@ func initialize() {
 	if dgs == nil {
 		log.Fatal("failed to create discordgo session")
 	}
+	log.Info("Session created")
 
 	gbot = &kardbot{
 		Session: dgs,
 	}
 
 	bot().configure()
+	log.Info("Configuration read")
 	bot().addOnReadyHandlers()
+	log.Info("OnReady handlers registered")
 	bot().prepInteractionHandlers()
+	log.Info("Interaction handlers prepared")
 
 	err = bot().Session.Open()
 	if err != nil {
 		log.Fatal(err)
 	}
 	bot().validateInitialization()
+	log.Info("Configuration validated")
 
 	bot().addOnCreateHandlers()
+	log.Info("OnCreate handlers registered")
 	bot().addInteractionHandlers(true)
+	log.Info("Interaction handlers registered")
 }
 
 func (kbot *kardbot) configure() {
@@ -173,9 +186,11 @@ func (kbot *kardbot) prepInteractionHandlers() {
 
 func (kbot *kardbot) addInteractionHandlers(unregisterAllPrevCmds bool) {
 	if unregisterAllPrevCmds {
+		log.Info("Unregistering all commands from previous bot instance")
 		kbot.unregisterAllCommands()
 	}
 
+	log.Info("Registering commands for current bot instance")
 	for _, guildID := range kbot.SlashGuilds {
 		if guildID == "" {
 			log.Warn("Empty string specified as slash guild implies global command. Kard-bot does not support this at this time.")
@@ -186,6 +201,7 @@ func (kbot *kardbot) addInteractionHandlers(unregisterAllPrevCmds bool) {
 			if err != nil {
 				log.Fatalf("Cannot create '%v' command: %v", cmd.Name, err)
 			}
+			log.Infof("Registered %s", cmd.Name)
 		}
 	}
 }

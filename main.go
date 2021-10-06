@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"runtime"
 	"strings"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 
@@ -15,6 +16,8 @@ import (
 func init() {
 	log.SetReportCaller(true)
 	log.SetFormatter(&log.TextFormatter{
+		FullTimestamp:   true,
+		TimestampFormat: time.UnixDate,
 		CallerPrettyfier: func(f *runtime.Frame) (string, string) {
 			split := strings.Split(f.File, "Kard-bot/")
 			filename := "Kard-bot/" + split[len(split)-1]
