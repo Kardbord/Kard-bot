@@ -2,7 +2,6 @@
 # shellcheck disable=SC2155
 
 REPO="kardbot"
-DOCKERHUB_USER="tkvarfordt"
 
 function usage() {
   echo "${0}"
@@ -11,7 +10,7 @@ function usage() {
   echo "${0} {-M|--major|-m|--minor|-p|--patch} {-h|--help}"
   echo
   echo "DESCRIPTION"
-  echo "Creates a ${REPO} release tarball containing a docker image accompanied with a docker-compose file and config/config.json."
+  echo "Creates a ${REPO} release tarball containing a docker-compose file and any local mounts it requires."
   echo "Semantic versioning is handled automatically by the script based on the type of revision specified."
   echo
   echo "OPTIONS"
@@ -19,9 +18,10 @@ function usage() {
   echo "-m,--minor  Indicates release is a minor (backwards compatibile with new features) release"
   echo "-p,--patch  Indicates release is a patch (backwards compatible bugfix) release"
   echo "-t,--tag    Optionally provide a tag (e.g., alpha or beta) to append to the semantic version."
-  echo "--push      Optionally push the created release tag to GitHub and the docker image to DockerHub."
-  echo "            If you select this option, you should create an official release in the GitHub repo using"
-  echo "            the tarball produced by this script. Otherwise that would be pretty naughty. :("
+  echo "--push      Optionally push the created release tag to GitHub. If you select this option, you"
+  echo "            should create an official release in the GitHub repo using the tarball produced by"
+  echo "            this script. Otherwise that would be pretty naughty. :( Creating an official release"
+  echo "            will trigger a GitHub action to build and publish an accompanying docker image."
   echo
   echo "EXAMPLES"
   echo "${0} -M"
@@ -130,24 +130,18 @@ function build_release() {
     fail "No tag specified, there is a problem with this script."
   fi
 
-  local image="${REPO}:${tag}"
-  prompt_continue "Ready to build release ${tag} with docker image ${DOCKERHUB_USER}/${image}! Proceed?"
+  prompt_continue "Ready to build release ${tag}! Proceed?"
   git tag "${tag}" -m "${REPO} release ${tag}" || fail "Failed to create git tag ${tag}"
-
-  local imagefile="${image}.tar.gz"
-  docker buildx build --push --platform linux/arm/v7,linux/arm64,linux/amd64 --tag "${DOCKERHUB_USER}/${image}" . || fail "Docker build failed!"
-  docker save "${DOCKERHUB_USER}/${image}" | gzip -9 > "${imagefile}" || fail "Failed to save docker image"
 
   local releasefile="${REPO}-${tag}.tar"
   echo "Tarring files..."
-  tar -cvf "./${releasefile}" --xform "s|^./|${REPO}-${tag}/|" "./docker-compose.yml" "./${imagefile}" "./config/" || fail "Failed to create release ${releasefile}"
+  tar -cvf "./${releasefile}" --xform "s|^./|${REPO}-${tag}/|" "./docker-compose.yml" "./config/" || fail "Failed to create release ${releasefile}"
   tar -rvf "./${releasefile}" --xform "s|^./.env_example|${REPO}-${tag}/.env|" "./.env_example" || fail "Failed to append .env_example to archive"
   echo "Compressing files..."
   gzip -9 "./${releasefile}"
-  rm -f "${imagefile}"
   if [ "${SHOULDPUSH}" -eq 1 ]; then
     git push origin "${tag}" || fail "Failed to push tag \"${tag}\"to GitHub"
-    echo "Successfully created release ${releasefile} and pushed ${tag} to GitHub and ${image} to Dockerhub."
+    echo "Successfully created release ${releasefile} and pushed ${tag} to GitHub."
     echo "You should create an official release on the GitHub using ${releasefile}."
   else
     echo "Successfully created release ${releasefile}"
