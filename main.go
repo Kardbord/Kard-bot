@@ -43,7 +43,5 @@ func init() {
 }
 
 func main() {
-	log.RegisterExitHandler(kardbot.Stop)
-	kardbot.Run()
-	kardbot.BlockThenStop()
+	kardbot.RunAndBlock()
 }

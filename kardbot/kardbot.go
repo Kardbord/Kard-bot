@@ -5,6 +5,7 @@ import (
 	"math/rand"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 	"time"
 
@@ -33,6 +34,10 @@ type kardbot struct {
 	SlashGuilds []string `json:"slash-cmd-guilds"`
 
 	EnableDGLogging bool `json:"enable-dg-logging"`
+
+	// Initialized in kardbot.Run, used to determine when
+	// kardbot.Stop has been called.
+	wg *sync.WaitGroup
 }
 
 // bot() is a getter for the global kardbot instance
@@ -47,29 +52,63 @@ func bot() *kardbot {
 }
 
 // Run initializes and starts the bot.
+// Returns a WaitGroup
 func Run() {
-	initialize()
+	if gbot != nil {
+		log.Warn("Run has already been called")
+		return
+	}
+
+	log.RegisterExitHandler(Stop)
+
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	gbot = &kardbot{wg: &wg}
+	go handleInterrupt()
+	gbot.initialize()
 	log.Print("Bot is now running. Press CTRL-C to exit.")
 }
 
-// Block the current goroutine until a terminatiing signal is received
 func Block() {
+	bot().wg.Wait()
+}
+
+func RunAndBlock() {
+	Run()
+	Block()
+}
+
+// listenForInterrupt blocks the current goroutine until a terminatiing signal is received.
+// When the signal is received, stop and clean up the bot.
+func handleInterrupt() {
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 	<-sc
-}
-
-// BlockThenStop blocks the current goroutine until a terminatiing signal is received.
-// When the signal is received, stop and clean up the bot.
-func BlockThenStop() {
-	Block()
 	Stop()
+	os.Exit(1)
 }
 
 // Stop and clean up.
 func Stop() {
+	if gbot == nil {
+		log.Info("Bot is not running")
+		return
+	}
+
+	defer func() {
+		if gbot.wg == nil {
+			log.Fatal("nil waitgroup, there is a bug. :(")
+		}
+		gbot.wg.Done()
+	}()
+
+	if gbot.Session == nil {
+		log.Info("No session to close")
+		return
+	}
+
 	log.Info("Closing session")
-	err := bot().Session.Close()
+	err := gbot.Session.Close()
 	if err != nil {
 		log.Errorf("Session closed with error: %v", err)
 	} else {
@@ -78,7 +117,7 @@ func Stop() {
 }
 
 // Initialize the single global bot instance
-func initialize() {
+func (kbot *kardbot) initialize() {
 	dgs, err := discordgo.New("Bot " + getBotToken())
 	if err != nil {
 		log.Fatal(err)
@@ -87,28 +126,25 @@ func initialize() {
 		log.Fatal("failed to create discordgo session")
 	}
 	log.Info("Session created")
+	kbot.Session = dgs
 
-	gbot = &kardbot{
-		Session: dgs,
-	}
-
-	bot().configure()
+	kbot.configure()
 	log.Info("Configuration read")
-	bot().addOnReadyHandlers()
+	kbot.addOnReadyHandlers()
 	log.Info("OnReady handlers registered")
-	bot().prepInteractionHandlers()
+	kbot.prepInteractionHandlers()
 	log.Info("Interaction handlers prepared")
 
-	err = bot().Session.Open()
+	err = kbot.Session.Open()
 	if err != nil {
 		log.Fatal(err)
 	}
-	bot().validateInitialization()
+	kbot.validateInitialization()
 	log.Info("Configuration validated")
 
-	bot().addOnCreateHandlers()
+	kbot.addOnCreateHandlers()
 	log.Info("OnCreate handlers registered")
-	bot().addInteractionHandlers(true)
+	kbot.addInteractionHandlers(true)
 	log.Info("Interaction handlers registered")
 }
 
