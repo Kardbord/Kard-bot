@@ -274,7 +274,11 @@ func (kbot *kardbot) unregisterAllCommands() {
 	// Unregister global commands
 	if cmds, err := kbot.Session.ApplicationCommands(kbot.Session.State.User.ID, ""); err == nil {
 		for _, cmd := range cmds {
-			_ = kbot.Session.ApplicationCommandDelete(bot().Session.State.User.ID, "", cmd.ID)
+			log.Infof("Unregistering global command: %s", cmd.Name)
+			err = kbot.Session.ApplicationCommandDelete(bot().Session.State.User.ID, "", cmd.ID)
+			if err != nil {
+				log.Error(err)
+			}
 		}
 	} else {
 		log.Warn(err)
@@ -284,7 +288,11 @@ func (kbot *kardbot) unregisterAllCommands() {
 	for _, guildID := range kbot.SlashGuilds {
 		if cmds, err := kbot.Session.ApplicationCommands(kbot.Session.State.User.ID, guildID); err == nil {
 			for _, cmd := range cmds {
-				_ = kbot.Session.ApplicationCommandDelete(bot().Session.State.User.ID, guildID, cmd.ID)
+				log.Infof("Unregistering cmd '%s' in guild %s", cmd.Name, guildID)
+				err = kbot.Session.ApplicationCommandDelete(bot().Session.State.User.ID, guildID, cmd.ID)
+				if err != nil {
+					log.Error(err)
+				}
 			}
 		} else {
 			log.Warn(err)
