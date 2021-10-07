@@ -24,6 +24,7 @@ A discord bot destined for greatness.
 - [ ] Configurably replace words with other words
 - [ ] Search and link to DnD wiki articles
 - [ ] Allow users to query Google; provide direct links to top results and a link to all results
+- [ ] Build memes using templates and user provided text
 
 # Installation
 
