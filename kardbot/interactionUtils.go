@@ -84,3 +84,22 @@ func getInteractionCreateAuthorNameAndID(i *discordgo.InteractionCreate) (string
 	}
 	return uname, id, nil
 }
+
+func channelIsNSFW(s *discordgo.Session, i *discordgo.InteractionCreate) (bool, error) {
+	if s == nil {
+		return false, fmt.Errorf("session is nil")
+	}
+	if i == nil {
+		return false, fmt.Errorf("interaction is nil")
+	}
+
+	ch, err := s.Channel(i.ChannelID)
+	if err != nil {
+		return false, err
+	}
+	if ch == nil {
+		return false, fmt.Errorf("could not retrieve channel with ID %s", i.ChannelID)
+	}
+
+	return ch.NSFW, nil
+}

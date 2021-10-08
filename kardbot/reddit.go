@@ -55,17 +55,46 @@ func redditRoulette(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		subreddits = []string{"all"}
 	}
 
+	nsfw, err := channelIsNSFW(s, i)
+	if err != nil {
+		// Log the error but continue on with nsfw=false
+		nsfw = false
+		log.Error(err)
+	}
+
 	var post *reddit.Post
-	var err error
 	switch i.ApplicationCommandData().Options[0].Name {
 	case redditRouletteSubCmdAny:
-		post, err = getRandomRedditPost(nil, subreddits...)
+		if nsfw {
+			// channel is nsfw, so grab any random reddit post
+			post, err = getRandomRedditPost(nil, subreddits...)
+		} else {
+			// channel is not nsfw, so get a SFW post
+			post, err = getRandomRedditPost(&nsfw, subreddits...)
+		}
 	case redditRouletteSubCmdSFW:
-		nsfw := false
-		post, err = getRandomRedditPost(&nsfw, subreddits...)
+		tmp := false
+		post, err = getRandomRedditPost(&tmp, subreddits...)
 	case redditRouletteSubCmdNSFW:
-		nsfw := true
-		post, err = getRandomRedditPost(&nsfw, subreddits...)
+		if nsfw {
+			post, err = getRandomRedditPost(&nsfw, subreddits...)
+		} else {
+			author, err := getInteractionCreateAuthorName(i)
+			if err != nil {
+				log.Error(err)
+				return
+			}
+			err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Content: fmt.Sprintf("%s tried to use `/reddit-roulette nsfw` in a SFW channel, that was naughty! :(", author),
+				},
+			})
+			if err != nil {
+				log.Error(err)
+			}
+			return
+		}
 	default:
 		log.Error("Reached unreachable case...")
 		return
