@@ -25,6 +25,7 @@ A discord bot destined for greatness.
 - [ ] Search and link to DnD wiki articles
 - [ ] Allow users to query Google; provide direct links to top results and a link to all results
 - [ ] Build memes using templates and user provided text
+- [ ] Youtube Roulette
 
 # Installation
 
