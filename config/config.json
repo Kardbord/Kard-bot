@@ -2,23 +2,23 @@
   "pastas": [
     {
       "name": "bee-movie",
-      "file": "pasta/beemovie.txt"
+      "file": "assets/pasta/beemovie.txt"
     },
     {
       "name": "amogus",
-      "file": "pasta/amogus.txt"
+      "file": "assets/pasta/amogus.txt"
     },
     {
       "name": "fitnessgram",
-      "file": "pasta/fitnessgram.txt"
+      "file": "assets/pasta/fitnessgram.txt"
     },
     {
       "name": "rekt",
-      "file": "pasta/rekt.txt"
+      "file": "assets/pasta/rekt.txt"
     },
     {
       "name": "table-flip",
-      "file": "pasta/tableflip.txt"
+      "file": "assets/pasta/tableflip.txt"
     }
   ],
   "greetings": [
