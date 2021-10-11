@@ -14,7 +14,7 @@ A discord bot destined for greatness.
 - [x] Reddit Roulette
 - [x] [Uwu-ifier](https://lingojam.com/uwu-ify)
 - [x] Print out a help message
-- [ ] Let users know when it is Wednesday
+- [x] Let users know when it is Wednesday
 - [ ] Inform users when Kard-bot is updated
 - [ ] [Creepy asterisks](https://www.reddit.com/r/creepyasterisks/)/Creepy PMs sent to users (with opt out option)
 - [ ] Mock certain questions or phrases
