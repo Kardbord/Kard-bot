@@ -5,12 +5,10 @@ import (
 	"fmt"
 	"math/rand"
 	"regexp"
-	"strconv"
 	"strings"
 
 	"github.com/TannerKvarfordt/Kard-bot/kardbot/dg_helpers"
 	"github.com/bwmarrin/discordgo"
-	"github.com/lucasb-eyer/go-colorful"
 	"github.com/vartanbeno/go-reddit/v2/reddit"
 
 	log "github.com/sirupsen/logrus"
@@ -133,7 +131,7 @@ func buildRedditPostEmbed(post *reddit.Post) (*discordgo.MessageEmbed, error) {
 	if post == nil {
 		return nil, fmt.Errorf("post is nil")
 	}
-	hexColor, _ := strconv.ParseInt(strings.Replace(colorful.FastHappyColor().Hex(), "#", "", -1), 16, 32)
+	hexColor, _ := fastHappyColorInt64()
 	var voteEmoji = ""
 	if post.Score > 0 {
 		voteEmoji = "👍"

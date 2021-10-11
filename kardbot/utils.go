@@ -5,8 +5,10 @@ import (
 	"math/rand"
 	"net/http"
 	"regexp"
+	"strconv"
 	"strings"
 
+	"github.com/lucasb-eyer/go-colorful"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -84,4 +86,9 @@ func firstN(s string, n int) string {
 		i++
 	}
 	return s
+}
+
+func fastHappyColorInt64() (int64, error) {
+	i, err := strconv.ParseInt(strings.Replace(colorful.FastHappyColor().Hex(), "#", "", -1), 16, 32)
+	return i, err
 }

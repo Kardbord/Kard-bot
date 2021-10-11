@@ -15,6 +15,8 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
+const AssetsDir string = "./assets"
+
 func init() {
 	rand.Seed(time.Now().UnixNano())
 }
@@ -139,6 +141,7 @@ func (kbot *kardbot) initialize() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	scheduler().StartAsync()
 	kbot.validateInitialization()
 	log.Info("Configuration validated")
 
