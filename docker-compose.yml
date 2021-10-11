@@ -5,7 +5,8 @@ services:
     container_name: kardbot-v1.1.1-beta
     volumes:
       - ./config:/app/config
-      - ./pasta:/app/pasta
+      - ./assets/pasta:/app/assets/pasta
+      - ./assets/wednesday:/app/assets/wednesday
     environment:
       - KARDBOT_TOKEN=${KARDBOT_TOKEN}
       - KARDBOT_OWNER_ID=${KARDBOT_OWNER_ID}

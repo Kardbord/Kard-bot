@@ -135,7 +135,7 @@ function build_release() {
 
   local releasefile="${REPO}-${tag}.tar"
   echo "Tarring files..."
-  tar -cvf "./${releasefile}" --xform "s|^./|${REPO}-${tag}/|" "./docker-compose.yml" "./config/" "./pasta/" || fail "Failed to create release ${releasefile}"
+  tar -cvf "./${releasefile}" --xform "s|^./|${REPO}-${tag}/|" "./docker-compose.yml" "./config/" "./assets/" || fail "Failed to create release ${releasefile}"
   tar -rvf "./${releasefile}" --xform "s|^./.env_example|${REPO}-${tag}/.env|" "./.env_example" || fail "Failed to append .env_example to archive"
   echo "Compressing files..."
   gzip -9 "./${releasefile}"
