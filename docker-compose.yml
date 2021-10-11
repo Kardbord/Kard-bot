@@ -1,10 +1,11 @@
 version: "3.9"
 services:
   kardbot:
-    image: tkvarfordt/kardbot:v1.1.0-beta
-    container_name: kardbot-v1.1.0-beta
+    image: tkvarfordt/kardbot:v1.1.1-beta
+    container_name: kardbot-v1.1.1-beta
     volumes:
       - ./config:/app/config
+      - ./pasta:/app/pasta
     environment:
       - KARDBOT_TOKEN=${KARDBOT_TOKEN}
       - KARDBOT_OWNER_ID=${KARDBOT_OWNER_ID}
