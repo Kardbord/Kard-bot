@@ -147,7 +147,7 @@ func (kbot *kardbot) initialize() {
 
 	kbot.addOnCreateHandlers()
 	log.Info("OnCreate handlers registered")
-	kbot.addInteractionHandlers(true)
+	kbot.addInteractionHandlers(false)
 	log.Info("Interaction handlers registered")
 }
 
@@ -223,13 +223,107 @@ func (kbot *kardbot) prepInteractionHandlers() {
 	})
 }
 
+func (kbot *kardbot) addOnReadyHandlers() {
+	for _, h := range onReadyHandlers() {
+		kbot.Session.AddHandler(h)
+	}
+}
+
+func (kbot *kardbot) addOnCreateHandlers() {
+	for _, h := range onCreateHandlers() {
+		kbot.Session.AddHandler(h)
+	}
+}
+
 func (kbot *kardbot) addInteractionHandlers(unregisterAllPrevCmds bool) {
 	if unregisterAllPrevCmds {
-		log.Info("Unregistering all commands from previous bot instance")
 		kbot.unregisterAllCommands()
+		kbot.registerAllCommands()
+		return
 	}
 
-	log.Info("Registering commands for current bot instance")
+	kbot.unregisterOldCommands()
+	kbot.bulkOverwriteCommands()
+}
+
+func (kbot *kardbot) bulkOverwriteGlobalCommands() {
+	// nothing to do, no global commands supported
+}
+
+func (kbot *kardbot) bulkOverwriteGuildCommands() {
+	for _, guildID := range kbot.SlashGuilds {
+		if guildID == "" {
+			log.Warn("Empty string specified as slash guild implies global command, skipping.")
+			continue
+		}
+		if guild, err := kbot.Session.Guild(guildID); err != nil {
+			log.Warn(err)
+		} else {
+			log.Infof("Bulk overwriting commands for guild: %s", guild.Name)
+		}
+		kbot.Session.ApplicationCommandBulkOverwrite(kbot.Session.State.User.ID, guildID, getCommands())
+	}
+}
+
+func (kbot *kardbot) bulkOverwriteCommands() {
+	kbot.bulkOverwriteGlobalCommands()
+	kbot.bulkOverwriteGuildCommands()
+}
+
+func (kbot *kardbot) unregisterOldGlobalCommands() {
+	// No global commands supported at this time,
+	// so unregister all of them.
+	kbot.unregisterGlobalCommands()
+}
+
+func (kbot *kardbot) unregisterOldGuildCommands() {
+	for _, guildID := range kbot.SlashGuilds {
+		if guildID == "" {
+			log.Warn("Empty string specified as slash guild implies global command, skipping.")
+			continue
+		}
+		if cmds, err := kbot.Session.ApplicationCommands(kbot.Session.State.User.ID, guildID); err == nil {
+			for _, cmd := range cmds {
+				if _, ok := getCommandImpls()[cmd.Name]; !ok {
+					log.Infof("Unregistering cmd '%s' in guild %s", cmd.Name, guildID)
+					err = kbot.Session.ApplicationCommandDelete(bot().Session.State.User.ID, guildID, cmd.ID)
+					if err != nil {
+						log.Error(err)
+					}
+				}
+			}
+		} else {
+			log.Warn(err)
+		}
+	}
+}
+
+func (kbot *kardbot) unregisterOldCommands() {
+	kbot.unregisterOldGlobalCommands()
+	kbot.unregisterOldGuildCommands()
+}
+
+func (kbot *kardbot) unregisterGlobalCommands() {
+	// Unregister global commands
+	if cmds, err := kbot.Session.ApplicationCommands(kbot.Session.State.User.ID, ""); err == nil {
+		for _, cmd := range cmds {
+			log.Infof("Unregistering global command: %s", cmd.Name)
+			err = kbot.Session.ApplicationCommandDelete(bot().Session.State.User.ID, "", cmd.ID)
+			if err != nil {
+				log.Error(err)
+			}
+		}
+	} else {
+		log.Warn(err)
+	}
+}
+
+func (kbot *kardbot) registerGlobalCommands() {
+	// No global commands at this time
+	log.Info("No global commands to register")
+}
+
+func (kbot *kardbot) registerGuildcommands() {
 	for _, guildID := range kbot.SlashGuilds {
 		if guildID == "" {
 			log.Warn("Empty string specified as slash guild implies global command. Kard-bot does not support this at this time.")
@@ -245,16 +339,37 @@ func (kbot *kardbot) addInteractionHandlers(unregisterAllPrevCmds bool) {
 	}
 }
 
-func (kbot *kardbot) addOnReadyHandlers() {
-	for _, h := range onReadyHandlers() {
-		kbot.Session.AddHandler(h)
+func (kbot *kardbot) registerAllCommands() {
+	log.Info("Registering all commands for current bot instance")
+	kbot.registerGlobalCommands()
+	kbot.registerGuildcommands()
+}
+
+func (kbot *kardbot) unregisterAllGuildCommands() {
+	// Unregister guild commands
+	for _, guildID := range kbot.SlashGuilds {
+		if guildID == "" {
+			log.Warn("Empty string specified as slash guild implies global command, skipping.")
+			continue
+		}
+		if cmds, err := kbot.Session.ApplicationCommands(kbot.Session.State.User.ID, guildID); err == nil {
+			for _, cmd := range cmds {
+				log.Infof("Unregistering cmd '%s' in guild %s", cmd.Name, guildID)
+				err = kbot.Session.ApplicationCommandDelete(kbot.Session.State.User.ID, guildID, cmd.ID)
+				if err != nil {
+					log.Error(err)
+				}
+			}
+		} else {
+			log.Warn(err)
+		}
 	}
 }
 
-func (kbot *kardbot) addOnCreateHandlers() {
-	for _, h := range onCreateHandlers() {
-		kbot.Session.AddHandler(h)
-	}
+func (kbot *kardbot) unregisterAllCommands() {
+	log.Info("Unregistering all commands from previous bot instance")
+	kbot.unregisterGlobalCommands()
+	kbot.unregisterAllGuildCommands()
 }
 
 func (kbot *kardbot) greetingCount() int {
@@ -271,34 +386,4 @@ func (kbot *kardbot) randomGreeting() string {
 
 func (kbot *kardbot) randomFarewell() string {
 	return kbot.Farewells[rand.Intn(kbot.farewellCount())]
-}
-
-func (kbot *kardbot) unregisterAllCommands() {
-	// Unregister global commands
-	if cmds, err := kbot.Session.ApplicationCommands(kbot.Session.State.User.ID, ""); err == nil {
-		for _, cmd := range cmds {
-			log.Infof("Unregistering global command: %s", cmd.Name)
-			err = kbot.Session.ApplicationCommandDelete(bot().Session.State.User.ID, "", cmd.ID)
-			if err != nil {
-				log.Error(err)
-			}
-		}
-	} else {
-		log.Warn(err)
-	}
-
-	// Unregister guild commands
-	for _, guildID := range kbot.SlashGuilds {
-		if cmds, err := kbot.Session.ApplicationCommands(kbot.Session.State.User.ID, guildID); err == nil {
-			for _, cmd := range cmds {
-				log.Infof("Unregistering cmd '%s' in guild %s", cmd.Name, guildID)
-				err = kbot.Session.ApplicationCommandDelete(bot().Session.State.User.ID, guildID, cmd.ID)
-				if err != nil {
-					log.Error(err)
-				}
-			}
-		} else {
-			log.Warn(err)
-		}
-	}
 }
