@@ -46,6 +46,8 @@ func greeting(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 	if matched {
+		wg := bot().updateLastActive()
+		defer wg.Wait()
 		_, err := s.ChannelMessageSend(
 			m.ChannelID,
 			fmt.Sprintf("%s %s!", bot().randomGreeting(), m.Author.Username),
@@ -77,6 +79,8 @@ func farewell(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 	if matched {
+		wg := bot().updateLastActive()
+		defer wg.Wait()
 		_, err := s.ChannelMessageSend(
 			m.ChannelID,
 			fmt.Sprintf("%s %s!", bot().randomFarewell(), m.Author.Username),

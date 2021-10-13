@@ -11,6 +11,7 @@ require (
 	github.com/lucasb-eyer/go-colorful v1.2.0
 	github.com/sirupsen/logrus v1.8.1
 	github.com/vartanbeno/go-reddit/v2 v2.0.1
+	go.uber.org/atomic v1.9.0
 )
 
 require (

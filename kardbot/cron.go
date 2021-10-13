@@ -16,8 +16,6 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const WednesdayAssetsDir string = AssetsDir + "/wednesday"
-
 var scheduler = func() *gocron.Scheduler { return nil }
 var genChanRegexp = func() *regexp.Regexp { return nil }
 
@@ -31,6 +29,9 @@ func init() {
 	// https://crontab.guru/#0_9_*_*_3
 	scheduler().Cron("0 9 * * 3").Do(itIsWednesdayMyDudes)
 
+	// https://crontab.guru/#*_*_*_*_*
+	scheduler().Cron("* * * * *").Do(setStatus)
+
 	// ^The above only initializes the scheduler, it does not start it.
 
 	r := regexp.MustCompile("(?i)^general$")
@@ -39,6 +40,8 @@ func init() {
 	}
 	genChanRegexp = func() *regexp.Regexp { return r }
 }
+
+const WednesdayAssetsDir string = AssetsDir + "/wednesday"
 
 func itIsWednesdayMyDudes() {
 	log.Info("It is wednesday my dudes")
@@ -128,6 +131,22 @@ func itIsWednesdayMyDudes() {
 				}
 				break
 			}
+		}
+	}
+}
+
+const idleTimeoutMinutes time.Duration = time.Minute * 5
+
+func setStatus() {
+	if time.Since(bot().lastActive.Load()) > idleTimeoutMinutes {
+		err := bot().Session.UpdateListeningStatus("")
+		if err != nil {
+			log.Error(err)
+		}
+
+		_, err = bot().Session.UserUpdateStatus(discordgo.StatusIdle)
+		if err != nil {
+			log.Error(err)
 		}
 	}
 }

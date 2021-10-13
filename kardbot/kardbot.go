@@ -9,10 +9,11 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/TannerKvarfordt/Kard-bot/kardbot/config"
 	log "github.com/sirupsen/logrus"
 
+	"github.com/TannerKvarfordt/Kard-bot/kardbot/config"
 	"github.com/bwmarrin/discordgo"
+	"go.uber.org/atomic"
 )
 
 const AssetsDir string = "./assets"
@@ -40,6 +41,8 @@ type kardbot struct {
 	// Initialized in kardbot.Run, used to determine when
 	// kardbot.Stop has been called.
 	wg *sync.WaitGroup
+
+	lastActive atomic.Time
 }
 
 // bot() is a getter for the global kardbot instance
@@ -141,6 +144,7 @@ func (kbot *kardbot) initialize() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	kbot.lastActive = *atomic.NewTime(time.Now())
 	scheduler().StartAsync()
 	kbot.validateInitialization()
 	log.Info("Configuration validated")
@@ -386,4 +390,30 @@ func (kbot *kardbot) randomGreeting() string {
 
 func (kbot *kardbot) randomFarewell() string {
 	return kbot.Farewells[rand.Intn(kbot.farewellCount())]
+}
+
+// updateLastActive creates a go routine which sets the
+// lastActive field to time.Now() and ensures the bot shows
+// as active. It returns a pointer to a WaitGroup so that callers can
+// wait to ensure this routine finished.
+func (kbot *kardbot) updateLastActive() *sync.WaitGroup {
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	go func() {
+		kbot.lastActive.Store(time.Now())
+
+		err := kbot.Session.UpdateListeningStatus("you")
+		if err != nil {
+			log.Error(err)
+		}
+
+		_, err = kbot.Session.UserUpdateStatus(discordgo.StatusOnline)
+		if err != nil {
+			log.Error(err)
+		}
+
+		wg.Done()
+	}()
+
+	return &wg
 }

@@ -1,9 +1,6 @@
 package kardbot
 
-import (
-	"github.com/bwmarrin/discordgo"
-	log "github.com/sirupsen/logrus"
-)
+import "github.com/bwmarrin/discordgo"
 
 type onReadyHandler = func(*discordgo.Session, *discordgo.Ready)
 
@@ -17,8 +14,6 @@ func onReadyHandlers() []onReadyHandler {
 }
 
 func onReady(s *discordgo.Session, r *discordgo.Ready) {
-	err := s.UpdateListeningStatus("you")
-	if err != nil {
-		log.Error(err)
-	}
+	wg := bot().updateLastActive()
+	defer wg.Wait()
 }

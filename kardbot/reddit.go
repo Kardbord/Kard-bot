@@ -37,6 +37,9 @@ func init() {
 }
 
 func redditRoulette(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	wg := bot().updateLastActive()
+	defer wg.Wait()
+
 	if isSelf, err := authorIsSelf(s, i); err != nil {
 		log.Error(err)
 		return
