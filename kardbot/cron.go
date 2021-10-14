@@ -86,23 +86,11 @@ func itIsWednesdayMyDudes() {
 		log.Error(err)
 		return
 	}
-	_, err = fd.Seek(0, 0)
-	if err != nil {
-		log.Error(err)
-		return
-	}
-
-	attachment := &discordgo.File{
-		Name:        img.Name(),
-		ContentType: mimeType.String(),
-		Reader:      fd,
-	}
-
 	hexColor, _ := fastHappyColorInt64()
 	e := dg_helpers.NewEmbed()
 	e.SetTitle("It is Wednesday my dudes").
 		SetColor(int(hexColor)).
-		SetImage("attachment://" + attachment.Name).
+		SetImage("attachment://" + img.Name()).
 		Truncate()
 
 	for _, g := range guilds {
@@ -122,6 +110,16 @@ func itIsWednesdayMyDudes() {
 				continue
 			}
 			if genChanRegexp().MatchString(c.Name) {
+				_, err = fd.Seek(0, 0)
+				if err != nil {
+					log.Error(err)
+					break
+				}
+				attachment := &discordgo.File{
+					Name:        img.Name(),
+					ContentType: mimeType.String(),
+					Reader:      fd,
+				}
 				_, err := session.ChannelMessageSendComplex(c.ID, &discordgo.MessageSend{
 					Embed: e.MessageEmbed,
 					Files: []*discordgo.File{attachment},
