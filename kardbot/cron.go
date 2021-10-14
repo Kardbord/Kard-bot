@@ -20,7 +20,7 @@ var scheduler = func() *gocron.Scheduler { return nil }
 var genChanRegexp = func() *regexp.Regexp { return nil }
 
 func init() {
-	s := gocron.NewScheduler(time.UTC)
+	s := gocron.NewScheduler(time.Local)
 	if s == nil {
 		log.Fatal("Could not create scheduler")
 	}
