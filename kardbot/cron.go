@@ -138,15 +138,23 @@ func itIsWednesdayMyDudes() {
 const idleTimeoutMinutes time.Duration = time.Minute * 5
 
 func setStatus() {
-	if time.Since(bot().lastActive.Load()) > idleTimeoutMinutes {
+	if bot().status.Load() != string(discordgo.StatusIdle) && time.Since(bot().lastActive.Load()) > idleTimeoutMinutes {
 		err := bot().Session.UpdateListeningStatus("")
 		if err != nil {
 			log.Error(err)
 		}
 
-		_, err = bot().Session.UserUpdateStatus(discordgo.StatusIdle)
+		idleSince := int(time.Now().Local().UnixMilli())
+		err = bot().Session.UpdateStatusComplex(discordgo.UpdateStatusData{
+			IdleSince: &idleSince,
+			AFK:       true,
+			Status:    string(discordgo.StatusIdle),
+		})
 		if err != nil {
 			log.Error(err)
+		} else {
+			bot().status.Store(string(discordgo.StatusIdle))
+			log.Infof("Set bot status to %s", bot().status.Load())
 		}
 	}
 }

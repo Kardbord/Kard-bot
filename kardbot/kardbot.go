@@ -43,6 +43,7 @@ type kardbot struct {
 	wg *sync.WaitGroup
 
 	lastActive atomic.Time
+	status     atomic.String
 }
 
 // bot() is a getter for the global kardbot instance
@@ -407,7 +408,18 @@ func (kbot *kardbot) updateLastActive() *sync.WaitGroup {
 			log.Error(err)
 		}
 
-		_, err = kbot.Session.UserUpdateStatus(discordgo.StatusOnline)
+		err = kbot.Session.UpdateStatusComplex(discordgo.UpdateStatusData{
+			AFK:    false,
+			Status: string(discordgo.StatusOnline),
+		})
+		if err != nil {
+			log.Error(err)
+		} else {
+			kbot.status.Store(string(discordgo.StatusOnline))
+			log.Infof("Set bot status to %s", kbot.status.Load())
+		}
+
+		err = kbot.Session.UpdateListeningStatus("you")
 		if err != nil {
 			log.Error(err)
 		}
