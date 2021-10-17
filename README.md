@@ -6,6 +6,26 @@
 
 A discord bot destined for greatness.
 
+# Table of Contents
+- [Kard-bot](#kard-bot)
+- [Features](#features)
+- [User Guide](#user-guide)
+  * [Hosting Installation](#hosting-installation)
+    + [Host using Docker](#host-using-docker)
+      - [Prerequisites](#prerequisites)
+      - [Instructions](#instructions)
+    + [Building from source](#building-from-source)
+      - [Prerequisites](#prerequisites-1)
+      - [Instructions](#instructions-1)
+  * [General Notes](#general-notes)
+- [References](#references)
+    + [Discord API Wrappers](#discord-api-wrappers)
+    + [Documentation](#documentation)
+    + [Tutorials](#tutorials)
+
+<small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
+
+
 # Features
 
 - [x] Respond to user greetings and goodbyes
@@ -28,18 +48,47 @@ A discord bot destined for greatness.
 - [ ] Build memes using templates and user provided text
 - [ ] Youtube Roulette
 
-# Installation
+# User Guide
 
-This bot is not currently hosted anywhere. If you want to use it, you can always try [hosting it yourself](#hosting-installation)! :)
+This bot is not publicly hosted anywhere. If you want to use it, you can always try [hosting it yourself](#hosting-installation)! :)
 
-# Hosting Installation
+## Hosting Installation
 
-Hosting this bot requires a Discord Bot Token. You can generate one by visiting the [Discord Developer Portal](https://discord.com/developers/),
-and then creating a new application with an accompanying bot. Give the bot its needed permissions in the OAuth2 section **(Be sure to tick the "applications.commands" box!)**, and then invite it
-to your server(s) using the link that is generated for you.
+Hosting this bot requires a Discord Bot Token. You can generate one by visiting the [Discord Developer Portal](https://discord.com/developers/applications),
+and then creating a new application with an accompanying bot. Give the bot its needed permissions in the OAuth2 section **(Be sure to tick the "applications.commands" box!)**, and then invite it to your server(s) using the link that is generated for you.
 
-For now, you will have to build the Kard-bot binary yourself. Free-time permitting, I may provide a released version or docker image.
+Now that the bot is invited, you should see it as an offline user in your server. Now you only need to start the bot backend to bring it online! You have two options:
+1. [Using the provided Docker images](#host-using-docker)
+2. [Building from source](#building-from-source)
 
+### Host using Docker
+#### Prerequisites
+- A host machine with one of the following system architectures:
+  - arm64
+  - amd64
+  - arm/v7
+- [Docker](https://www.docker.com/get-started)
+- [docker-compose](https://docs.docker.com/compose/install/)
+
+#### Instructions
+Head over to the [Releases](https://github.com/TannerKvarfordt/Kard-bot/releases) page and download the tarball for the desired release.
+These tarballs contain everything needed to get an instance of the bot up and running, provided that the host machine has internet access.
+Untar it on the host machine. Edit the included `.env` file to include the bot token you generated earlier.
+```shell
+KARDBOT_TOKEN="Your bot token here"
+```
+Next, edit the `slash-cmd-guilds` entry in the `config/config.json` file to include the guild (server) IDs of each server you invited the bot to.
+
+With your token in place and your config updated, you can simply run `docker-compose up -d` from the untarred directory to get your bot started!
+The Docker daemon will automatically download the needed docker image from [Docker Hub](https://hub.docker.com/repository/docker/tkvarfordt/kardbot/) or the
+[GitHub Container Registry](https://github.com/TannerKvarfordt/Kard-bot/pkgs/container/kard-bot). 
+To check the status of the docker container, you can use `docker ps -a` or `docker logs <CONTAINER-NAME>`.
+
+### Building from source
+#### Prerequisites
+- The [Go](https://golang.org/) 1.17 runtime or later.
+
+#### Instructions
 Assuming you have the [Go](https://golang.org/) runtime installed, you can install Kard-bot with a simple shell command.
 
 ```shell
@@ -54,8 +103,12 @@ environment variables take precedence over anything in the `.env` file.
 KARDBOT_TOKEN="Your bot token here"
 ```
 
-With your token in place, you can simply run the Kard-bot binary to bring it to life!
-For a more robust running solution, consider creating a [systemd service](https://docs.fedoraproject.org/en-US/quick-docs/understanding-and-administering-systemd/#creating-new-systemd-services) or something similar to suit your needs.
+You will also need to edit the `slash-cmd-guilds` entry in the `config/config.json` file to include the guild (server) IDs of each server you invited the bot to.
+
+With your token in place and your config updated, you can simply run the Kard-bot binary to bring it to life!
+For a more robust running solution, consider creating a [systemd service](https://docs.fedoraproject.org/en-US/quick-docs/understanding-and-administering-systemd/#creating-new-systemd-services) or [using the provided Docker image](#host-using-docker).
+
+## General Notes
 
 Some commands are restricted so that only the bot owner can run them. The bot owner is specified by the `KARDBOT_OWNER_ID` environment variable.
 It can be set in the same manner as the `KARDBOT_TOKEN` variable. Its value should be the user ID of the bot owner. Note that this is not the same
@@ -70,7 +123,6 @@ Useful resources for writing a Discord bot.
 
 - [discordpy](https://github.com/Rapptz/discord.py)
 - [discordgo](https://github.com/bwmarrin/discordgo)
-  - ~~[dgc](https://github.com/lus/dgc)~~ will be deprecated April 2022 due to Discord API updates :(
 - [others](https://discordapi.com/unofficial/comparison.html)
 
 ### Documentation
