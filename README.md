@@ -35,9 +35,9 @@ A discord bot destined for greatness.
 - [x] [Uwu-ifier](https://lingojam.com/uwu-ify)
 - [x] Print out a help message
 - [x] Let users know when it is Wednesday
+- [X] Daily compliments DM'd to users who opt in
 - [ ] Inform users when Kard-bot is updated
 - [ ] [Creepy asterisks](https://www.reddit.com/r/creepyasterisks/)/Creepy PMs sent to users who opt in
-- [ ] Positive affirmations sent to users who opt in
 - [ ] Mock certain questions or phrases
 - [ ] "Quack" any time a user types an expletive
 - [ ] Subscribe to social media accounts (maybe a webhook would be more appropriate?)
