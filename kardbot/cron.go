@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"os"
 	"regexp"
+	"sync"
 	"time"
 
 	"github.com/TannerKvarfordt/Kard-bot/kardbot/dg_helpers"
@@ -17,7 +18,6 @@ import (
 )
 
 var scheduler = func() *gocron.Scheduler { return nil }
-var genChanRegexp = func() *regexp.Regexp { return nil }
 
 func init() {
 	s := gocron.NewScheduler(time.Local)
@@ -32,8 +32,20 @@ func init() {
 	// https://crontab.guru/#*_*_*_*_*
 	scheduler().Cron("* * * * *").Do(setStatus)
 
-	// ^The above only initializes the scheduler, it does not start it.
+	// https://crontab.guru/#30_7_*_*_*
+	scheduler().Cron("30 7 * * *").Do(sendMorningCompliments)
 
+	// https://crontab.guru/#30_20_*_*_*
+	scheduler().Cron("30 20 * * *").Do(sendEveningCompliments)
+
+	// ^The above only initializes the scheduler, it does not start it.
+}
+
+const WednesdayAssetsDir string = AssetsDir + "/wednesday"
+
+var genChanRegexp = func() *regexp.Regexp { return nil }
+
+func init() {
 	r := regexp.MustCompile("(?i)^general$")
 	if r == nil {
 		log.Fatal("nil Regexp")
@@ -41,9 +53,10 @@ func init() {
 	genChanRegexp = func() *regexp.Regexp { return r }
 }
 
-const WednesdayAssetsDir string = AssetsDir + "/wednesday"
-
 func itIsWednesdayMyDudes() {
+	wg := bot().updateLastActive()
+	defer wg.Wait()
+
 	log.Info("It is wednesday my dudes")
 	session := bot().Session
 	if session == nil {
@@ -155,4 +168,62 @@ func setStatus() {
 			log.Infof("Set bot status to %s", bot().status.Load())
 		}
 	}
+}
+
+func sendMorningCompliments() {
+	wg := bot().updateLastActive()
+	defer wg.Wait()
+
+	bot().complimentSubsAMMutex.RLock()
+	defer bot().complimentSubsAMMutex.RUnlock()
+	sendCompliments(bot().ComplimentSubsAM)
+}
+
+func sendEveningCompliments() {
+	wg := bot().updateLastActive()
+	defer wg.Wait()
+
+	bot().complimentSubsPMMutex.RLock()
+	defer bot().complimentSubsPMMutex.RUnlock()
+	sendCompliments(bot().ComplimentSubsPM)
+}
+
+func sendCompliments(subscribers map[string]bool) error {
+	var sendCompliment = func(subscriberID string, wg *sync.WaitGroup) {
+		if wg == nil {
+			log.Error("nil waitgroup provided")
+			return
+		}
+		wg.Add(1)
+		defer wg.Done()
+
+		user, err := bot().Session.User(subscriberID)
+		if err != nil {
+			log.Error(err)
+			return
+		}
+
+		uc, err := bot().Session.UserChannelCreate(subscriberID)
+		if err != nil {
+			log.Error(err)
+		}
+
+		compliment := bot().Compliments[rand.Intn(len(bot().Compliments))]
+		compliment = fmt.Sprintf("Hey %s, I just wanted to let you know...\n%s", user.Username, compliment)
+		_, err = bot().Session.ChannelMessageSend(uc.ID, compliment)
+		if err != nil {
+			log.Error(err)
+		}
+		log.Infof("Told %s that '%s'", user.Username, compliment)
+	}
+
+	wg := sync.WaitGroup{}
+	for sid, isSubbed := range subscribers {
+		if isSubbed {
+			go sendCompliment(sid, &wg)
+		}
+	}
+
+	wg.Wait()
+	return nil
 }

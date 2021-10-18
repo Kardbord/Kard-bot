@@ -26,9 +26,14 @@ func init() {
 var gbot *kardbot = nil
 
 type kardbot struct {
-	Session   *discordgo.Session
-	Greetings []string `json:"greetings"`
-	Farewells []string `json:"farewells"`
+	Session               *discordgo.Session
+	Greetings             []string        `json:"greetings"`
+	Farewells             []string        `json:"farewells"`
+	ComplimentSubsAM      map[string]bool `json:"compliment-subscribers-morning"`
+	complimentSubsAMMutex sync.RWMutex
+	ComplimentSubsPM      map[string]bool `json:"compliment-subscribers-evening"`
+	complimentSubsPMMutex sync.RWMutex
+	Compliments           []string `json:"compliments"`
 
 	// Guilds with which to explicitly register slash commands.
 	// Global commands take up to an hour (read, up to 24 hours)
@@ -218,6 +223,11 @@ func (kbot *kardbot) validateInitialization() {
 	if kbot.farewellCount() == 0 {
 		log.Fatal("No farewells configured.")
 	}
+
+	// Validate compliments
+	if kbot.complimentCount() == 0 {
+		log.Fatal("No compliments configured.")
+	}
 }
 
 func (kbot *kardbot) prepInteractionHandlers() {
@@ -383,6 +393,10 @@ func (kbot *kardbot) greetingCount() int {
 
 func (kbot *kardbot) farewellCount() int {
 	return len(kbot.Farewells)
+}
+
+func (kbot *kardbot) complimentCount() int {
+	return len(kbot.Compliments)
 }
 
 func (kbot *kardbot) randomGreeting() string {

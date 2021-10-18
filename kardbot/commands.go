@@ -168,6 +168,59 @@ func getCommands() []*discordgo.ApplicationCommand {
 			},
 		},
 		{
+			Name:        "compliments",
+			Description: "Receive a daily compliment!",
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        complimentsGet,
+					Description: "Get a compliment!",
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionBoolean,
+							Name:        complimentInDM,
+							Description: "Get the compliment as a DM",
+							Required:    false,
+						},
+					},
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommandGroup,
+					Name:        complimentsOptIn,
+					Description: "Opt-in to daily DM compliments",
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionSubCommand,
+							Name:        complimentsMorning,
+							Description: "Opt in to daily DM compliments in the morning",
+						},
+						{
+							Type:        discordgo.ApplicationCommandOptionSubCommand,
+							Name:        complimentsEvening,
+							Description: "Opt in to daily DM compliments in the evening",
+						},
+					},
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommandGroup,
+					Name:        complimentsOptOut,
+					Description: "Opt-out of daily DM compliments",
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionSubCommand,
+							Name:        complimentsMorning,
+							Description: "Opt out of daily DM compliments in the morning",
+						},
+						{
+							Type:        discordgo.ApplicationCommandOptionSubCommand,
+							Name:        complimentsEvening,
+							Description: "Opt out of daily DM compliments in the evening",
+						},
+					},
+				},
+			},
+		},
+		{
 			Name:        "help",
 			Description: "Get helpful information about the bot.",
 		},
@@ -181,6 +234,7 @@ func getCommandImpls() map[string]onInteractionHandler {
 		"pasta":           servePasta,
 		"reddit-roulette": redditRoulette,
 		"uwu":             uwuify,
+		"compliments":     complimentHandler,
 		"help":            botInfo,
 	}
 }
