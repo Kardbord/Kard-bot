@@ -221,6 +221,35 @@ func getCommands() []*discordgo.ApplicationCommand {
 			},
 		},
 		{
+			Name:        "creepy-dms",
+			Description: "What do you mean you don't want to receive creepy DMs?",
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        creepyDMGet,
+					Description: "Get a creepy DM ASAP",
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionBoolean,
+							Name:        creepyChannelDM,
+							Description: "Send the message to the channel instead of as a DM",
+							Required:    false,
+						},
+					},
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        creepyDMOptIn,
+					Description: "Opt in to random creepy DMs (1 per day max)",
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        creepyDMOptOut,
+					Description: "Opt out of random creepy DMs",
+				},
+			},
+		},
+		{
 			Name:        "help",
 			Description: "Get helpful information about the bot.",
 		},
@@ -235,6 +264,7 @@ func getCommandImpls() map[string]onInteractionHandler {
 		"reddit-roulette": redditRoulette,
 		"uwu":             uwuify,
 		"compliments":     complimentHandler,
+		"creepy-dms":      creepyDMHandler,
 		"help":            botInfo,
 	}
 }

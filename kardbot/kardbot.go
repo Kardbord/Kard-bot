@@ -26,22 +26,26 @@ func init() {
 var gbot *kardbot = nil
 
 type kardbot struct {
-	Session               *discordgo.Session
-	Greetings             []string        `json:"greetings"`
-	Farewells             []string        `json:"farewells"`
+	Session         *discordgo.Session
+	Greetings       []string `json:"greetings"`
+	Farewells       []string `json:"farewells"`
+	EnableDGLogging bool     `json:"enable-dg-logging"`
+
 	ComplimentSubsAM      map[string]bool `json:"compliment-subscribers-morning"`
 	complimentSubsAMMutex sync.RWMutex
 	ComplimentSubsPM      map[string]bool `json:"compliment-subscribers-evening"`
 	complimentSubsPMMutex sync.RWMutex
 	Compliments           []string `json:"compliments"`
 
+	CreepyDMSubs      map[string]bool `json:"creepy-dm-subscribers"`
+	creepyDMSubsMutex sync.RWMutex
+	CreepyDMs         []string `json:"creepy-dms"`
+
 	// Guilds with which to explicitly register slash commands.
 	// Global commands take up to an hour (read, up to 24 hours)
 	// to register. Specifying guilds allows slash commands to register
 	// instantly.
 	SlashGuilds []string `json:"slash-cmd-guilds"`
-
-	EnableDGLogging bool `json:"enable-dg-logging"`
 
 	// Initialized in kardbot.Run, used to determine when
 	// kardbot.Stop has been called.
