@@ -73,9 +73,11 @@ Now that the bot is invited, you should see it as an offline user in your server
 #### Instructions
 Head over to the [Releases](https://github.com/TannerKvarfordt/Kard-bot/releases) page and download the tarball for the desired release.
 These tarballs contain everything needed to get an instance of the bot up and running, provided that the host machine has internet access.
-Untar it on the host machine. Edit the included `.env` file to include the bot token you generated earlier.
+Untar it on the host machine. Edit the included `.env` file to include the bot token you generated earlier. You may also want to
+set the time zone by setting the `TZ` variable.
 ```shell
 KARDBOT_TOKEN="Your bot token here"
+TZ="Your time zone here ex: America/Boise"
 ```
 Next, edit the `slash-cmd-guilds` entry in the `config/config.json` file to include the guild (server) IDs of each server you invited the bot to.
 

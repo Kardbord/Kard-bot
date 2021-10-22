@@ -11,4 +11,5 @@ services:
       - KARDBOT_TOKEN=${KARDBOT_TOKEN}
       - KARDBOT_OWNER_ID=${KARDBOT_OWNER_ID}
       - KARDBOT_TESTBED_GUILD=${KARDBOT_TESTBED_GUILD}
+      - TZ=${TZ}
     restart: unless-stopped
