@@ -214,7 +214,6 @@ func sendCompliments(subscribers map[string]bool) error {
 		}
 
 		compliment := bot().Compliments[rand.Intn(len(bot().Compliments))]
-		compliment = fmt.Sprintf("Hey %s, I just wanted to let you know...\n%s", user.Username, compliment)
 		_, err = bot().Session.ChannelMessageSend(uc.ID, compliment)
 		if err != nil {
 			log.Error(err)

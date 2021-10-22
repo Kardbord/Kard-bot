@@ -153,7 +153,6 @@ func getCompliment(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	}
 
 	compliment := bot().Compliments[rand.Intn(len(bot().Compliments))]
-	compliment = fmt.Sprintf("Hey %s, I just wanted to let you know...\n%s", author, compliment)
 
 	sendAsDM := false
 	if len(i.ApplicationCommandData().Options[0].Options) > 0 {
@@ -174,7 +173,7 @@ func getCompliment(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
-				Content: fmt.Sprintf("%s had a compliment DM'd to them. :)", author),
+				Content: fmt.Sprintf("I DM'd a compliment to %s. :)", author),
 			},
 		})
 		if err != nil {
@@ -192,5 +191,5 @@ func getCompliment(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	if err != nil {
 		log.Error(err)
 	}
-	log.Infof("Told %s that '%s'", author, compliment)
+	log.Infof("To %s: \"%s\"", author, compliment)
 }
