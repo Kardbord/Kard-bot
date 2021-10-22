@@ -290,6 +290,7 @@ func sendCreepyDMs() {
 			log.Infof("%s escaped a creepy DM this time...", user.Username)
 			return nil
 		}
+		log.Infof("%s will get a creepy DM today >:)", user.Username)
 
 		dm := bot().CreepyDMs[rand.Intn(len(bot().CreepyDMs))]
 		uc, err := bot().Session.UserChannelCreate(subID)
