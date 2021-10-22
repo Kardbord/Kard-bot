@@ -52,7 +52,7 @@ func creepyDMsOptIn(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
-			Content: fmt.Sprintf("%s subscribed to creepy DMs", author),
+			Content: fmt.Sprintf("%s subscribed to creepy DMs 😈", author),
 		},
 	})
 	if err != nil {
