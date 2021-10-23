@@ -327,7 +327,7 @@ func writeCreepyDmSubscribersToConfig() error {
 		Odds: creepyDMOdds,
 	}
 
-	fileBytes, err := json.MarshalIndent(cfg, "", "")
+	fileBytes, err := json.MarshalIndent(cfg, "", "  ")
 	if err != nil {
 		return err
 	}
