@@ -3,6 +3,7 @@ package kardbot
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"math/rand"
 	"sync"
 	"time"
@@ -37,13 +38,23 @@ var (
 	creepyDMs []string
 )
 
+type creepyDmSubscribersConfig struct {
+	Subs map[string]bool `json:"creepy-dm-subscribers"`
+	Odds float32         `json:"creepy-dm-odds"`
+}
+
 const creepyDmSubscribersFilepath = "config/creepy-dm-subscribers.json"
 
+var creepyDmSubscribersFileMutex sync.RWMutex
+
 func init() {
-	cfg := struct {
-		Subs map[string]bool `json:"creepy-dm-subscribers"`
-		Odds float32         `json:"creepy-dm-odds"`
-	}{}
+	creepyDmSubscribersFileMutex.RLock()
+	defer creepyDmSubscribersFileMutex.RUnlock()
+	creepyDMSubsMutex.Lock()
+	defer creepyDMSubsMutex.Unlock()
+
+	cfg := creepyDmSubscribersConfig{}
+
 	cfg.Odds = defaultCreepyDMOdds
 
 	jsonCfg, err := config.NewJsonConfig(creepyDmSubscribersFilepath)
@@ -66,7 +77,6 @@ func init() {
 	if creepyDMOdds < 0.01 {
 		log.Warn("creepyDMOdds set at less than 1%")
 	}
-
 }
 
 const creepyDmListFilepath = "config/creepy-dms.json"
@@ -118,10 +128,25 @@ func creepyDMsOptIn(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	}
 
 	creepyDMSubsMutex.Lock()
-	defer creepyDMSubsMutex.Unlock()
 	creepyDMSubs[authorID] = true
-	log.Infof("User %s subscribed to creepy DMs", author)
+	creepyDMSubsMutex.Unlock()
 
+	err = writeCreepyDmSubscribersToConfig()
+	if err != nil {
+		log.Errorf("Error persisting user %s's subscription: %v", author, err)
+		err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: fmt.Sprintf("%s, you are subscribed to creepy DMs as long as the bot remains up, but there was an error persisting your subscription. Please try to opt-in again.", author),
+			},
+		})
+		if err != nil {
+			log.Error(err)
+		}
+		return
+	}
+
+	log.Infof("User %s subscribed to creepy DMs", author)
 	err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
@@ -141,14 +166,30 @@ func creepyDMsOptOut(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	}
 
 	creepyDMSubsMutex.Lock()
-	defer creepyDMSubsMutex.Unlock()
 	creepyDMSubs[authorID] = false
+	creepyDMSubsMutex.Unlock()
+
+	err = writeCreepyDmSubscribersToConfig()
+	if err != nil {
+		log.Errorf("Error persisting user %s's opt-out: %v", author, err)
+		err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: fmt.Sprintf("%s, you are unsubscribed to creepy DMs as long as the bot remains up, but there was an error persisting your opt-out. Please try to opt-out again.", author),
+			},
+		})
+		if err != nil {
+			log.Error(err)
+		}
+		return
+	}
+
 	log.Infof("User %s unsubscribed from creepy DMs", author)
 
 	err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
-			Content: fmt.Sprintf("%s unsubscribed from creepy DMs", author),
+			Content: fmt.Sprintf("%s unsubscribed from creepy DMs 👿", author),
 		},
 	})
 	if err != nil {
@@ -273,4 +314,23 @@ func isSubbedToCreepyDMs(subscriberID, subscriberName string) bool {
 		return false
 	}
 	return true
+}
+
+func writeCreepyDmSubscribersToConfig() error {
+	creepyDmSubscribersFileMutex.Lock()
+	defer creepyDmSubscribersFileMutex.Unlock()
+	creepyDMSubsMutex.RLock()
+	defer creepyDMSubsMutex.RUnlock()
+
+	cfg := creepyDmSubscribersConfig{
+		Subs: creepyDMSubs,
+		Odds: creepyDMOdds,
+	}
+
+	fileBytes, err := json.MarshalIndent(cfg, "", "")
+	if err != nil {
+		return err
+	}
+
+	return ioutil.WriteFile(creepyDmSubscribersFilepath, fileBytes, 0664)
 }

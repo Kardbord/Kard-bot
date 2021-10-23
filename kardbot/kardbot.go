@@ -93,6 +93,10 @@ func handleInterrupt() {
 
 // Stop and clean up.
 func Stop() {
+	if err := writeCreepyDmSubscribersToConfig(); err != nil {
+		log.Error(err)
+	}
+
 	if gbot == nil {
 		log.Info("Bot is not running")
 		return
