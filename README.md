@@ -79,7 +79,7 @@ set the time zone by setting the `TZ` variable.
 KARDBOT_TOKEN="Your bot token here"
 TZ="Your time zone here ex: America/Boise"
 ```
-Next, edit the `slash-cmd-guilds` entry in the `config/config.json` file to include the guild (server) IDs of each server you invited the bot to.
+Next, edit the `slash-cmd-guilds` entry in the `config/setup.json` file to include the guild (server) IDs of each server you invited the bot to.
 
 With your token in place and your config updated, you can simply run `docker-compose up -d` from the untarred directory to get your bot started!
 The Docker daemon will automatically download the needed docker image from [Docker Hub](https://hub.docker.com/repository/docker/tkvarfordt/kardbot/) or the
@@ -91,10 +91,12 @@ To check the status of the docker container, you can use `docker ps -a` or `dock
 - The [Go](https://golang.org/) 1.17 runtime or later.
 
 #### Instructions
-Assuming you have the [Go](https://golang.org/) runtime installed, you can install Kard-bot with a simple shell command.
+Assuming you have the [Go](https://golang.org/) runtime installed, you can install Kard-bot with a simple set of shell commands.
 
 ```shell
-go install github.com/TannerKvarfordt/Kard-bot
+go get github.com/TannerKvarfordt/Kard-bot
+cd $GOPATH/src/github.com/TannerKvarfordt/Kard-bot
+go build
 ```
 
 In order to authenticate with Discord, Kard-bot looks for the `KARDBOT_TOKEN` environment variable.
@@ -105,7 +107,7 @@ environment variables take precedence over anything in the `.env` file.
 KARDBOT_TOKEN="Your bot token here"
 ```
 
-You will also need to edit the `slash-cmd-guilds` entry in the `config/config.json` file to include the guild (server) IDs of each server you invited the bot to.
+You will also need to edit the `slash-cmd-guilds` entry in the `config/setup.json` file to include the guild (server) IDs of each server you invited the bot to.
 
 With your token in place and your config updated, you can simply run the Kard-bot binary to bring it to life!
 For a more robust running solution, consider creating a [systemd service](https://docs.fedoraproject.org/en-US/quick-docs/understanding-and-administering-systemd/#creating-new-systemd-services) or [using the provided Docker image](#host-using-docker).
