@@ -27,19 +27,7 @@ var gbot *kardbot = nil
 
 type kardbot struct {
 	Session         *discordgo.Session
-	Greetings       []string `json:"greetings"`
-	Farewells       []string `json:"farewells"`
-	EnableDGLogging bool     `json:"enable-dg-logging"`
-
-	ComplimentSubsAM      map[string]bool `json:"compliment-subscribers-morning"`
-	complimentSubsAMMutex sync.RWMutex
-	ComplimentSubsPM      map[string]bool `json:"compliment-subscribers-evening"`
-	complimentSubsPMMutex sync.RWMutex
-	Compliments           []string `json:"compliments"`
-
-	CreepyDMSubs      map[string]bool `json:"creepy-dm-subscribers"`
-	creepyDMSubsMutex sync.RWMutex
-	CreepyDMs         []string `json:"creepy-dms"`
+	EnableDGLogging bool `json:"enable-dg-logging"`
 
 	// Guilds with which to explicitly register slash commands.
 	// Global commands take up to an hour (read, up to 24 hours)
@@ -165,13 +153,20 @@ func (kbot *kardbot) initialize() {
 	log.Info("Interaction handlers registered")
 }
 
+const kardbotConfigFile = "config/setup.json"
+
 func (kbot *kardbot) configure() {
 	kbot.Session.Identify.Intents = Intents
 	kbot.Session.SyncEvents = false
 	kbot.Session.ShouldReconnectOnError = true
 	kbot.Session.StateEnabled = true
 
-	err := json.Unmarshal(config.RawJSONConfig(), kbot)
+	jsonCfg, err := config.NewJsonConfig(kardbotConfigFile)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = json.Unmarshal(jsonCfg.Raw, kbot)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -199,7 +194,7 @@ func (kbot *kardbot) validateInitialization() {
 		log.Warn("discordgo session will not reconnect on error.")
 	}
 	if kbot.Session.SyncEvents {
-		log.Warn("Session events are being executed synchronously, which may result in slower responses. Consider disabling this if command can safely be executed asynchronously.")
+		log.Warn("Session events are being executed synchronously, which may result in slower responses. Consider disabling this if commands can safely be executed asynchronously.")
 	}
 	if kbot.Session.Identify.Intents == discordgo.IntentsNone {
 		log.Warn("No intents registered with the discordgo API, which may result in decreased functionality.")
@@ -216,21 +211,6 @@ func (kbot *kardbot) validateInitialization() {
 	// Validate SlashGuilds
 	if len(kbot.SlashGuilds) == 0 {
 		log.Warn("No guilds are configured to register slash commands with.")
-	}
-
-	// Validate greetings
-	if kbot.greetingCount() == 0 {
-		log.Fatal("No greetings configured.")
-	}
-
-	// Validate farewells
-	if kbot.farewellCount() == 0 {
-		log.Fatal("No farewells configured.")
-	}
-
-	// Validate compliments
-	if kbot.complimentCount() == 0 {
-		log.Fatal("No compliments configured.")
 	}
 }
 
@@ -389,26 +369,6 @@ func (kbot *kardbot) unregisterAllCommands() {
 	log.Info("Unregistering all commands from previous bot instance")
 	kbot.unregisterGlobalCommands()
 	kbot.unregisterAllGuildCommands()
-}
-
-func (kbot *kardbot) greetingCount() int {
-	return len(kbot.Greetings)
-}
-
-func (kbot *kardbot) farewellCount() int {
-	return len(kbot.Farewells)
-}
-
-func (kbot *kardbot) complimentCount() int {
-	return len(kbot.Compliments)
-}
-
-func (kbot *kardbot) randomGreeting() string {
-	return kbot.Greetings[rand.Intn(kbot.greetingCount())]
-}
-
-func (kbot *kardbot) randomFarewell() string {
-	return kbot.Farewells[rand.Intn(kbot.farewellCount())]
 }
 
 // updateLastActive creates a go routine which sets the

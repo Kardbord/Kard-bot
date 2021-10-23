@@ -1,0 +1,24 @@
+{
+  "pastas": [
+    {
+      "name": "bee-movie",
+      "file": "assets/pasta/beemovie.txt"
+    },
+    {
+      "name": "amogus",
+      "file": "assets/pasta/amogus.txt"
+    },
+    {
+      "name": "fitnessgram",
+      "file": "assets/pasta/fitnessgram.txt"
+    },
+    {
+      "name": "rekt",
+      "file": "assets/pasta/rekt.txt"
+    },
+    {
+      "name": "table-flip",
+      "file": "assets/pasta/tableflip.txt"
+    }
+  ]
+}

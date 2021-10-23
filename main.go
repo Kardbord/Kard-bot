@@ -13,6 +13,8 @@ import (
 	"github.com/TannerKvarfordt/Kard-bot/kardbot/config"
 )
 
+const MainConfigFile = "config/setup.json"
+
 func init() {
 	log.SetReportCaller(true)
 	log.SetFormatter(&log.TextFormatter{
@@ -29,7 +31,11 @@ func init() {
 		DefaultLogLvl string `json:"default-log-level"`
 	}{"info"}
 
-	err := json.Unmarshal(config.RawJSONConfig(), &cfg)
+	jsonCfg, err := config.NewJsonConfig(MainConfigFile)
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = json.Unmarshal(jsonCfg.Raw, &cfg)
 	if err != nil {
 		log.Fatal(err)
 	}

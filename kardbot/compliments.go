@@ -1,9 +1,12 @@
 package kardbot
 
 import (
+	"encoding/json"
 	"fmt"
 	"math/rand"
+	"sync"
 
+	"github.com/TannerKvarfordt/Kard-bot/kardbot/config"
 	"github.com/bwmarrin/discordgo"
 
 	log "github.com/sirupsen/logrus"
@@ -17,6 +20,70 @@ const (
 	complimentsGet     = "get-compliment"
 	complimentInDM     = "dm"
 )
+
+var (
+	// Morning compliment subscribers.
+	// key: discord user ID
+	// val: is currently subscribed
+	complimentSubsAM      map[string]bool
+	complimentSubsAMMutex sync.RWMutex
+
+	// Evening compliment subscribers.
+	// key: discord user ID
+	// val: is currently subscribed
+	complimentSubsPM      map[string]bool
+	complimentSubsPMMutex sync.RWMutex
+
+	// List of compliments
+	compliments []string
+)
+
+const complimentSubscribersFilepath = "config/compliment-subscribers.json"
+
+func init() {
+	cfg := struct {
+		SubsAM map[string]bool `json:"compliment-subscribers-morning"`
+		SubsPM map[string]bool `json:"compliment-subscribers-evening"`
+	}{}
+
+	jsonCfg, err := config.NewJsonConfig(complimentSubscribersFilepath)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = json.Unmarshal(jsonCfg.Raw, &cfg)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	complimentSubsAM = cfg.SubsAM
+	complimentSubsPM = cfg.SubsPM
+}
+
+const complimentListFilepath = "config/compliments.json"
+
+func init() {
+	cfg := struct {
+		Compliments []string `json:"compliments"`
+	}{}
+
+	jsonCfg, err := config.NewJsonConfig(complimentListFilepath)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = json.Unmarshal(jsonCfg.Raw, &cfg)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	compliments = cfg.Compliments
+
+	// Validate compliments
+	if len(compliments) == 0 {
+		log.Fatal("No compliments configured.")
+	}
+}
 
 func complimentHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	wg := bot().updateLastActive()
@@ -60,9 +127,9 @@ func morningComplimentOptIn(s *discordgo.Session, i *discordgo.InteractionCreate
 		return
 	}
 
-	bot().complimentSubsAMMutex.Lock()
-	defer bot().complimentSubsAMMutex.Unlock()
-	bot().ComplimentSubsAM[authorID] = true
+	complimentSubsAMMutex.Lock()
+	defer complimentSubsAMMutex.Unlock()
+	complimentSubsAM[authorID] = true
 	log.Infof("User %s subscribed to morning compliments", author)
 
 	err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
@@ -83,9 +150,9 @@ func morningComplimentOptOut(s *discordgo.Session, i *discordgo.InteractionCreat
 		return
 	}
 
-	bot().complimentSubsAMMutex.Lock()
-	defer bot().complimentSubsAMMutex.Unlock()
-	bot().ComplimentSubsAM[authorID] = false
+	complimentSubsAMMutex.Lock()
+	defer complimentSubsAMMutex.Unlock()
+	complimentSubsAM[authorID] = false
 	log.Infof("User %s un-subscribed to morning compliments", author)
 
 	err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
@@ -106,9 +173,9 @@ func eveningComplimentOptIn(s *discordgo.Session, i *discordgo.InteractionCreate
 		return
 	}
 
-	bot().complimentSubsPMMutex.Lock()
-	defer bot().complimentSubsPMMutex.Unlock()
-	bot().ComplimentSubsPM[authorID] = true
+	complimentSubsPMMutex.Lock()
+	defer complimentSubsPMMutex.Unlock()
+	complimentSubsPM[authorID] = true
 	log.Infof("User %s subscribed to evening compliments", author)
 
 	err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
@@ -129,9 +196,9 @@ func eveningComplimentOptOut(s *discordgo.Session, i *discordgo.InteractionCreat
 		return
 	}
 
-	bot().complimentSubsPMMutex.Lock()
-	defer bot().complimentSubsPMMutex.Unlock()
-	bot().ComplimentSubsPM[authorID] = false
+	complimentSubsPMMutex.Lock()
+	defer complimentSubsPMMutex.Unlock()
+	complimentSubsPM[authorID] = false
 	log.Infof("User %s un-subscribed to evening compliments", author)
 
 	err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
@@ -152,7 +219,7 @@ func getCompliment(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		return
 	}
 
-	compliment := bot().Compliments[rand.Intn(len(bot().Compliments))]
+	compliment := compliments[rand.Intn(len(compliments))]
 
 	sendAsDM := false
 	if len(i.ApplicationCommandData().Options[0].Options) > 0 {
@@ -192,4 +259,61 @@ func getCompliment(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		log.Error(err)
 	}
 	log.Infof("To %s: \"%s\"", author, compliment)
+}
+
+func sendMorningCompliments() {
+	wg := bot().updateLastActive()
+	defer wg.Wait()
+
+	complimentSubsAMMutex.RLock()
+	defer complimentSubsAMMutex.RUnlock()
+	sendCompliments(complimentSubsAM)
+}
+
+func sendEveningCompliments() {
+	wg := bot().updateLastActive()
+	defer wg.Wait()
+
+	complimentSubsPMMutex.RLock()
+	defer complimentSubsPMMutex.RUnlock()
+	sendCompliments(complimentSubsPM)
+}
+
+func sendCompliments(subscribers map[string]bool) error {
+	var sendCompliment = func(subscriberID string, wg *sync.WaitGroup) {
+		if wg == nil {
+			log.Error("nil waitgroup provided")
+			return
+		}
+		wg.Add(1)
+		defer wg.Done()
+
+		user, err := bot().Session.User(subscriberID)
+		if err != nil {
+			log.Error(err)
+			return
+		}
+
+		uc, err := bot().Session.UserChannelCreate(subscriberID)
+		if err != nil {
+			log.Error(err)
+		}
+
+		compliment := compliments[rand.Intn(len(compliments))]
+		_, err = bot().Session.ChannelMessageSend(uc.ID, compliment)
+		if err != nil {
+			log.Error(err)
+		}
+		log.Infof("Told %s that '%s'", user.Username, compliment)
+	}
+
+	wg := sync.WaitGroup{}
+	for sid, isSubbed := range subscribers {
+		if isSubbed {
+			go sendCompliment(sid, &wg)
+		}
+	}
+
+	wg.Wait()
+	return nil
 }

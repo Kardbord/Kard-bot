@@ -1,16 +1,13 @@
 package kardbot
 
 import (
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"math/rand"
 	"os"
 	"regexp"
-	"sync"
 	"time"
 
-	"github.com/TannerKvarfordt/Kard-bot/kardbot/config"
 	"github.com/TannerKvarfordt/Kard-bot/kardbot/dg_helpers"
 	"github.com/bwmarrin/discordgo"
 	"github.com/gabriel-vasile/mimetype"
@@ -173,152 +170,4 @@ func setStatus() {
 			log.Infof("Set bot status to %s", bot().status.Load())
 		}
 	}
-}
-
-func sendMorningCompliments() {
-	wg := bot().updateLastActive()
-	defer wg.Wait()
-
-	bot().complimentSubsAMMutex.RLock()
-	defer bot().complimentSubsAMMutex.RUnlock()
-	sendCompliments(bot().ComplimentSubsAM)
-}
-
-func sendEveningCompliments() {
-	wg := bot().updateLastActive()
-	defer wg.Wait()
-
-	bot().complimentSubsPMMutex.RLock()
-	defer bot().complimentSubsPMMutex.RUnlock()
-	sendCompliments(bot().ComplimentSubsPM)
-}
-
-func sendCompliments(subscribers map[string]bool) error {
-	var sendCompliment = func(subscriberID string, wg *sync.WaitGroup) {
-		if wg == nil {
-			log.Error("nil waitgroup provided")
-			return
-		}
-		wg.Add(1)
-		defer wg.Done()
-
-		user, err := bot().Session.User(subscriberID)
-		if err != nil {
-			log.Error(err)
-			return
-		}
-
-		uc, err := bot().Session.UserChannelCreate(subscriberID)
-		if err != nil {
-			log.Error(err)
-		}
-
-		compliment := bot().Compliments[rand.Intn(len(bot().Compliments))]
-		_, err = bot().Session.ChannelMessageSend(uc.ID, compliment)
-		if err != nil {
-			log.Error(err)
-		}
-		log.Infof("Told %s that '%s'", user.Username, compliment)
-	}
-
-	wg := sync.WaitGroup{}
-	for sid, isSubbed := range subscribers {
-		if isSubbed {
-			go sendCompliment(sid, &wg)
-		}
-	}
-
-	wg.Wait()
-	return nil
-}
-
-const defaultCreepyDMOdds float32 = 0.5
-
-var creepyDMOdds = func() float32 { return defaultCreepyDMOdds }
-
-func init() {
-	var cfg = struct {
-		CreepyDMOdds float32 `json:"creepy-dm-odds"`
-	}{defaultCreepyDMOdds}
-	json.Unmarshal(config.RawJSONConfig(), &cfg)
-
-	if cfg.CreepyDMOdds != 0.0 {
-		creepyDMOdds = func() float32 { return cfg.CreepyDMOdds }
-	}
-
-	if creepyDMOdds() < 0.0 || creepyDMOdds() > 1.0 {
-		log.Fatalf("creepyDMOdds configuration value (%f) is out of range. Valid values are [0.0, 1.0]", creepyDMOdds())
-	}
-
-	if creepyDMOdds() < 0.01 {
-		log.Warn("creepyDMOdds set at less than 1%")
-	}
-}
-
-// sendCreepyDMs is run every day. It spawns a goroutine for each
-// subscriber and randomly decides whether or not said subscriber
-// will receive creepy-PM that day. If so the goroutine sleeps
-// for a random amount of time, not exceeding 24 hours, before
-// sending the DM.
-func sendCreepyDMs() {
-	wg := sync.WaitGroup{}
-	defer wg.Wait()
-	bot().creepyDMSubsMutex.RLock()
-	// Defers are LIFO; this MUST happen prior to wg.Wait
-	// or any subscribe/unsubscribe commands will be deadlocked.
-	defer bot().creepyDMSubsMutex.RUnlock()
-
-	// Made this an anonymous inner function so that I wouldn't
-	// accidentally use an uncopied value from bot().CreepyDMSubs
-	// after the mutex is released.
-	sendDM := func(subID string) error {
-		const minutesPerDay = 1440
-		time.Sleep(time.Minute * time.Duration(rand.Intn(minutesPerDay)))
-
-		activeWG := bot().updateLastActive()
-		defer activeWG.Wait()
-
-		user, err := bot().Session.User(subID)
-		if err != nil {
-			return err
-		}
-		if !isSubbedToCreepyDMs(subID, user.Username) {
-			log.Infof("%s has unsubbed from creepy DMs since this routine started", user.Username)
-			return nil
-		}
-		if rand.Float32() > creepyDMOdds() {
-			log.Infof("%s escaped a creepy DM this time...", user.Username)
-			return nil
-		}
-		log.Infof("%s will get a creepy DM today >:)", user.Username)
-
-		dm := bot().CreepyDMs[rand.Intn(len(bot().CreepyDMs))]
-		uc, err := bot().Session.UserChannelCreate(subID)
-		if err != nil {
-			return err
-		}
-
-		_, err = bot().Session.ChannelMessageSend(uc.ID, dm)
-		return err
-	}
-
-	for subscriberID := range bot().CreepyDMSubs {
-		wg.Add(1)
-		go func(subID string) {
-			defer wg.Done()
-			if err := sendDM(subID); err != nil {
-				log.Error(err)
-			}
-		}(subscriberID)
-	}
-}
-
-func isSubbedToCreepyDMs(subscriberID, subscriberName string) bool {
-	bot().creepyDMSubsMutex.RLock()
-	defer bot().creepyDMSubsMutex.RUnlock()
-
-	if ok, isSubbed := bot().CreepyDMSubs[subscriberID]; !ok || !isSubbed {
-		return false
-	}
-	return true
 }

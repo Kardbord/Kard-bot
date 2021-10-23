@@ -26,11 +26,19 @@ var pastaMenu func() map[string]pasta
 // Does not include the "random" option
 var pastaList func() []string
 
+const PastaConfigFile = "config/pasta.json"
+
 func init() {
 	cfg := struct {
 		Pastas []pasta `json:"pastas"`
 	}{}
-	err := json.Unmarshal(config.RawJSONConfig(), &cfg)
+
+	jsonCfg, err := config.NewJsonConfig(PastaConfigFile)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = json.Unmarshal(jsonCfg.Raw, &cfg)
 	if err != nil {
 		log.Fatal(err)
 	}
