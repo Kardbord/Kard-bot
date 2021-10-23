@@ -1,8 +1,8 @@
 version: "3.9"
 services:
   kardbot:
-    image: tkvarfordt/kardbot:v1.4.1-beta
-    container_name: kardbot-v1.4.1-beta
+    image: tkvarfordt/kardbot:v1.4.2-beta
+    container_name: kardbot-v1.4.2-beta
     volumes:
       - ./config:/app/config
       - ./assets/pasta:/app/assets/pasta
