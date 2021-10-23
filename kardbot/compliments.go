@@ -3,6 +3,7 @@ package kardbot
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"math/rand"
 	"sync"
 
@@ -40,11 +41,22 @@ var (
 
 const complimentSubscribersFilepath = "config/compliment-subscribers.json"
 
+var complimentSubscribersFileMutex sync.RWMutex
+
+type complimentSubscribersConfig struct {
+	SubsAM map[string]bool `json:"compliment-subscribers-morning"`
+	SubsPM map[string]bool `json:"compliment-subscribers-evening"`
+}
+
 func init() {
-	cfg := struct {
-		SubsAM map[string]bool `json:"compliment-subscribers-morning"`
-		SubsPM map[string]bool `json:"compliment-subscribers-evening"`
-	}{}
+	complimentSubscribersFileMutex.RLock()
+	defer complimentSubscribersFileMutex.RUnlock()
+	complimentSubsAMMutex.Lock()
+	defer complimentSubsAMMutex.Unlock()
+	complimentSubsPMMutex.Lock()
+	defer complimentSubsPMMutex.Unlock()
+
+	cfg := complimentSubscribersConfig{}
 
 	jsonCfg, err := config.NewJsonConfig(complimentSubscribersFilepath)
 	if err != nil {
@@ -128,10 +140,25 @@ func morningComplimentOptIn(s *discordgo.Session, i *discordgo.InteractionCreate
 	}
 
 	complimentSubsAMMutex.Lock()
-	defer complimentSubsAMMutex.Unlock()
 	complimentSubsAM[authorID] = true
-	log.Infof("User %s subscribed to morning compliments", author)
+	complimentSubsAMMutex.Unlock()
 
+	err = writeComplimentSubscribersToConfig()
+	if err != nil {
+		log.Errorf("Error persisting user %s's subscription: %v", author, err)
+		err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: fmt.Sprintf("%s, you are subscribed to receive morning compliments as long as the bot is up, but there was an error persisting your subscription. Please try to opt-in again.", author),
+			},
+		})
+		if err != nil {
+			log.Error(err)
+		}
+		return
+	}
+
+	log.Infof("User %s subscribed to morning compliments", author)
 	err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
@@ -151,8 +178,24 @@ func morningComplimentOptOut(s *discordgo.Session, i *discordgo.InteractionCreat
 	}
 
 	complimentSubsAMMutex.Lock()
-	defer complimentSubsAMMutex.Unlock()
 	complimentSubsAM[authorID] = false
+	complimentSubsAMMutex.Unlock()
+
+	err = writeComplimentSubscribersToConfig()
+	if err != nil {
+		log.Errorf("Error persisting user %s's opt-out: %v", author, err)
+		err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: fmt.Sprintf("%s, you are unsubscribed from morning compliments as long as the bot is up, but there was an error persisting your opt-out. Please try to opt-out again.", author),
+			},
+		})
+		if err != nil {
+			log.Error(err)
+		}
+		return
+	}
+
 	log.Infof("User %s un-subscribed to morning compliments", author)
 
 	err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
@@ -174,10 +217,25 @@ func eveningComplimentOptIn(s *discordgo.Session, i *discordgo.InteractionCreate
 	}
 
 	complimentSubsPMMutex.Lock()
-	defer complimentSubsPMMutex.Unlock()
 	complimentSubsPM[authorID] = true
-	log.Infof("User %s subscribed to evening compliments", author)
+	complimentSubsPMMutex.Unlock()
 
+	err = writeComplimentSubscribersToConfig()
+	if err != nil {
+		log.Errorf("Error persisting user %s's subscription: %v", author, err)
+		err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: fmt.Sprintf("%s, you are subscribed to receive evening compliments as long as the bot is up, but there was an error persisting your subscription. Please try to opt-in again.", author),
+			},
+		})
+		if err != nil {
+			log.Error(err)
+		}
+		return
+	}
+
+	log.Infof("User %s subscribed to evening compliments", author)
 	err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
@@ -197,10 +255,25 @@ func eveningComplimentOptOut(s *discordgo.Session, i *discordgo.InteractionCreat
 	}
 
 	complimentSubsPMMutex.Lock()
-	defer complimentSubsPMMutex.Unlock()
 	complimentSubsPM[authorID] = false
-	log.Infof("User %s un-subscribed to evening compliments", author)
+	complimentSubsPMMutex.Unlock()
 
+	err = writeComplimentSubscribersToConfig()
+	if err != nil {
+		log.Errorf("Error persisting user %s's opt-out: %v", author, err)
+		err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: fmt.Sprintf("%s, you are unsubscribed from evening compliments as long as the bot is up, but there was an error persisting your opt-out. Please try to opt-out again.", author),
+			},
+		})
+		if err != nil {
+			log.Error(err)
+		}
+		return
+	}
+
+	log.Infof("User %s un-subscribed to evening compliments", author)
 	err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
@@ -316,4 +389,25 @@ func sendCompliments(subscribers map[string]bool) error {
 
 	wg.Wait()
 	return nil
+}
+
+func writeComplimentSubscribersToConfig() error {
+	complimentSubscribersFileMutex.Lock()
+	defer complimentSubscribersFileMutex.Unlock()
+	complimentSubsAMMutex.RLock()
+	defer complimentSubsAMMutex.RUnlock()
+	complimentSubsPMMutex.RLock()
+	defer complimentSubsPMMutex.RUnlock()
+
+	cfg := complimentSubscribersConfig{
+		SubsAM: complimentSubsAM,
+		SubsPM: complimentSubsPM,
+	}
+
+	fileBytes, err := json.MarshalIndent(cfg, "", "")
+	if err != nil {
+		return err
+	}
+
+	return ioutil.WriteFile(complimentSubscribersFilepath, fileBytes, 0664)
 }

@@ -97,6 +97,10 @@ func Stop() {
 		log.Error(err)
 	}
 
+	if err := writeComplimentSubscribersToConfig(); err != nil {
+		log.Error(err)
+	}
+
 	if gbot == nil {
 		log.Info("Bot is not running")
 		return
