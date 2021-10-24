@@ -265,26 +265,27 @@ func sendCreepyDMs() {
 	// accidentally use an uncopied value from bot().CreepyDMSubs
 	// after the mutex is released.
 	sendDM := func(subID string) error {
+		user, err := bot().Session.User(subID)
+		if err != nil {
+			return err
+		}
+
+		if rand.Float32() > creepyDMOdds {
+			log.Infof("%s escaped a creepy DM this time...", user.Username)
+			return nil
+		}
+		log.Infof("%s will get a creepy DM today >:) (unless they unsubscribe before we send it)", user.Username)
+
 		const minutesPerDay = 1440
 		time.Sleep(time.Minute * time.Duration(rand.Intn(minutesPerDay)))
 
 		activeWG := bot().updateLastActive()
 		defer activeWG.Wait()
 
-		user, err := bot().Session.User(subID)
-		if err != nil {
-			return err
-		}
 		if !isSubbedToCreepyDMs(subID, user.Username) {
 			log.Infof("%s has unsubbed from creepy DMs since this routine started", user.Username)
 			return nil
 		}
-		if rand.Float32() > creepyDMOdds {
-			log.Infof("%s escaped a creepy DM this time...", user.Username)
-			return nil
-		}
-		log.Infof("%s will get a creepy DM today >:)", user.Username)
-
 		dm := creepyDMs[rand.Intn(len(creepyDMs))]
 		uc, err := bot().Session.UserChannelCreate(subID)
 		if err != nil {
