@@ -92,3 +92,14 @@ func fastHappyColorInt64() (int64, error) {
 	i, err := strconv.ParseInt(strings.Replace(colorful.FastHappyColor().Hex(), "#", "", -1), 16, 32)
 	return i, err
 }
+
+var sentenceEndPunctRegex = func() *regexp.Regexp { return nil }
+
+func init() {
+	r := regexp.MustCompile(`\s*[^\d\w]+\s*$`)
+	if r == nil {
+		log.Fatal("Could not init sentenceEndPunctRegex")
+	}
+
+	sentenceEndPunctRegex = func() *regexp.Regexp { return r }
+}

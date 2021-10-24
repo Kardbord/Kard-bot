@@ -25,6 +25,18 @@ func getCommands() []*discordgo.ApplicationCommand {
 			},
 		},
 		{
+			Name:        "what-are-the-odds",
+			Description: "What are the odds that an event will occur? Use third-person voice for best results.",
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Type:        discordgo.ApplicationCommandOptionString,
+					Name:        "event",
+					Description: "something that you want to know the odds of",
+					Required:    true,
+				},
+			},
+		},
+		{
 			Name:        "loglevel",
 			Description: "Update the log level of the bot. Only works for whitelisted users.",
 			Options: []*discordgo.ApplicationCommandOption{
@@ -258,13 +270,14 @@ func getCommands() []*discordgo.ApplicationCommand {
 
 func getCommandImpls() map[string]onInteractionHandler {
 	return map[string]onInteractionHandler{
-		"roll":            rollDice,
-		"loglevel":        updateLogLevel,
-		"pasta":           servePasta,
-		"reddit-roulette": redditRoulette,
-		"uwu":             uwuify,
-		"compliments":     complimentHandler,
-		"creepy-dms":      creepyDMHandler,
-		"help":            botInfo,
+		"roll":              rollDice,
+		"loglevel":          updateLogLevel,
+		"pasta":             servePasta,
+		"reddit-roulette":   redditRoulette,
+		"uwu":               uwuify,
+		"compliments":       complimentHandler,
+		"creepy-dms":        creepyDMHandler,
+		"help":              botInfo,
+		"what-are-the-odds": whatAreTheOdds,
 	}
 }
