@@ -96,7 +96,7 @@ func fastHappyColorInt64() (int64, error) {
 var sentenceEndPunctRegex = func() *regexp.Regexp { return nil }
 
 func init() {
-	r := regexp.MustCompile(`\s*[^\d\w]+\s*$`)
+	r := regexp.MustCompile(`\s*[^\d\w>]+\s*$`)
 	if r == nil {
 		log.Fatal("Could not init sentenceEndPunctRegex")
 	}
