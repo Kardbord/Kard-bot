@@ -54,7 +54,9 @@ func updateLogLevel(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		log.Info(info)
 		log.SetLevel(lvl)
 		if bot().EnableDGLogging {
+			bot().dgLoggingMutex.Lock()
 			s.LogLevel = logrusToDiscordGo()[lvl]
+			bot().dgLoggingMutex.Unlock()
 		}
 		err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,

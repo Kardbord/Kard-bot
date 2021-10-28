@@ -26,7 +26,9 @@ func init() {
 var gbot *kardbot = nil
 
 type kardbot struct {
-	Session         *discordgo.Session
+	Session        *discordgo.Session
+	dgLoggingMutex sync.Mutex
+
 	EnableDGLogging bool `json:"enable-dg-logging"`
 
 	// Guilds with which to explicitly register slash commands.
@@ -183,7 +185,9 @@ func (kbot *kardbot) configure() {
 	}
 
 	if kbot.EnableDGLogging {
+		kbot.dgLoggingMutex.Lock()
 		kbot.Session.LogLevel = logrusToDiscordGo()[log.GetLevel()]
+		kbot.dgLoggingMutex.Unlock()
 	}
 }
 
