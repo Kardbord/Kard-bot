@@ -3,6 +3,10 @@
 </div>
 
 # Kard-bot
+[![Build](https://github.com/TannerKvarfordt/Kard-bot/actions/workflows/go.yml/badge.svg)](https://github.com/TannerKvarfordt/Kard-bot/actions/workflows/go.yml)
+[![CodeQL](https://github.com/TannerKvarfordt/Kard-bot/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/TannerKvarfordt/Kard-bot/actions/workflows/codeql-analysis.yml)
+[![Docker Image](https://github.com/TannerKvarfordt/Kard-bot/actions/workflows/release.yml/badge.svg)](https://github.com/TannerKvarfordt/Kard-bot/actions/workflows/release.yml)
+
 
 A discord bot destined for greatness.
 
