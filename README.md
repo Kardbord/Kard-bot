@@ -6,7 +6,7 @@
 [![Build](https://github.com/TannerKvarfordt/Kard-bot/actions/workflows/go.yml/badge.svg)](https://github.com/TannerKvarfordt/Kard-bot/actions/workflows/go.yml)
 [![CodeQL](https://github.com/TannerKvarfordt/Kard-bot/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/TannerKvarfordt/Kard-bot/actions/workflows/codeql-analysis.yml)
 [![Docker Image](https://github.com/TannerKvarfordt/Kard-bot/actions/workflows/release.yml/badge.svg)](https://github.com/TannerKvarfordt/Kard-bot/actions/workflows/release.yml)
-
+[![Go Report Card](https://goreportcard.com/badge/github.com/TannerKvarfordt/Kard-bot)](https://goreportcard.com/report/github.com/TannerKvarfordt/Kard-bot)
 
 A discord bot destined for greatness.
 
