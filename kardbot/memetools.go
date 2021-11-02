@@ -113,8 +113,9 @@ func buildMemeCommands() []*discordgo.ApplicationCommand {
 			Type:        discordgo.ApplicationCommandOptionBoolean,
 			Name:        previewOpt,
 			Description: "DM's you this meme so you can preview it before sending it to the channel.",
+			Required:    true,
 		}
-		for i := range subcmd.Options {
+		for i := 1; i < len(subcmd.Options); i++ {
 			subcmd.Options[i] = &discordgo.ApplicationCommandOption{}
 			subcmd.Options[i].Type = discordgo.ApplicationCommandOptionString
 			subcmd.Options[i].Name = fmt.Sprint(i)
@@ -161,6 +162,21 @@ func buildAMeme(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		} else {
 			log.Errorf("Unknown argument: %s", arg.Name)
 			return
+		}
+	}
+
+	switch len(i.ApplicationCommandData().Options[0].Options) {
+	case 0:
+		fallthrough
+	case 1:
+		for i := range boxes {
+			boxes[i].Text = fmt.Sprintf("Placeholder %d", i)
+		}
+	default:
+		for i := range boxes {
+			if i != 0 && boxes[i].Text == "" {
+				boxes[i].Text = fmt.Sprintf("Placeholder %d", i)
+			}
 		}
 	}
 
