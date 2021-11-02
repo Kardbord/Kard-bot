@@ -69,11 +69,17 @@ func isHTTPS(url string) bool {
 	return strings.HasPrefix(resp.Request.URL.String(), "https://")
 }
 
-var isNotNumericRegex = func() *regexp.Regexp { return nil }
+var (
+	isNotNumericRegex = func() *regexp.Regexp { return nil }
+	isNumericRegex    = func() *regexp.Regexp { return nil }
+)
 
 func init() {
-	r := regexp.MustCompile("[^0-9]+")
-	isNotNumericRegex = func() *regexp.Regexp { return r }
+	r1 := regexp.MustCompile("[^0-9]+")
+	isNotNumericRegex = func() *regexp.Regexp { return r1 }
+
+	r2 := regexp.MustCompile(`^\d+$`)
+	isNumericRegex = func() *regexp.Regexp { return r2 }
 }
 
 // Taken from https://stackoverflow.com/questions/41602230
@@ -102,17 +108,6 @@ func init() {
 	}
 
 	sentenceEndPunctRegex = func() *regexp.Regexp { return r }
-}
-
-var whiteSpaceRegexp = func() *regexp.Regexp { return nil }
-
-func init() {
-	r := regexp.MustCompile(`\s+`)
-	if r == nil {
-		log.Fatal("Could not compile whiteSpaceRegexp")
-	}
-
-	whiteSpaceRegexp = func() *regexp.Regexp { return r }
 }
 
 func MinOf(vars ...int) int {

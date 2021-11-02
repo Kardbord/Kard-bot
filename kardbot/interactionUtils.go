@@ -103,3 +103,20 @@ func channelIsNSFW(s *discordgo.Session, i *discordgo.InteractionCreate) (bool, 
 
 	return ch.NSFW, nil
 }
+
+func getInteractionCreateAuthorMention(i *discordgo.InteractionCreate) (string, error) {
+	if i == nil {
+		return "", errors.New("context is nil")
+	}
+
+	if i.Member != nil {
+		if i.Member.User == nil {
+			return "", errors.New("member.user is nil")
+		}
+		return i.Member.User.Mention(), nil
+	} else if i.User != nil {
+		return i.User.Mention(), nil
+	} else {
+		return "", errors.New("member and user are nil")
+	}
+}

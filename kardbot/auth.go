@@ -14,12 +14,16 @@ const (
 	BotOwnerEnv     = "KARDBOT_OWNER_ID"
 	TestbedGuildEnv = "KARDBOT_TESTBED_GUILD"
 	Intents         = discordgo.IntentsAllWithoutPrivileged
+	ImgflipUserEnv  = "IMGFLIP_API_USERNAME"
+	ImgflipPassEnv  = "IMGFLIP_API_PASSWORD"
 )
 
 var (
 	getBotToken     = func() string { return "" }
 	getOwnerID      = func() string { return "" }
 	getTestbedGuild = func() string { return "" }
+	getImgflipUser  = func() string { return "" }
+	getImgflipPass  = func() string { return "" }
 )
 
 // Retrieves the bot's auth token from the environment
@@ -51,4 +55,20 @@ func init() {
 		log.Warnf("%s is the empty string. Commands will not be registered with a testbed guild.", TestbedGuildEnv)
 	}
 	getTestbedGuild = func() string { return testbed }
+
+	imgflipUser, userFound := os.LookupEnv(ImgflipUserEnv)
+	if !userFound {
+		log.Warnf("%s not found in environment", ImgflipUserEnv)
+	} else if imgflipUser == "" {
+		log.Warnf("%s is the empty string. %s will not work", ImgflipUserEnv, memeCommand)
+	}
+	getImgflipUser = func() string { return imgflipUser }
+
+	imgflipPass, passFound := os.LookupEnv(ImgflipPassEnv)
+	if !passFound {
+		log.Warnf("%s not found in environment", ImgflipPassEnv)
+	} else if imgflipPass == "" {
+		log.Warnf("%s is the empty string. %s will not work", ImgflipPassEnv, memeCommand)
+	}
+	getImgflipPass = func() string { return imgflipPass }
 }

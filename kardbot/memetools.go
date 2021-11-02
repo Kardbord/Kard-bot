@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"math"
 	"regexp"
+	"strconv"
 	"strings"
 
+	"github.com/TannerKvarfordt/Kard-bot/kardbot/dg_helpers"
 	"github.com/TannerKvarfordt/imgflipgo"
 	"github.com/bwmarrin/discordgo"
 	log "github.com/sirupsen/logrus"
@@ -14,6 +16,8 @@ import (
 const (
 	memeCommand     = "build-a-meme"
 	maxMemeCommands = 4
+
+	previewOpt = "preview"
 )
 
 var memeCommandRegex = func() *regexp.Regexp { return nil }
@@ -33,7 +37,7 @@ func strMatchesMemeCmdPattern(str string) bool {
 }
 
 var (
-	// template.ID to Meme mapping
+	// Meme.Name to Meme mapping
 	memeTemplates func() map[string]imgflipgo.Meme
 
 	memeCommands func() []*discordgo.ApplicationCommand
@@ -45,10 +49,18 @@ func init() {
 		log.Fatal(err)
 	}
 
+	whiteSpaceRegexp := regexp.MustCompile(`\s+`)
+	if whiteSpaceRegexp == nil {
+		log.Fatal("Could not compile whiteSpaceRegexp")
+	}
 	memeMap := make(map[string]imgflipgo.Meme, len(memes))
 	for _, meme := range memes {
-		meme.Name = strings.ToLower(whiteSpaceRegexp().ReplaceAllString(meme.Name, "-"))
-		memeMap[meme.ID] = meme
+		meme.Name = strings.ToLower(whiteSpaceRegexp.ReplaceAllLiteralString(meme.Name, "-"))
+		if _, ok := memeMap[meme.Name]; ok {
+			log.Warnf(`Meme name conflict! %s already exists and will be skipped`, meme.Name)
+			continue
+		}
+		memeMap[meme.Name] = meme
 	}
 
 	memeTemplates = func() map[string]imgflipgo.Meme {
@@ -63,7 +75,6 @@ func init() {
 	memeCommands = func() []*discordgo.ApplicationCommand {
 		return memecmds
 	}
-
 }
 
 func buildMemeCommands() []*discordgo.ApplicationCommand {
@@ -93,20 +104,27 @@ func buildMemeCommands() []*discordgo.ApplicationCommand {
 			}
 		}
 
-		subcmd := memecmd.Options[tCount%maxDiscordCommandOptions]
+		subcmdIdx := tCount % maxDiscordCommandOptions
+		if subcmdIdx >= len(memecmd.Options) {
+			log.Fatalf("Attempted to index out of range. Valid range was %d for memecmd %s. Tried to index %d", len(memecmd.Options), memeCommand, subcmdIdx)
+		}
+
+		memecmd.Options[subcmdIdx] = &discordgo.ApplicationCommandOption{}
+		subcmd := memecmd.Options[subcmdIdx]
 		subcmd.Type = discordgo.ApplicationCommandOptionSubCommand
 		subcmd.Name = template.Name
 		subcmd.Description = fmt.Sprintf("Create a meme using the %s template", template.Name)
 		subcmd.Options = make([]*discordgo.ApplicationCommandOption, template.BoxCount+1)
 		subcmd.Options[0] = &discordgo.ApplicationCommandOption{
 			Type:        discordgo.ApplicationCommandOptionBoolean,
-			Name:        "preview",
+			Name:        previewOpt,
 			Description: "DM's you this meme so you can preview it before sending it to the channel.",
 		}
-		for i, textOpt := range subcmd.Options {
-			textOpt.Type = discordgo.ApplicationCommandOptionString
-			textOpt.Name = fmt.Sprint(i + 1)
-			textOpt.Description = fmt.Sprintf("Text for box %d", i+1)
+		for i := range subcmd.Options {
+			subcmd.Options[i] = &discordgo.ApplicationCommandOption{}
+			subcmd.Options[i].Type = discordgo.ApplicationCommandOptionString
+			subcmd.Options[i].Name = fmt.Sprint(i)
+			subcmd.Options[i].Description = fmt.Sprintf("Text for box %d", i)
 		}
 
 		tCount++
@@ -121,6 +139,99 @@ func buildMemeCommands() []*discordgo.ApplicationCommand {
 	return allcmds
 }
 
-func buildAMeme(*discordgo.Session, *discordgo.InteractionCreate) {
+func buildAMeme(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	wg := bot().updateLastActive()
+	defer wg.Wait()
 
+	template, ok := memeTemplates()[i.ApplicationCommandData().Options[0].Name]
+	if !ok {
+		log.Errorf("No template found with name %s", i.ApplicationCommandData().Options[0].Name)
+		return
+	}
+
+	boxes := make([]imgflipgo.TextBox, template.BoxCount)
+	isPreview := false
+	for _, arg := range i.ApplicationCommandData().Options[0].Options {
+		if isNumericRegex().MatchString(arg.Name) {
+			boxIdx, err := strconv.Atoi(arg.Name)
+			if err != nil {
+				log.Error(err)
+				return
+			}
+			if boxIdx >= len(boxes) {
+				log.Errorf("Index %d exceeds number of expected boxes", boxIdx)
+			}
+			boxes[boxIdx].Text = arg.StringValue()
+		} else if arg.Name == previewOpt {
+			isPreview = true
+		} else {
+			log.Errorf("Unknown argument: %s", arg.Name)
+			return
+		}
+	}
+
+	resp, err := imgflipgo.CaptionImage(&imgflipgo.CaptionRequest{
+		TemplateID: template.ID,
+		Username:   getImgflipUser(),
+		Password:   getImgflipPass(),
+		TextBoxes:  boxes,
+	})
+	if err != nil {
+		log.Error(err)
+		return
+	}
+
+	hexColor, _ := fastHappyColorInt64()
+	embed := dg_helpers.NewEmbed().
+		SetColor(int(hexColor)).
+		SetImage(resp.Data.URL)
+
+	if isPreview {
+		mention, err := getInteractionCreateAuthorMention(i)
+		if err != nil {
+			mention = "Someone"
+		}
+
+		authorID, err := getInteractionCreateAuthorID(i)
+		if err != nil {
+			log.Error(err)
+			return
+		}
+
+		uc, err := s.UserChannelCreate(authorID)
+		if err != nil {
+			log.Error(err)
+			return
+		}
+
+		_, err = s.ChannelMessageSendEmbed(uc.ID, embed.MessageEmbed)
+		if err != nil {
+			log.Error(err)
+			return
+		}
+
+		err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: fmt.Sprintf("%s is cooking up a meme! :D", mention),
+				AllowedMentions: &discordgo.MessageAllowedMentions{
+					Parse: []discordgo.AllowedMentionType{discordgo.AllowedMentionTypeUsers},
+				},
+			},
+		})
+		if err != nil {
+			log.Error(err)
+		}
+		return
+	}
+
+	err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Embeds: []*discordgo.MessageEmbed{embed.MessageEmbed},
+		},
+	})
+	if err != nil {
+		log.Error(err)
+	}
 }
