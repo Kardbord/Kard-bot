@@ -257,6 +257,9 @@ func (kbot *kardbot) addInteractionHandlers(unregisterAllPrevCmds bool) {
 		return
 	}
 
+	if !validateCmdRegex() {
+		log.Fatal("One or more commands is invalid.")
+	}
 	kbot.unregisterOldCommands()
 	kbot.bulkOverwriteCommands()
 }

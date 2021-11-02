@@ -129,3 +129,15 @@ func MaxOf(vars ...int) int {
 	}
 	return max
 }
+
+// See https://discord.com/developers/docs/interactions/application-commands#application-command-object
+var validCommandRegex = func() *regexp.Regexp { return nil }
+
+func init() {
+	r := regexp.MustCompile(`^[\w-]{1,32}$`)
+	if r == nil {
+		log.Fatal("Could not compile validCommandRegex")
+	}
+
+	validCommandRegex = func() *regexp.Regexp { return r }
+}

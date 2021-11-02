@@ -1,6 +1,9 @@
 package kardbot
 
-import "github.com/bwmarrin/discordgo"
+import (
+	"github.com/bwmarrin/discordgo"
+	log "github.com/sirupsen/logrus"
+)
 
 type onInteractionHandler func(*discordgo.Session, *discordgo.InteractionCreate)
 
@@ -294,4 +297,48 @@ func getCommandImpls() map[string]onInteractionHandler {
 		"what-are-the-odds": whatAreTheOdds,
 		memeCommand:         buildAMeme,
 	}
+}
+
+// TODO: expand on this for all fields
+func validateCmdRegex() bool {
+	conforms := true
+	for _, cmd := range getCommands() {
+		if !validCommandRegex().MatchString(cmd.Name) {
+			log.Errorf(`Command %s does not conform to Discord's command naming requirements`, cmd.Name)
+			conforms = false
+		}
+		for _, opt1 := range cmd.Options {
+			if !validCommandRegex().MatchString(opt1.Name) {
+				log.Errorf(`Option %s.%s does not conform to Discord's command naming requirements`, cmd.Name, opt1.Name)
+				conforms = false
+			}
+
+			switch opt1.Type {
+			case discordgo.ApplicationCommandOptionSubCommand:
+				for _, opt2 := range opt1.Options {
+					if !validCommandRegex().MatchString(opt2.Name) {
+						log.Errorf(`Option %s.%s.%s does not conform to Discord's command naming requirements`, cmd.Name, opt1.Name, opt2.Name)
+						conforms = false
+					}
+				}
+
+			case discordgo.ApplicationCommandOptionSubCommandGroup:
+				for _, opt2 := range opt1.Options {
+					if !validCommandRegex().MatchString(opt2.Name) {
+						log.Errorf(`Option %s.%s.%s does not conform to Discord's command naming requirements`, cmd.Name, opt1.Name, opt2.Name)
+						conforms = false
+					}
+
+					for _, opt3 := range opt2.Options {
+						if !validCommandRegex().MatchString(opt3.Name) {
+							log.Errorf(`Option %s.%s.%s.%s does not conform to Discord's command naming requirements`, cmd.Name, opt1.Name, opt2.Name, opt3.Name)
+							conforms = false
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return conforms
 }
