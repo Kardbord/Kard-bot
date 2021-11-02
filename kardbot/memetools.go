@@ -118,8 +118,8 @@ func buildMemeCommands() []*discordgo.ApplicationCommand {
 		for i := 1; i < len(subcmd.Options); i++ {
 			subcmd.Options[i] = &discordgo.ApplicationCommandOption{}
 			subcmd.Options[i].Type = discordgo.ApplicationCommandOptionString
-			subcmd.Options[i].Name = fmt.Sprint(i)
-			subcmd.Options[i].Description = fmt.Sprintf("Text for box %d", i)
+			subcmd.Options[i].Name = fmt.Sprint(i - 1)
+			subcmd.Options[i].Description = fmt.Sprintf("Text for box %d", i-1)
 		}
 
 		tCount++
