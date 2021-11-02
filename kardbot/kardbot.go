@@ -302,7 +302,11 @@ func (kbot *kardbot) unregisterOldGuildCommands() {
 		}
 		if cmds, err := kbot.Session.ApplicationCommands(kbot.Session.State.User.ID, guildID); err == nil {
 			for _, cmd := range cmds {
-				if _, ok := getCommandImpls()[cmd.Name]; !ok {
+				cmdname := cmd.Name
+				if strMatchesMemeCmdPattern(cmdname) {
+					cmdname = memeCommand
+				}
+				if _, ok := getCommandImpls()[cmdname]; !ok {
 					log.Infof("Unregistering cmd '%s' in guild %s", cmd.Name, guildID)
 					err = kbot.Session.ApplicationCommandDelete(bot().Session.State.User.ID, guildID, cmd.ID)
 					if err != nil {
