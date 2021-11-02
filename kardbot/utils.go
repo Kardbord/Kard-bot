@@ -103,3 +103,34 @@ func init() {
 
 	sentenceEndPunctRegex = func() *regexp.Regexp { return r }
 }
+
+var whiteSpaceRegexp = func() *regexp.Regexp { return nil }
+
+func init() {
+	r := regexp.MustCompile(`\s+`)
+	if r == nil {
+		log.Fatal("Could not compile whiteSpaceRegexp")
+	}
+
+	whiteSpaceRegexp = func() *regexp.Regexp { return r }
+}
+
+func MinOf(vars ...int) int {
+	min := vars[0]
+	for _, i := range vars {
+		if min > i {
+			min = i
+		}
+	}
+	return min
+}
+
+func MaxOf(vars ...int) int {
+	max := vars[0]
+	for _, i := range vars {
+		if max < i {
+			max = i
+		}
+	}
+	return max
+}

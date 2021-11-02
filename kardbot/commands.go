@@ -4,8 +4,14 @@ import "github.com/bwmarrin/discordgo"
 
 type onInteractionHandler func(*discordgo.Session, *discordgo.InteractionCreate)
 
+// The max number of command options any single command is allowed to have.
+const (
+	maxDiscordCommandOptions = 25
+	maxDiscordOptionChoices  = 25
+)
+
 func getCommands() []*discordgo.ApplicationCommand {
-	return []*discordgo.ApplicationCommand{
+	allcmds := []*discordgo.ApplicationCommand{
 		{
 			Name:        "roll",
 			Description: "Rolls a D{X} die {Y} times, where X and Y are provided by the user.",
@@ -266,6 +272,13 @@ func getCommands() []*discordgo.ApplicationCommand {
 			Description: "Get helpful information about the bot.",
 		},
 	}
+
+	// Have to get creative when adding meme template commands
+	// since there is a limit to the number of options a command
+	// can have.
+	allcmds = append(allcmds, memeCommands()...)
+
+	return allcmds
 }
 
 func getCommandImpls() map[string]onInteractionHandler {
@@ -279,5 +292,6 @@ func getCommandImpls() map[string]onInteractionHandler {
 		"creepy-dms":        creepyDMHandler,
 		"help":              botInfo,
 		"what-are-the-odds": whatAreTheOdds,
+		memeCommand:         buildAMeme,
 	}
 }

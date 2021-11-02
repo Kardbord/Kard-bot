@@ -228,7 +228,11 @@ func (kbot *kardbot) validateInitialization() {
 
 func (kbot *kardbot) prepInteractionHandlers() {
 	kbot.Session.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		if h, ok := getCommandImpls()[i.ApplicationCommandData().Name]; ok {
+		cmd := i.ApplicationCommandData().Name
+		if strMatchesMemeCmdPattern(cmd) {
+			cmd = memeCommand
+		}
+		if h, ok := getCommandImpls()[cmd]; ok {
 			h(s, i)
 		}
 	})
