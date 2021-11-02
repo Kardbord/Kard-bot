@@ -158,7 +158,7 @@ func buildAMeme(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			}
 			boxes[boxIdx].Text = arg.StringValue()
 		} else if arg.Name == previewOpt {
-			isPreview = true
+			isPreview = arg.BoolValue()
 		} else {
 			log.Errorf("Unknown argument: %s", arg.Name)
 			return
