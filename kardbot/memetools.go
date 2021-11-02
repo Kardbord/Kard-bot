@@ -5,7 +5,6 @@ import (
 	"math"
 	"regexp"
 	"strconv"
-	"strings"
 
 	"github.com/TannerKvarfordt/Kard-bot/kardbot/dg_helpers"
 	"github.com/TannerKvarfordt/imgflipgo"
@@ -37,7 +36,7 @@ func strMatchesMemeCmdPattern(str string) bool {
 }
 
 var (
-	// Meme.Name to Meme mapping
+	// Meme.ID to Meme mapping
 	memeTemplates func() map[string]imgflipgo.Meme
 
 	memeCommands func() []*discordgo.ApplicationCommand
@@ -49,18 +48,13 @@ func init() {
 		log.Fatal(err)
 	}
 
-	whiteSpaceRegexp := regexp.MustCompile(`\s+`)
-	if whiteSpaceRegexp == nil {
-		log.Fatal("Could not compile whiteSpaceRegexp")
-	}
 	memeMap := make(map[string]imgflipgo.Meme, len(memes))
 	for _, meme := range memes {
-		meme.Name = strings.ToLower(whiteSpaceRegexp.ReplaceAllLiteralString(meme.Name, "-"))
-		if _, ok := memeMap[meme.Name]; ok {
+		if _, ok := memeMap[meme.ID]; ok {
 			log.Warnf(`Meme name conflict! %s already exists and will be skipped`, meme.Name)
 			continue
 		}
-		memeMap[meme.Name] = meme
+		memeMap[meme.ID] = meme
 	}
 
 	memeTemplates = func() map[string]imgflipgo.Meme {
@@ -112,8 +106,8 @@ func buildMemeCommands() []*discordgo.ApplicationCommand {
 		memecmd.Options[subcmdIdx] = &discordgo.ApplicationCommandOption{}
 		subcmd := memecmd.Options[subcmdIdx]
 		subcmd.Type = discordgo.ApplicationCommandOptionSubCommand
-		subcmd.Name = template.Name
-		subcmd.Description = fmt.Sprintf("Create a meme using the %s template", template.Name)
+		subcmd.Name = template.ID
+		subcmd.Description = fmt.Sprint(template.Name)
 		subcmd.Options = make([]*discordgo.ApplicationCommandOption, template.BoxCount+1)
 		subcmd.Options[0] = &discordgo.ApplicationCommandOption{
 			Type:        discordgo.ApplicationCommandOptionBoolean,
