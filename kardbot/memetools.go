@@ -156,6 +156,14 @@ func buildAMeme(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	wg := bot().updateLastActive()
 	defer wg.Wait()
 
+	err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
+	})
+	if err != nil {
+		log.Error(err)
+		return
+	}
+
 	template, ok := memeTemplates()[i.ApplicationCommandData().Options[templateOptIdx].StringValue()]
 	if !ok {
 		log.Errorf("No template found with name %s", i.ApplicationCommandData().Options[0].Name)
@@ -232,13 +240,10 @@ func buildAMeme(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			return
 		}
 
-		err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Content: fmt.Sprintf("%s is cooking up a meme! :D", mention),
-				AllowedMentions: &discordgo.MessageAllowedMentions{
-					Parse: []discordgo.AllowedMentionType{discordgo.AllowedMentionTypeUsers},
-				},
+		_, err = s.InteractionResponseEdit(s.State.User.ID, i.Interaction, &discordgo.WebhookEdit{
+			Content: fmt.Sprintf("%s is cooking up a meme! :D", mention),
+			AllowedMentions: &discordgo.MessageAllowedMentions{
+				Parse: []discordgo.AllowedMentionType{discordgo.AllowedMentionTypeUsers},
 			},
 		})
 		if err != nil {
@@ -247,11 +252,8 @@ func buildAMeme(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		return
 	}
 
-	err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Embeds: []*discordgo.MessageEmbed{embed.MessageEmbed},
-		},
+	_, err = s.InteractionResponseEdit(s.State.User.ID, i.Interaction, &discordgo.WebhookEdit{
+		Embeds: []*discordgo.MessageEmbed{embed.MessageEmbed},
 	})
 	if err != nil {
 		log.Error(err)
