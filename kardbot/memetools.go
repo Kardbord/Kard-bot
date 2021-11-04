@@ -176,13 +176,13 @@ func buildAMeme(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			continue
 		}
 		boxIdx, err := strconv.Atoi(arg.Name)
-		if boxIdx >= len(boxes) {
-			log.Debugf("This template has less than %d boxes, skipping...", boxIdx)
-			continue
-		}
 		if err != nil {
 			log.Error(err)
 			return
+		}
+		if boxIdx >= len(boxes) {
+			log.Debugf("This template has less than %d boxes, skipping...", boxIdx)
+			continue
 		}
 		boxes[boxIdx].Text = arg.StringValue()
 	}
