@@ -42,6 +42,7 @@ A discord bot destined for greatness.
 - [x] Daily compliments DM'd to users who opt in
 - [x] Creepy DMs sent to users who opt in
 - [x] Provide "odds" that a user specified event will occur
+- [x] Build memes from provided templates and user provided text
 - [ ] Inform users when Kard-bot is updated
 - [ ] Mock certain questions or phrases
 - [ ] "Quack" any time a user types an expletive
@@ -50,7 +51,6 @@ A discord bot destined for greatness.
 - [ ] Configurably replace words with other words
 - [ ] Search and link to DnD wiki articles
 - [ ] Allow users to query Google; provide direct links to top results and a link to all results
-- [ ] Build memes using templates and user provided text
 - [ ] Youtube Roulette
 
 # User Guide
