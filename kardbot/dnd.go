@@ -101,7 +101,7 @@ func parseDieSides(rawDieSides string) (uint64, error) {
 		return 0, fmt.Errorf("invalid argument provided: %s", rawDieSides)
 	}
 	// Strip non-numeric characters
-	dieSidesParsed := isNotNumericRegex().ReplaceAllString(rawDieSides, "")
+	dieSidesParsed := IsNotNumericRegex().ReplaceAllString(rawDieSides, "")
 	sides, err := strconv.ParseUint(dieSidesParsed, 10, 64)
 	if err != nil {
 		return 0, fmt.Errorf("could not convert %s to int", dieSidesParsed)

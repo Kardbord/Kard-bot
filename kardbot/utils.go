@@ -70,16 +70,16 @@ func isHTTPS(url string) bool {
 }
 
 var (
-	isNotNumericRegex = func() *regexp.Regexp { return nil }
-	isNumericRegex    = func() *regexp.Regexp { return nil }
+	IsNotNumericRegex = func() *regexp.Regexp { return nil }
+	IsNumericRegex    = func() *regexp.Regexp { return nil }
 )
 
 func init() {
 	r1 := regexp.MustCompile("[^0-9]+")
-	isNotNumericRegex = func() *regexp.Regexp { return r1 }
+	IsNotNumericRegex = func() *regexp.Regexp { return r1 }
 
 	r2 := regexp.MustCompile(`^\d+$`)
-	isNumericRegex = func() *regexp.Regexp { return r2 }
+	IsNumericRegex = func() *regexp.Regexp { return r2 }
 }
 
 // Taken from https://stackoverflow.com/questions/41602230

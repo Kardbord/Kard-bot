@@ -16,7 +16,13 @@ const (
 	memeCommand     = "build-a-meme"
 	maxMemeCommands = 4
 
-	previewOpt = "preview"
+	previewOpt    = "preview"
+	previewOptIdx = 0
+
+	templateOpt    = "template"
+	templateOptIdx = 1
+
+	reservedOptCount = 2
 )
 
 var memeCommandRegex = func() *regexp.Regexp { return nil }
@@ -73,13 +79,27 @@ func init() {
 
 func buildMemeCommands() []*discordgo.ApplicationCommand {
 	allcmds := []*discordgo.ApplicationCommand{}
-	memecmd := &discordgo.ApplicationCommand{
-		Options: make([]*discordgo.ApplicationCommandOption, MinOf(maxDiscordCommandOptions, len(memeTemplates()))),
+
+	newCmd := func() *discordgo.ApplicationCommand {
+		newcmd := &discordgo.ApplicationCommand{
+			Options: make([]*discordgo.ApplicationCommandOption, maxDiscordCommandOptions),
+		}
+		for i := reservedOptCount; i < maxDiscordCommandOptions; i++ {
+			newcmd.Options[i] = &discordgo.ApplicationCommandOption{
+				Type:        discordgo.ApplicationCommandOptionString,
+				Name:        fmt.Sprint(i - reservedOptCount),
+				Description: fmt.Sprintf("Text box %d", i-reservedOptCount),
+				Required:    false,
+			}
+		}
+		return newcmd
 	}
+
+	memecmd := newCmd()
 	tCount := 0 // template counter
 	exceededCmds := false
 	for _, template := range memeTemplates() {
-		if template.BoxCount > maxDiscordCommandOptions {
+		if template.BoxCount > maxDiscordCommandOptions-reservedOptCount {
 			log.Infof("Skipping %s as it has too many text boxes (%d)", template.Name, template.BoxCount)
 			continue
 		}
@@ -93,33 +113,31 @@ func buildMemeCommands() []*discordgo.ApplicationCommand {
 			memecmd.Name = fmt.Sprintf("%s%d", memeCommand, cmdItr)
 			memecmd.Description = fmt.Sprintf("Create a meme using templates %d through %d", tCount-maxDiscordCommandOptions+1, tCount)
 			allcmds = append(allcmds, memecmd)
-			memecmd = &discordgo.ApplicationCommand{
-				Options: make([]*discordgo.ApplicationCommandOption, MinOf(maxDiscordCommandOptions, len(memeTemplates())-tCount)),
+			memecmd = newCmd()
+		}
+
+		if memecmd.Options[previewOptIdx] == nil {
+			memecmd.Options[previewOptIdx] = &discordgo.ApplicationCommandOption{
+				Type:        discordgo.ApplicationCommandOptionBoolean,
+				Name:        previewOpt,
+				Description: "Preview the meme via DM.",
+				Required:    true,
 			}
 		}
 
-		subcmdIdx := tCount % maxDiscordCommandOptions
-		if subcmdIdx >= len(memecmd.Options) {
-			log.Fatalf("Attempted to index out of range. Valid range was %d for memecmd %s. Tried to index %d", len(memecmd.Options), memeCommand, subcmdIdx)
+		if memecmd.Options[templateOptIdx] == nil {
+			memecmd.Options[templateOptIdx] = &discordgo.ApplicationCommandOption{
+				Type:        discordgo.ApplicationCommandOptionString,
+				Name:        templateOpt,
+				Description: "Select a meme template",
+				Required:    true,
+				Choices:     make([]*discordgo.ApplicationCommandOptionChoice, MinOf(maxDiscordOptionChoices, len(memeTemplates())-tCount)),
+			}
 		}
-
-		memecmd.Options[subcmdIdx] = &discordgo.ApplicationCommandOption{}
-		subcmd := memecmd.Options[subcmdIdx]
-		subcmd.Type = discordgo.ApplicationCommandOptionSubCommand
-		subcmd.Name = template.ID
-		subcmd.Description = fmt.Sprint(template.Name)
-		subcmd.Options = make([]*discordgo.ApplicationCommandOption, template.BoxCount+1)
-		subcmd.Options[0] = &discordgo.ApplicationCommandOption{
-			Type:        discordgo.ApplicationCommandOptionBoolean,
-			Name:        previewOpt,
-			Description: "DM's you this meme so you can preview it before sending it to the channel.",
-			Required:    true,
-		}
-		for i := 1; i < len(subcmd.Options); i++ {
-			subcmd.Options[i] = &discordgo.ApplicationCommandOption{}
-			subcmd.Options[i].Type = discordgo.ApplicationCommandOptionString
-			subcmd.Options[i].Name = fmt.Sprint(i - 1)
-			subcmd.Options[i].Description = fmt.Sprintf("Text for box %d", i-1)
+		choiceIdx := tCount % maxDiscordOptionChoices
+		memecmd.Options[templateOptIdx].Choices[choiceIdx] = &discordgo.ApplicationCommandOptionChoice{
+			Name:  template.Name,
+			Value: template.ID,
 		}
 
 		tCount++
@@ -138,43 +156,36 @@ func buildAMeme(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	wg := bot().updateLastActive()
 	defer wg.Wait()
 
-	template, ok := memeTemplates()[i.ApplicationCommandData().Options[0].Name]
+	template, ok := memeTemplates()[i.ApplicationCommandData().Options[templateOptIdx].StringValue()]
 	if !ok {
 		log.Errorf("No template found with name %s", i.ApplicationCommandData().Options[0].Name)
 		return
 	}
 
 	boxes := make([]imgflipgo.TextBox, template.BoxCount)
-	isPreview := false
-	for _, arg := range i.ApplicationCommandData().Options[0].Options {
-		if isNumericRegex().MatchString(arg.Name) {
-			boxIdx, err := strconv.Atoi(arg.Name)
-			if err != nil {
-				log.Error(err)
-				return
-			}
-			if boxIdx >= len(boxes) {
-				log.Errorf("Index %d exceeds number of expected boxes", boxIdx)
-			}
-			boxes[boxIdx].Text = arg.StringValue()
-		} else if arg.Name == previewOpt {
-			isPreview = arg.BoolValue()
-		} else {
-			log.Errorf("Unknown argument: %s", arg.Name)
+	for argidx, arg := range i.ApplicationCommandData().Options {
+		if argidx == templateOptIdx || argidx == previewOptIdx {
+			continue
+		}
+		boxIdx, err := strconv.Atoi(arg.Name)
+		if boxIdx >= len(boxes) {
+			log.Debugf("This template has less than %d boxes, skipping...", boxIdx)
+			continue
+		}
+		if err != nil {
+			log.Error(err)
 			return
 		}
+		boxes[boxIdx].Text = arg.StringValue()
 	}
 
-	switch len(i.ApplicationCommandData().Options[0].Options) {
-	case 0:
-		fallthrough
-	case 1:
+	if len(i.ApplicationCommandData().Options) == reservedOptCount {
 		for i := range boxes {
 			boxes[i].Text = fmt.Sprintf("Placeholder %d", i)
 		}
-	default:
+	} else {
 		for i := range boxes {
-			if i != 0 && boxes[i].Text == "" {
+			if boxes[i].Text == "" {
 				boxes[i].Text = fmt.Sprintf("Placeholder %d", i)
 			}
 		}
@@ -196,6 +207,7 @@ func buildAMeme(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		SetColor(int(hexColor)).
 		SetImage(resp.Data.URL)
 
+	isPreview := i.ApplicationCommandData().Options[previewOptIdx].BoolValue()
 	if isPreview {
 		mention, err := getInteractionCreateAuthorMention(i)
 		if err != nil {
