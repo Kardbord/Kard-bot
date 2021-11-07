@@ -11,11 +11,11 @@ func authorIsSelf(s *discordgo.Session, i *discordgo.InteractionCreate) (bool, e
 	if s == nil || i == nil {
 		return false, fmt.Errorf("interaction or session is nil")
 	}
-	_, authorID, err := getInteractionCreateAuthorNameAndID(i)
+	metadata, err := getInteractionMetaData(i)
 	if err != nil {
 		return false, err
 	}
-	return authorID == s.State.User.ID, nil
+	return metadata.AuthorID == s.State.User.ID, nil
 }
 
 func authorIsOwner(i *discordgo.InteractionCreate) (bool, error) {
@@ -38,51 +38,49 @@ func authorIsOwner(i *discordgo.InteractionCreate) (bool, error) {
 	}
 }
 
-func getInteractionCreateAuthorName(i *discordgo.InteractionCreate) (string, error) {
+type interactionMetaData struct {
+	AuthorID       string
+	AuthorUsername string
+	AuthorMention  string
+	AuthorEmail    string
+	GuildID        string
+	ChannelID      string
+	InteractionID  string
+}
+
+func getInteractionMetaData(i *discordgo.InteractionCreate) (*interactionMetaData, error) {
 	if i == nil {
-		return "", errors.New("context is nil")
+		return nil, errors.New("interaction is nil")
 	}
 
 	if i.Member != nil {
 		if i.Member.User == nil {
-			return "", errors.New("member.user is nil")
+			return nil, errors.New("member.user is nil")
 		}
-		return i.Member.User.Username, nil
-	} else if i.User != nil {
-		return i.User.Username, nil
-	} else {
-		return "", errors.New("member and user are nil")
-	}
-}
-
-func getInteractionCreateAuthorID(i *discordgo.InteractionCreate) (string, error) {
-	if i == nil {
-		return "", errors.New("context is nil")
+		return &interactionMetaData{
+			AuthorID:       i.Member.User.ID,
+			AuthorUsername: i.Member.User.Username,
+			AuthorMention:  i.Member.User.Mention(),
+			AuthorEmail:    i.Member.User.Email,
+			GuildID:        i.GuildID,
+			ChannelID:      i.ChannelID,
+			InteractionID:  i.ID,
+		}, nil
 	}
 
-	if i.Member != nil {
-		if i.Member.User == nil {
-			return "", errors.New("member.user is nil")
-		}
-		return i.Member.User.ID, nil
-	} else if i.User != nil {
-		return i.User.ID, nil
-	} else {
-		return "", errors.New("member and user are nil")
+	if i.User != nil {
+		return &interactionMetaData{
+			AuthorID:       i.User.ID,
+			AuthorUsername: i.User.Username,
+			AuthorMention:  i.User.Mention(),
+			AuthorEmail:    i.User.Email,
+			GuildID:        i.GuildID,
+			ChannelID:      i.ChannelID,
+			InteractionID:  i.ID,
+		}, nil
 	}
-}
 
-func getInteractionCreateAuthorNameAndID(i *discordgo.InteractionCreate) (string, string, error) {
-	id, err1 := getInteractionCreateAuthorID(i)
-	uname, err2 := getInteractionCreateAuthorName(i)
-	if err1 != nil && err2 != nil {
-		return uname, id, fmt.Errorf("error 1:%v\n\terror 2:%v", err1, err2)
-	} else if err1 != nil {
-		return uname, id, err1
-	} else if err2 != nil {
-		return uname, id, err2
-	}
-	return uname, id, nil
+	return nil, errors.New("no metadata could be found")
 }
 
 func channelIsNSFW(s *discordgo.Session, i *discordgo.InteractionCreate) (bool, error) {
@@ -102,21 +100,4 @@ func channelIsNSFW(s *discordgo.Session, i *discordgo.InteractionCreate) (bool, 
 	}
 
 	return ch.NSFW, nil
-}
-
-func getInteractionCreateAuthorMention(i *discordgo.InteractionCreate) (string, error) {
-	if i == nil {
-		return "", errors.New("context is nil")
-	}
-
-	if i.Member != nil {
-		if i.Member.User == nil {
-			return "", errors.New("member.user is nil")
-		}
-		return i.Member.User.Mention(), nil
-	} else if i.User != nil {
-		return i.User.Mention(), nil
-	} else {
-		return "", errors.New("member and user are nil")
-	}
 }

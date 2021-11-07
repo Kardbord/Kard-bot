@@ -133,23 +133,23 @@ func complimentHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 }
 
 func morningComplimentOptIn(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	author, authorID, err := getInteractionCreateAuthorNameAndID(i)
+	metadata, err := getInteractionMetaData(i)
 	if err != nil {
 		log.Error(err)
 		return
 	}
 
 	complimentSubsAMMutex.Lock()
-	complimentSubsAM[authorID] = true
+	complimentSubsAM[metadata.AuthorID] = true
 	complimentSubsAMMutex.Unlock()
 
 	err = writeComplimentSubscribersToConfig()
 	if err != nil {
-		log.Errorf("Error persisting user %s's subscription: %v", author, err)
+		log.Errorf("Error persisting user %s's subscription: %v", metadata.AuthorUsername, err)
 		err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
-				Content: fmt.Sprintf("%s, you are subscribed to receive morning compliments as long as the bot is up, but there was an error persisting your subscription. Please try to opt-in again.", author),
+				Content: fmt.Sprintf("%s, you are subscribed to receive morning compliments as long as the bot is up, but there was an error persisting your subscription. Please try to opt-in again.", metadata.AuthorUsername),
 			},
 		})
 		if err != nil {
@@ -158,11 +158,11 @@ func morningComplimentOptIn(s *discordgo.Session, i *discordgo.InteractionCreate
 		return
 	}
 
-	log.Infof("User %s subscribed to morning compliments", author)
+	log.Infof("User %s subscribed to morning compliments", metadata.AuthorUsername)
 	err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
-			Content: fmt.Sprintf("%s has subscribed to receive daily morning compliments. :)", author),
+			Content: fmt.Sprintf("%s has subscribed to receive daily morning compliments. :)", metadata.AuthorUsername),
 		},
 	})
 	if err != nil {
@@ -171,23 +171,23 @@ func morningComplimentOptIn(s *discordgo.Session, i *discordgo.InteractionCreate
 }
 
 func morningComplimentOptOut(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	author, authorID, err := getInteractionCreateAuthorNameAndID(i)
+	metadata, err := getInteractionMetaData(i)
 	if err != nil {
 		log.Error(err)
 		return
 	}
 
 	complimentSubsAMMutex.Lock()
-	complimentSubsAM[authorID] = false
+	complimentSubsAM[metadata.AuthorID] = false
 	complimentSubsAMMutex.Unlock()
 
 	err = writeComplimentSubscribersToConfig()
 	if err != nil {
-		log.Errorf("Error persisting user %s's opt-out: %v", author, err)
+		log.Errorf("Error persisting user %s's opt-out: %v", metadata.AuthorUsername, err)
 		err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
-				Content: fmt.Sprintf("%s, you are unsubscribed from morning compliments as long as the bot is up, but there was an error persisting your opt-out. Please try to opt-out again.", author),
+				Content: fmt.Sprintf("%s, you are unsubscribed from morning compliments as long as the bot is up, but there was an error persisting your opt-out. Please try to opt-out again.", metadata.AuthorUsername),
 			},
 		})
 		if err != nil {
@@ -196,12 +196,12 @@ func morningComplimentOptOut(s *discordgo.Session, i *discordgo.InteractionCreat
 		return
 	}
 
-	log.Infof("User %s un-subscribed to morning compliments", author)
+	log.Infof("User %s un-subscribed to morning compliments", metadata.AuthorUsername)
 
 	err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
-			Content: fmt.Sprintf("%s has unsubscribed from daily morning compliments. :(", author),
+			Content: fmt.Sprintf("%s has unsubscribed from daily morning compliments. :(", metadata.AuthorUsername),
 		},
 	})
 	if err != nil {
@@ -210,23 +210,23 @@ func morningComplimentOptOut(s *discordgo.Session, i *discordgo.InteractionCreat
 }
 
 func eveningComplimentOptIn(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	author, authorID, err := getInteractionCreateAuthorNameAndID(i)
+	metadata, err := getInteractionMetaData(i)
 	if err != nil {
 		log.Error(err)
 		return
 	}
 
 	complimentSubsPMMutex.Lock()
-	complimentSubsPM[authorID] = true
+	complimentSubsPM[metadata.AuthorID] = true
 	complimentSubsPMMutex.Unlock()
 
 	err = writeComplimentSubscribersToConfig()
 	if err != nil {
-		log.Errorf("Error persisting user %s's subscription: %v", author, err)
+		log.Errorf("Error persisting user %s's subscription: %v", metadata.AuthorUsername, err)
 		err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
-				Content: fmt.Sprintf("%s, you are subscribed to receive evening compliments as long as the bot is up, but there was an error persisting your subscription. Please try to opt-in again.", author),
+				Content: fmt.Sprintf("%s, you are subscribed to receive evening compliments as long as the bot is up, but there was an error persisting your subscription. Please try to opt-in again.", metadata.AuthorUsername),
 			},
 		})
 		if err != nil {
@@ -235,11 +235,11 @@ func eveningComplimentOptIn(s *discordgo.Session, i *discordgo.InteractionCreate
 		return
 	}
 
-	log.Infof("User %s subscribed to evening compliments", author)
+	log.Infof("User %s subscribed to evening compliments", metadata.AuthorUsername)
 	err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
-			Content: fmt.Sprintf("%s has subscribed to receive daily evening compliments. :)", author),
+			Content: fmt.Sprintf("%s has subscribed to receive daily evening compliments. :)", metadata.AuthorUsername),
 		},
 	})
 	if err != nil {
@@ -248,23 +248,23 @@ func eveningComplimentOptIn(s *discordgo.Session, i *discordgo.InteractionCreate
 }
 
 func eveningComplimentOptOut(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	author, authorID, err := getInteractionCreateAuthorNameAndID(i)
+	metadata, err := getInteractionMetaData(i)
 	if err != nil {
 		log.Error(err)
 		return
 	}
 
 	complimentSubsPMMutex.Lock()
-	complimentSubsPM[authorID] = false
+	complimentSubsPM[metadata.AuthorID] = false
 	complimentSubsPMMutex.Unlock()
 
 	err = writeComplimentSubscribersToConfig()
 	if err != nil {
-		log.Errorf("Error persisting user %s's opt-out: %v", author, err)
+		log.Errorf("Error persisting user %s's opt-out: %v", metadata.AuthorUsername, err)
 		err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
-				Content: fmt.Sprintf("%s, you are unsubscribed from evening compliments as long as the bot is up, but there was an error persisting your opt-out. Please try to opt-out again.", author),
+				Content: fmt.Sprintf("%s, you are unsubscribed from evening compliments as long as the bot is up, but there was an error persisting your opt-out. Please try to opt-out again.", metadata.AuthorUsername),
 			},
 		})
 		if err != nil {
@@ -273,11 +273,11 @@ func eveningComplimentOptOut(s *discordgo.Session, i *discordgo.InteractionCreat
 		return
 	}
 
-	log.Infof("User %s un-subscribed to evening compliments", author)
+	log.Infof("User %s un-subscribed to evening compliments", metadata.AuthorUsername)
 	err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
-			Content: fmt.Sprintf("%s has unsubscribed from daily evening compliments. :(", author),
+			Content: fmt.Sprintf("%s has unsubscribed from daily evening compliments. :(", metadata.AuthorUsername),
 		},
 	})
 	if err != nil {
@@ -286,7 +286,7 @@ func eveningComplimentOptOut(s *discordgo.Session, i *discordgo.InteractionCreat
 }
 
 func getCompliment(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	author, authorID, err := getInteractionCreateAuthorNameAndID(i)
+	metadata, err := getInteractionMetaData(i)
 	if err != nil {
 		log.Error(err)
 		return
@@ -300,7 +300,7 @@ func getCompliment(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	}
 
 	if sendAsDM {
-		uc, err := bot().Session.UserChannelCreate(authorID)
+		uc, err := bot().Session.UserChannelCreate(metadata.AuthorID)
 		if err != nil {
 			log.Error(err)
 		}
@@ -308,12 +308,12 @@ func getCompliment(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		if err != nil {
 			log.Error(err)
 		}
-		log.Infof("Told %s that '%s'", author, compliment)
+		log.Infof("Told %s that '%s'", metadata.AuthorUsername, compliment)
 
 		err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
-				Content: fmt.Sprintf("I DM'd a compliment to %s. :)", author),
+				Content: fmt.Sprintf("I DM'd a compliment to %s. :)", metadata.AuthorUsername),
 			},
 		})
 		if err != nil {
@@ -331,7 +331,7 @@ func getCompliment(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	if err != nil {
 		log.Error(err)
 	}
-	log.Infof("To %s: \"%s\"", author, compliment)
+	log.Infof("To %s: \"%s\"", metadata.AuthorUsername, compliment)
 }
 
 func sendMorningCompliments() {

@@ -121,23 +121,23 @@ func creepyDMHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 }
 
 func creepyDMsOptIn(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	author, authorID, err := getInteractionCreateAuthorNameAndID(i)
+	metadata, err := getInteractionMetaData(i)
 	if err != nil {
 		log.Error(err)
 		return
 	}
 
 	creepyDMSubsMutex.Lock()
-	creepyDMSubs[authorID] = true
+	creepyDMSubs[metadata.AuthorID] = true
 	creepyDMSubsMutex.Unlock()
 
 	err = writeCreepyDmSubscribersToConfig()
 	if err != nil {
-		log.Errorf("Error persisting user %s's subscription: %v", author, err)
+		log.Errorf("Error persisting user %s's subscription: %v", metadata.AuthorUsername, err)
 		err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
-				Content: fmt.Sprintf("%s, you are subscribed to creepy DMs as long as the bot remains up, but there was an error persisting your subscription. Please try to opt-in again.", author),
+				Content: fmt.Sprintf("%s, you are subscribed to creepy DMs as long as the bot remains up, but there was an error persisting your subscription. Please try to opt-in again.", metadata.AuthorUsername),
 			},
 		})
 		if err != nil {
@@ -146,11 +146,11 @@ func creepyDMsOptIn(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		return
 	}
 
-	log.Infof("User %s subscribed to creepy DMs", author)
+	log.Infof("User %s subscribed to creepy DMs", metadata.AuthorUsername)
 	err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
-			Content: fmt.Sprintf("%s subscribed to creepy DMs 😈", author),
+			Content: fmt.Sprintf("%s subscribed to creepy DMs 😈", metadata.AuthorUsername),
 		},
 	})
 	if err != nil {
@@ -159,23 +159,23 @@ func creepyDMsOptIn(s *discordgo.Session, i *discordgo.InteractionCreate) {
 }
 
 func creepyDMsOptOut(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	author, authorID, err := getInteractionCreateAuthorNameAndID(i)
+	metadata, err := getInteractionMetaData(i)
 	if err != nil {
 		log.Error(err)
 		return
 	}
 
 	creepyDMSubsMutex.Lock()
-	creepyDMSubs[authorID] = false
+	creepyDMSubs[metadata.AuthorID] = false
 	creepyDMSubsMutex.Unlock()
 
 	err = writeCreepyDmSubscribersToConfig()
 	if err != nil {
-		log.Errorf("Error persisting user %s's opt-out: %v", author, err)
+		log.Errorf("Error persisting user %s's opt-out: %v", metadata.AuthorUsername, err)
 		err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
-				Content: fmt.Sprintf("%s, you are unsubscribed to creepy DMs as long as the bot remains up, but there was an error persisting your opt-out. Please try to opt-out again.", author),
+				Content: fmt.Sprintf("%s, you are unsubscribed to creepy DMs as long as the bot remains up, but there was an error persisting your opt-out. Please try to opt-out again.", metadata.AuthorUsername),
 			},
 		})
 		if err != nil {
@@ -184,12 +184,12 @@ func creepyDMsOptOut(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		return
 	}
 
-	log.Infof("User %s unsubscribed from creepy DMs", author)
+	log.Infof("User %s unsubscribed from creepy DMs", metadata.AuthorUsername)
 
 	err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
-			Content: fmt.Sprintf("%s unsubscribed from creepy DMs 👿", author),
+			Content: fmt.Sprintf("%s unsubscribed from creepy DMs 👿", metadata.AuthorUsername),
 		},
 	})
 	if err != nil {
@@ -218,13 +218,13 @@ func getCreepyDM(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		return
 	}
 
-	author, authorID, err := getInteractionCreateAuthorNameAndID(i)
+	metadata, err := getInteractionMetaData(i)
 	if err != nil {
 		log.Error(err)
 		return
 	}
 
-	uc, err := s.UserChannelCreate(authorID)
+	uc, err := s.UserChannelCreate(metadata.AuthorID)
 	if err != nil {
 		log.Error(err)
 		return
@@ -235,12 +235,12 @@ func getCreepyDM(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		log.Error(err)
 		return
 	}
-	log.Tracef("Sent %s a creepy DM", author)
+	log.Tracef("Sent %s a creepy DM", metadata.AuthorUsername)
 
 	err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
-			Content: fmt.Sprintf("%s was sent a creepy DM", author),
+			Content: fmt.Sprintf("%s was sent a creepy DM", metadata.AuthorUsername),
 		},
 	})
 	if err != nil {

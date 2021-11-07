@@ -33,7 +33,7 @@ func updateLogLevel(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		return
 	}
 
-	author, authorID, err := getInteractionCreateAuthorNameAndID(i)
+	metadata, err := getInteractionMetaData(i)
 	if err != nil {
 		log.Error(err)
 		return
@@ -43,7 +43,7 @@ func updateLogLevel(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		log.Error(err)
 		return
 	} else if !isOwner {
-		log.Warnf("User %s (%s) does not have privilege to update log level", author, authorID)
+		log.Warnf("User %s (%s) does not have privilege to update log level", metadata.AuthorUsername, metadata.AuthorID)
 		return
 	}
 

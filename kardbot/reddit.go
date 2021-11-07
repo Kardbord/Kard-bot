@@ -80,7 +80,7 @@ func redditRoulette(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		if nsfw {
 			post, err = getRandomRedditPost(&nsfw, subreddits...)
 		} else {
-			author, err := getInteractionCreateAuthorName(i)
+			metadata, err := getInteractionMetaData(i)
 			if err != nil {
 				log.Error(err)
 				return
@@ -88,7 +88,7 @@ func redditRoulette(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 				Type: discordgo.InteractionResponseChannelMessageWithSource,
 				Data: &discordgo.InteractionResponseData{
-					Content: fmt.Sprintf("%s tried to use `/reddit-roulette nsfw` in a SFW channel, that was naughty! :(", author),
+					Content: fmt.Sprintf("%s tried to use `/reddit-roulette nsfw` in a SFW channel, that was naughty! :(", metadata.AuthorUsername),
 				},
 			})
 			if err != nil {

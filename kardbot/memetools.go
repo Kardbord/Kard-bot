@@ -244,13 +244,13 @@ func buildAMeme(s *discordgo.Session, i *discordgo.InteractionCreate) {
 
 	isPreview := i.ApplicationCommandData().Options[previewOptIdx].BoolValue()
 	if isPreview {
-		authorID, err := getInteractionCreateAuthorID(i)
+		metadata, err := getInteractionMetaData(i)
 		if err != nil {
 			log.Error(err)
 			return
 		}
 
-		uc, err := s.UserChannelCreate(authorID)
+		uc, err := s.UserChannelCreate(metadata.AuthorID)
 		if err != nil {
 			log.Error(err)
 			return
