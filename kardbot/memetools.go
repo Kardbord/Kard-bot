@@ -17,12 +17,16 @@ const (
 	maxMemeCommands = 4
 
 	previewOpt    = "preview"
-	previewOptIdx = 0
+	previewOptIdx = 1
 
 	templateOpt    = "template"
-	templateOptIdx = 1
+	templateOptIdx = 0
 
-	reservedOptCount = 2
+	placeholderOpt     = "placeholders"
+	placeholderOptReqd = false
+	placeholderOptIdx  = 2 // as this is not a required opt, this index is only guaranteed when registering the command, not when handling it
+
+	reservedOptCount = 3
 )
 
 var memeCommandRegex = func() *regexp.Regexp { return nil }
@@ -134,6 +138,16 @@ func buildMemeCommands() []*discordgo.ApplicationCommand {
 				Choices:     make([]*discordgo.ApplicationCommandOptionChoice, MinOf(maxDiscordOptionChoices, len(memeTemplates())-tCount)),
 			}
 		}
+
+		if memecmd.Options[placeholderOptIdx] == nil {
+			memecmd.Options[placeholderOptIdx] = &discordgo.ApplicationCommandOption{
+				Type:        discordgo.ApplicationCommandOptionBoolean,
+				Name:        placeholderOpt,
+				Description: "Include placeholder text?",
+				Required:    placeholderOptReqd,
+			}
+		}
+
 		choiceIdx := tCount % maxDiscordOptionChoices
 		memecmd.Options[templateOptIdx].Choices[choiceIdx] = &discordgo.ApplicationCommandOptionChoice{
 			Name:  template.Name,
@@ -171,8 +185,13 @@ func buildAMeme(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	}
 
 	boxes := make([]imgflipgo.TextBox, template.BoxCount)
+	includePlaceholders := false
 	for argidx, arg := range i.ApplicationCommandData().Options {
 		if argidx == templateOptIdx || argidx == previewOptIdx {
+			continue
+		}
+		if arg.Name == placeholderOpt {
+			includePlaceholders = arg.BoolValue()
 			continue
 		}
 		boxIdx, err := strconv.Atoi(arg.Name)
@@ -189,12 +208,20 @@ func buildAMeme(s *discordgo.Session, i *discordgo.InteractionCreate) {
 
 	if len(i.ApplicationCommandData().Options) == reservedOptCount {
 		for i := range boxes {
-			boxes[i].Text = fmt.Sprintf("Placeholder %d", i)
+			if includePlaceholders {
+				boxes[i].Text = fmt.Sprintf("Placeholder %d", i)
+			} else {
+				boxes[i].Text = " "
+			}
 		}
 	} else {
 		for i := range boxes {
 			if boxes[i].Text == "" {
-				boxes[i].Text = fmt.Sprintf("Placeholder %d", i)
+				if includePlaceholders {
+					boxes[i].Text = fmt.Sprintf("Placeholder %d", i)
+				} else {
+					boxes[i].Text = " "
+				}
 			}
 		}
 	}
