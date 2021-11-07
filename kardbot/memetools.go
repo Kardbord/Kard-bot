@@ -26,7 +26,15 @@ const (
 	placeholderOptReqd = false
 	placeholderOptIdx  = 2 // as this is not a required opt, this index is only guaranteed when registering the command, not when handling it
 
-	reservedOptCount = 3
+	maxFontSizeOpt     = "max-font-size-px"
+	maxFontSizeOptReqd = false
+	maxFontSizeOptIdx  = 3 // as this is not a required opt, this index is only guaranteed when registering the command, not when handling it
+
+	fontOpt     = "font"
+	fontOptReqd = false
+	fontOptIdx  = 4 // as this is not a required opt, this index is only guaranteed when registering the command, not when handling it
+
+	reservedOptCount = 5
 )
 
 var memeCommandRegex = func() *regexp.Regexp { return nil }
@@ -148,6 +156,34 @@ func buildMemeCommands() []*discordgo.ApplicationCommand {
 			}
 		}
 
+		if memecmd.Options[maxFontSizeOptIdx] == nil {
+			memecmd.Options[maxFontSizeOptIdx] = &discordgo.ApplicationCommandOption{
+				Type:        discordgo.ApplicationCommandOptionInteger,
+				Name:        maxFontSizeOpt,
+				Description: "Max font size to use, in pixels.",
+				Required:    maxFontSizeOptReqd,
+			}
+		}
+
+		if memecmd.Options[fontOptIdx] == nil {
+			memecmd.Options[fontOptIdx] = &discordgo.ApplicationCommandOption{
+				Type:        discordgo.ApplicationCommandOptionString,
+				Name:        fontOpt,
+				Description: "Select a font to use",
+				Required:    fontOptReqd,
+				Choices: []*discordgo.ApplicationCommandOptionChoice{
+					{
+						Name:  string(imgflipgo.FontArial),
+						Value: imgflipgo.FontArial,
+					},
+					{
+						Name:  string(imgflipgo.FontImpact),
+						Value: imgflipgo.FontImpact,
+					},
+				},
+			}
+		}
+
 		choiceIdx := tCount % maxDiscordOptionChoices
 		memecmd.Options[templateOptIdx].Choices[choiceIdx] = &discordgo.ApplicationCommandOptionChoice{
 			Name:  template.Name,
@@ -186,51 +222,55 @@ func buildAMeme(s *discordgo.Session, i *discordgo.InteractionCreate) {
 
 	boxes := make([]imgflipgo.TextBox, template.BoxCount)
 	includePlaceholders := false
-	for argidx, arg := range i.ApplicationCommandData().Options {
-		if argidx == templateOptIdx || argidx == previewOptIdx {
+	maxFontSize := int(0)
+	font := imgflipgo.FontImpact
+	for _, arg := range i.ApplicationCommandData().Options {
+		switch arg.Name {
+		case templateOpt:
 			continue
-		}
-		if arg.Name == placeholderOpt {
+		case previewOpt:
+			continue
+		case placeholderOpt:
 			includePlaceholders = arg.BoolValue()
-			continue
+		case maxFontSizeOpt:
+			maxFontSize = int(arg.IntValue())
+			if maxFontSize <= 0 {
+				log.Warn("font size cannot be <= 0")
+				maxFontSize = 0 // unset
+			}
+		case fontOpt:
+			font = imgflipgo.Font(arg.StringValue())
+		default:
+			boxIdx, err := strconv.Atoi(arg.Name)
+			if err != nil {
+				log.Error(err)
+				return
+			}
+			if boxIdx >= len(boxes) {
+				log.Debugf("This template has less than %d boxes, skipping...", boxIdx)
+				continue
+			}
+			boxes[boxIdx].Text = arg.StringValue()
 		}
-		boxIdx, err := strconv.Atoi(arg.Name)
-		if err != nil {
-			log.Error(err)
-			return
-		}
-		if boxIdx >= len(boxes) {
-			log.Debugf("This template has less than %d boxes, skipping...", boxIdx)
-			continue
-		}
-		boxes[boxIdx].Text = arg.StringValue()
 	}
 
-	if len(i.ApplicationCommandData().Options) == reservedOptCount {
-		for i := range boxes {
+	for i := range boxes {
+		if boxes[i].Text == "" {
 			if includePlaceholders {
 				boxes[i].Text = fmt.Sprintf("Placeholder %d", i)
 			} else {
 				boxes[i].Text = " "
 			}
 		}
-	} else {
-		for i := range boxes {
-			if boxes[i].Text == "" {
-				if includePlaceholders {
-					boxes[i].Text = fmt.Sprintf("Placeholder %d", i)
-				} else {
-					boxes[i].Text = " "
-				}
-			}
-		}
 	}
 
 	resp, err := imgflipgo.CaptionImage(&imgflipgo.CaptionRequest{
-		TemplateID: template.ID,
-		Username:   getImgflipUser(),
-		Password:   getImgflipPass(),
-		TextBoxes:  boxes,
+		TemplateID:    template.ID,
+		Username:      getImgflipUser(),
+		Password:      getImgflipPass(),
+		MaxFontSizePx: uint(maxFontSize),
+		Font:          font,
+		TextBoxes:     boxes,
 	})
 	if err != nil {
 		log.Error(err)
