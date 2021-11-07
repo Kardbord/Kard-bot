@@ -244,11 +244,6 @@ func buildAMeme(s *discordgo.Session, i *discordgo.InteractionCreate) {
 
 	isPreview := i.ApplicationCommandData().Options[previewOptIdx].BoolValue()
 	if isPreview {
-		mention, err := getInteractionCreateAuthorMention(i)
-		if err != nil {
-			mention = "Someone"
-		}
-
 		authorID, err := getInteractionCreateAuthorID(i)
 		if err != nil {
 			log.Error(err)
@@ -267,15 +262,11 @@ func buildAMeme(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			return
 		}
 
-		_, err = s.InteractionResponseEdit(s.State.User.ID, i.Interaction, &discordgo.WebhookEdit{
-			Content: fmt.Sprintf("%s is cooking up a meme! :D", mention),
-			AllowedMentions: &discordgo.MessageAllowedMentions{
-				Parse: []discordgo.AllowedMentionType{discordgo.AllowedMentionTypeUsers},
-			},
-		})
+		err = s.InteractionResponseDelete(s.State.User.ID, i.Interaction)
 		if err != nil {
 			log.Error(err)
 		}
+
 		return
 	}
 
