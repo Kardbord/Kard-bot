@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"math/rand"
 	"sync"
+	"time"
 
 	"github.com/TannerKvarfordt/Kard-bot/kardbot/config"
 	"github.com/bwmarrin/discordgo"
@@ -300,6 +301,14 @@ func getCompliment(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	}
 
 	if sendAsDM {
+		err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
+		})
+		if err != nil {
+			log.Error(err)
+			return
+		}
+
 		uc, err := bot().Session.UserChannelCreate(metadata.AuthorID)
 		if err != nil {
 			log.Error(err)
@@ -310,12 +319,8 @@ func getCompliment(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		}
 		log.Infof("Told %s that '%s'", metadata.AuthorUsername, compliment)
 
-		err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Content: fmt.Sprintf("I DM'd a compliment to %s. :)", metadata.AuthorUsername),
-			},
-		})
+		time.Sleep(time.Millisecond * 250) // give a bit for the initial response to be received
+		err = s.InteractionResponseDelete(s.State.User.ID, i.Interaction)
 		if err != nil {
 			log.Error(err)
 		}

@@ -218,6 +218,14 @@ func getCreepyDM(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		return
 	}
 
+	err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
+	})
+	if err != nil {
+		log.Error(err)
+		return
+	}
+
 	metadata, err := getInteractionMetaData(i)
 	if err != nil {
 		log.Error(err)
@@ -237,12 +245,8 @@ func getCreepyDM(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	}
 	log.Tracef("Sent %s a creepy DM", metadata.AuthorUsername)
 
-	err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Content: fmt.Sprintf("%s was sent a creepy DM", metadata.AuthorUsername),
-		},
-	})
+	time.Sleep(time.Millisecond * 250) // sleep a bit for the initial response to be received
+	err = s.InteractionResponseDelete(s.State.User.ID, i.Interaction)
 	if err != nil {
 		log.Error(err)
 	}
