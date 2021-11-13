@@ -99,5 +99,10 @@ func channelIsNSFW(s *discordgo.Session, i *discordgo.InteractionCreate) (bool, 
 		return false, fmt.Errorf("could not retrieve channel with ID %s", i.ChannelID)
 	}
 
+	// DMs are considered nsfw
+	if ch.Type == discordgo.ChannelTypeDM {
+		return true, nil
+	}
+
 	return ch.NSFW, nil
 }

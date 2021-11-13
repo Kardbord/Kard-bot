@@ -1,6 +1,8 @@
 package kardbot
 
 import (
+	"fmt"
+
 	"github.com/bwmarrin/discordgo"
 	log "github.com/sirupsen/logrus"
 )
@@ -271,6 +273,18 @@ func getCommands() []*discordgo.ApplicationCommand {
 			},
 		},
 		{
+			Name:        delBotDMCmd,
+			Description: "Clear your DM history with the bot. Only works when issued from DMs.",
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Type:        discordgo.ApplicationCommandOptionInteger,
+					Name:        "msg-count",
+					Description: fmt.Sprintf("How many messages back should we delete? Up to %d.", msgLimit),
+					Required:    true,
+				},
+			},
+		},
+		{
 			Name:        "help",
 			Description: "Get helpful information about the bot.",
 		},
@@ -280,7 +294,6 @@ func getCommands() []*discordgo.ApplicationCommand {
 	// since there is a limit to the number of options a command
 	// can have.
 	allcmds = append(allcmds, memeCommands()...)
-
 	return allcmds
 }
 
@@ -296,6 +309,7 @@ func getCommandImpls() map[string]onInteractionHandler {
 		"help":              botInfo,
 		"what-are-the-odds": whatAreTheOdds,
 		memeCommand:         buildAMeme,
+		delBotDMCmd:         deleteBotDMs,
 	}
 }
 
