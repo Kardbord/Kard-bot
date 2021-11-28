@@ -222,8 +222,8 @@ func buildAMeme(s *discordgo.Session, i *discordgo.InteractionCreate) {
 
 	boxes := make([]imgflipgo.TextBox, template.BoxCount)
 	includePlaceholders := false
-	maxFontSize := int(0)
-	font := imgflipgo.FontImpact
+	var maxFontSize *uint = nil
+	var font *imgflipgo.Font = nil
 	for _, arg := range i.ApplicationCommandData().Options {
 		switch arg.Name {
 		case templateOpt:
@@ -233,13 +233,17 @@ func buildAMeme(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		case placeholderOpt:
 			includePlaceholders = arg.BoolValue()
 		case maxFontSizeOpt:
-			maxFontSize = int(arg.IntValue())
-			if maxFontSize <= 0 {
+			mfs := int(arg.IntValue())
+			if mfs > 0 {
+				tmp := uint(mfs)
+				maxFontSize = &tmp
+			} else {
 				log.Warn("font size cannot be <= 0")
-				maxFontSize = 0 // unset
+				maxFontSize = nil
 			}
 		case fontOpt:
-			font = imgflipgo.Font(arg.StringValue())
+			f := imgflipgo.Font(arg.StringValue())
+			font = &f
 		default:
 			boxIdx, err := strconv.Atoi(arg.Name)
 			if err != nil {
@@ -264,11 +268,12 @@ func buildAMeme(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		}
 	}
 
+	log.Infof("Using %v", font)
 	resp, err := imgflipgo.CaptionImage(&imgflipgo.CaptionRequest{
 		TemplateID:    template.ID,
 		Username:      getImgflipUser(),
 		Password:      getImgflipPass(),
-		MaxFontSizePx: uint(maxFontSize),
+		MaxFontSizePx: maxFontSize,
 		Font:          font,
 		TextBoxes:     boxes,
 	})
