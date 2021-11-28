@@ -5,25 +5,28 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
+	"github.com/TannerKvarfordt/hfapigo"
 	"github.com/bwmarrin/discordgo"
 	"github.com/joho/godotenv"
 )
 
 const (
-	BotTokenEnv     = "KARDBOT_TOKEN"
-	BotOwnerEnv     = "KARDBOT_OWNER_ID"
-	TestbedGuildEnv = "KARDBOT_TESTBED_GUILD"
-	Intents         = discordgo.IntentsAllWithoutPrivileged
-	ImgflipUserEnv  = "IMGFLIP_API_USERNAME"
-	ImgflipPassEnv  = "IMGFLIP_API_PASSWORD"
+	BotTokenEnv         = "KARDBOT_TOKEN"
+	BotOwnerEnv         = "KARDBOT_OWNER_ID"
+	TestbedGuildEnv     = "KARDBOT_TESTBED_GUILD"
+	Intents             = discordgo.IntentsAllWithoutPrivileged
+	ImgflipUserEnv      = "IMGFLIP_API_USERNAME"
+	ImgflipPassEnv      = "IMGFLIP_API_PASSWORD"
+	HuggingFaceTokenEnv = "HUGGING_FACE_TOKEN"
 )
 
 var (
-	getBotToken     = func() string { return "" }
-	getOwnerID      = func() string { return "" }
-	getTestbedGuild = func() string { return "" }
-	getImgflipUser  = func() string { return "" }
-	getImgflipPass  = func() string { return "" }
+	getBotToken         = func() string { return "" }
+	getOwnerID          = func() string { return "" }
+	getTestbedGuild     = func() string { return "" }
+	getImgflipUser      = func() string { return "" }
+	getImgflipPass      = func() string { return "" }
+	getHuggingFaceToken = func() string { return "" }
 )
 
 // Retrieves the bot's auth token from the environment
@@ -71,4 +74,13 @@ func init() {
 		log.Warnf("%s is the empty string. %s will not work", ImgflipPassEnv, memeCommand)
 	}
 	getImgflipPass = func() string { return imgflipPass }
+
+	hfToken, hfTokFound := os.LookupEnv(HuggingFaceTokenEnv)
+	if !hfTokFound {
+		log.Warnf("%s not found in environment", HuggingFaceTokenEnv)
+	} else if hfToken == "" {
+		log.Warnf("%s is the empty string.", HuggingFaceTokenEnv)
+	}
+	getHuggingFaceToken = func() string { return hfToken }
+	hfapigo.SetAPIKey(getHuggingFaceToken())
 }

@@ -285,6 +285,18 @@ func getCommands() []*discordgo.ApplicationCommand {
 			},
 		},
 		{
+			Name:        storyTimeCmd,
+			Description: "The bot will tell you a short story based on a given prompt.",
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Type:        discordgo.ApplicationCommandOptionString,
+					Name:        "prompt",
+					Description: "A prompt to generate a story from.",
+					Required:    true,
+				},
+			},
+		},
+		{
 			Name:        "help",
 			Description: "Get helpful information about the bot.",
 		},
@@ -310,6 +322,7 @@ func getCommandImpls() map[string]onInteractionHandler {
 		"what-are-the-odds": whatAreTheOdds,
 		memeCommand:         buildAMeme,
 		delBotDMCmd:         deleteBotDMs,
+		storyTimeCmd:        storyTime,
 	}
 }
 
