@@ -78,7 +78,7 @@ func storyTime(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	}
 
 	_, err = s.InteractionResponseEdit(s.State.User.ID, i.Interaction, &discordgo.WebhookEdit{
-		Content: textResps[0].GeneratedTexts[0],
+		Content: firstN(textResps[0].GeneratedTexts[0], int(MaxDiscordMsgLen)),
 		AllowedMentions: &discordgo.MessageAllowedMentions{
 			Parse: []discordgo.AllowedMentionType{
 				discordgo.AllowedMentionTypeUsers,
