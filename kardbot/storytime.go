@@ -75,6 +75,7 @@ func storyTime(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	}
 	if len(textResps) == 0 || len(textResps[0].GeneratedTexts) == 0 || textResps[0].GeneratedTexts[0] == "" {
 		log.Error("Received no text generation responses")
+		return
 	}
 
 	_, err = s.InteractionResponseEdit(s.State.User.ID, i.Interaction, &discordgo.WebhookEdit{
