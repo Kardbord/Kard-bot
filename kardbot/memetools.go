@@ -268,7 +268,9 @@ func buildAMeme(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		}
 	}
 
-	log.Infof("Using %v", font)
+	if font != nil {
+		log.Debugf("Using %s", *font)
+	}
 	resp, err := imgflipgo.CaptionImage(&imgflipgo.CaptionRequest{
 		TemplateID:    template.ID,
 		Username:      getImgflipUser(),
