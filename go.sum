@@ -35,8 +35,8 @@ github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03
 github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym/WlBOVXweHU+Q+/VP0lqqI8lqeDx9IjBqo=
 github.com/TannerKvarfordt/hfapigo v0.0.1 h1:VsFZx76js8QSfqS8dyej6RCcwwrcK0f20Jt/6YAVAg8=
 github.com/TannerKvarfordt/hfapigo v0.0.1/go.mod h1:XKhHnldnhSZNCrRZclWr2D/A/UlEGaQ8OxpM7r8wQpE=
-github.com/TannerKvarfordt/imgflipgo v1.0.4 h1:MdZD3Gl9k+9W+y032YX5DiVXkYriqgxcTc14J8+exBg=
-github.com/TannerKvarfordt/imgflipgo v1.0.4/go.mod h1:wvuZ3+UAyCtKuvqn0Thcjhj31yetO8/baXPBYI5i9Ug=
+github.com/TannerKvarfordt/imgflipgo v1.0.5 h1:y9q6Vt4cq0bH3FvlDuEfqabZURtdcD7KYZ4EYdWDWIw=
+github.com/TannerKvarfordt/imgflipgo v1.0.5/go.mod h1:wvuZ3+UAyCtKuvqn0Thcjhj31yetO8/baXPBYI5i9Ug=
 github.com/bwmarrin/discordgo v0.23.3-0.20210821175000-0fad116c6c2a h1:L7EuIzka83l5Z7LQqpSBfvmTNvUdr9tGhBa0mDBgSsc=
 github.com/bwmarrin/discordgo v0.23.3-0.20210821175000-0fad116c6c2a/go.mod h1:NJZpH+1AfhIcyQsPeuBKsUtYrRnjkyu0kIVMCHkZtRY=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=

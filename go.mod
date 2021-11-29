@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/TannerKvarfordt/hfapigo v0.0.1
-	github.com/TannerKvarfordt/imgflipgo v1.0.4
+	github.com/TannerKvarfordt/imgflipgo v1.0.5
 	github.com/bwmarrin/discordgo v0.23.3-0.20210821175000-0fad116c6c2a
 	github.com/deadshot465/owoify-go v1.0.1
 	github.com/gabriel-vasile/mimetype v1.4.0
