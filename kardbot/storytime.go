@@ -67,7 +67,7 @@ func storyTime(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	textResps, err := hfapigo.SendTextGenerationRequest(storyTimeTextGenModel(), &hfapigo.TextGenerationRequest{
 		Inputs:     []string{i.ApplicationCommandData().Options[0].StringValue()},
 		Parameters: *hfapigo.NewTextGenerationParameters().SetReturnFullText(true).SetMaxNewTokens(250),
-		Options:    *hfapigo.NewOptions().SetWaitForModel(true),
+		Options:    *hfapigo.NewOptions().SetWaitForModel(true).SetUseCache(false),
 	})
 	if err != nil {
 		log.Error(err)
