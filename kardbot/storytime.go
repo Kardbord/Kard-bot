@@ -2,9 +2,12 @@ package kardbot
 
 import (
 	"encoding/json"
+	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/TannerKvarfordt/Kard-bot/kardbot/config"
+	"github.com/TannerKvarfordt/Kard-bot/kardbot/dg_helpers"
 	"github.com/TannerKvarfordt/hfapigo"
 	"github.com/bwmarrin/discordgo"
 	log "github.com/sirupsen/logrus"
@@ -45,12 +48,9 @@ func init() {
 		log.Fatal("No story time text generation model specified")
 	}
 
-	resp, err := http.Get(hfapigo.APIBaseURL + cfg.TextGenModel)
+	err = validateStoryTimeModel(cfg.TextGenModel)
 	if err != nil {
 		log.Fatal(err)
-	}
-	if resp.StatusCode != http.StatusOK {
-		log.Fatal("invalid text generation model:", http.StatusText(resp.StatusCode))
 	}
 
 	storyTimeCfg = func() storyTimeConfig {
@@ -101,6 +101,12 @@ func init() {
 	}
 }
 
+const (
+	storyTimePromptOpt = "prompt"
+	storyTimeModelOpt  = "model"
+	storyTimeHelpOpt   = "help"
+)
+
 func storyTime(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	wg := bot().updateLastActive()
 	defer wg.Wait()
@@ -112,7 +118,49 @@ func storyTime(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		return
 	}
 
-	err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+	cfg := storyTimeCfg()
+	model := cfg.TextGenModel
+	input := ""
+	for _, opt := range i.ApplicationCommandData().Options {
+		switch opt.Name {
+		case storyTimePromptOpt:
+			input = opt.StringValue()
+		case storyTimeModelOpt:
+			model = opt.StringValue()
+		case storyTimeHelpOpt:
+			if !opt.BoolValue() {
+				continue
+			}
+			err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Embeds: []*discordgo.MessageEmbed{buildStoryTimeHelpEmbed()},
+				},
+			})
+			if err != nil {
+				log.Error(err)
+			}
+			return
+		default:
+			log.Warn("Unknown option: ", opt.Name)
+		}
+	}
+
+	err := validateStoryTimeModel(model)
+	if err != nil {
+		err2 := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: fmt.Sprintf("%s is not a valid model", model),
+			},
+		})
+		if err2 != nil {
+			log.Error(err)
+		}
+		return
+	}
+
+	err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
 	})
 	if err != nil {
@@ -120,9 +168,8 @@ func storyTime(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		return
 	}
 
-	cfg := storyTimeCfg()
-	textResps, err := hfapigo.SendTextGenerationRequest(cfg.TextGenModel, &hfapigo.TextGenerationRequest{
-		Inputs:  []string{i.ApplicationCommandData().Options[0].StringValue()},
+	textResps, err := hfapigo.SendTextGenerationRequest(model, &hfapigo.TextGenerationRequest{
+		Inputs:  []string{input},
 		Options: *hfapigo.NewOptions().SetWaitForModel(true).SetUseCache(false),
 		Parameters: *(&hfapigo.TextGenerationParameters{
 			TopK:              cfg.TopK,
@@ -155,4 +202,65 @@ func storyTime(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	if err != nil {
 		log.Error(err)
 	}
+}
+
+func validateStoryTimeModel(model string) error {
+	resp, err := http.Get(hfapigo.APIBaseURL + model)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("invalid text generation model: %d - %s", resp.StatusCode, http.StatusText(resp.StatusCode))
+	}
+
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+
+	type modelData struct {
+		PipelineTag string `json:"pipeline_tag,omitempty"`
+	}
+
+	md := modelData{}
+	err = json.Unmarshal(respBody, &md)
+	if err != nil {
+		return err
+	}
+
+	if md.PipelineTag != "text-generation" {
+		return fmt.Errorf("%s is not a valid text generation model", model)
+	}
+
+	return nil
+}
+
+func buildStoryTimeHelpEmbed() *discordgo.MessageEmbed {
+	optsHelp := fmt.Sprintf(
+		"• **%s (Optional)**: A prompt to generate a story from.\n"+
+			"• **%s (Optional)**: The text generation AI model to use. For example, _gpt2_ or _EleutherAI/gpt-neo-125M_. "+
+			"For other options, see the [Hugging Face Model Repository](https://huggingface.co/models?pipeline_tag=text-generation).",
+		storyTimePromptOpt, storyTimeModelOpt)
+
+	about := fmt.Sprintf("Most available text-generation AI models are next-word prediction models. Think of your phone trying to predict your next word as you type, "+
+		"except it isn't familiar with your personal typing patterns. The stories generated here are not intended (or likely) to be sensical or good, but it's fun to see what the bot comes up with. "+
+		"The bot is probably going to stray from your prompt to a large degree. Some models will probably be better than others at staying on topic. The default model ([%s](https://huggingface.co/%s)) "+
+		"was selected with this in mind, but there may be a better one out there. Feel free to experiment!", storyTimeCfg().TextGenModel, storyTimeCfg().TextGenModel)
+
+	tips := "For best results, you'll want to provide a sensical prompt at least a few words long. The longer the prompt, the more likely the bot will stay at least somewhat on topic. " +
+		"Usually about a single sentence-length prompt will do fairly well. Another trick is to leave the last sentence of your prompt incomplete, and let the bot finish it for you. " +
+		"Below are a few examples of the kind of prompts that will do well.\n" +
+		"\n• Ogres are like\n" +
+		"• What makes you think she is a witch? Well, she turned me into a\n" +
+		"• I'll build my own lunar lander! With blackjack, and\n" +
+		"\nOf course, your mileage may vary."
+
+	return dg_helpers.NewEmbed().
+		SetTitle(fmt.Sprintf("`/%s` Help", storyTimeCmd)).
+		AddField("Options", optsHelp).
+		AddField("About", about).
+		AddField("Usage Tips", tips).
+		Truncate().
+		MessageEmbed
 }

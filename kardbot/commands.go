@@ -286,13 +286,25 @@ func getCommands() []*discordgo.ApplicationCommand {
 		},
 		{
 			Name:        storyTimeCmd,
-			Description: "The bot will tell you a short story based on a given prompt.",
+			Description: "The bot will tell you a short story (but not a good or sensical one) based on a given prompt.",
 			Options: []*discordgo.ApplicationCommandOption{
 				{
 					Type:        discordgo.ApplicationCommandOptionString,
-					Name:        "prompt",
+					Name:        storyTimePromptOpt,
 					Description: "A prompt to generate a story from.",
-					Required:    true,
+					Required:    false,
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionString,
+					Name:        storyTimeModelOpt,
+					Description: "The text generation AI model to use. For example, gpt2 or EleutherAI/gpt-neo-125M.",
+					Required:    false,
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionBoolean,
+					Name:        storyTimeHelpOpt,
+					Description: "Print a helpful message about how to use this command.",
+					Required:    false,
 				},
 			},
 		},
