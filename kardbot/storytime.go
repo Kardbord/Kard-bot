@@ -15,15 +15,22 @@ const (
 	StoryTimeConfigFile = "config/storytime.json"
 )
 
-var storyTimeTextGenModel = func() string {
-	return hfapigo.RecommendedTextGenerationModel
+// Configuration parameters that will be passed to the HF API
+// See https://api-inference.huggingface.co/docs/python/html/detailed_parameters.html#text-generation-task
+type storyTimeConfig struct {
+	TextGenModel      string   `json:"story-time-text-generation-model,omitempty"`
+	TopK              *int     `json:"story-time-topK,omitempty"`
+	TopP              *float64 `json:"story-time-topP,omitempty"`
+	Temperature       *float64 `json:"story-time-temperature,omitempty"`
+	RepetitionPenalty *float64 `json:"story-time-repetition-penalty,omitempty"`
+	MaxNewTokens      *int     `json:"story-time-max-new-tokens,omitempty"`
+	MaxTime           *float64 `json:"story-time-max-time-s,omitempty"`
 }
 
-func init() {
-	cfg := struct {
-		StoryTimeTextGenModel string `json:"story-time-text-generation-model,omitempty"`
-	}{}
+var storyTimeCfg func() storyTimeConfig
 
+func init() {
+	cfg := storyTimeConfig{}
 	jsonCfg, err := config.NewJsonConfig(StoryTimeConfigFile)
 	if err != nil {
 		log.Fatal(err)
@@ -34,14 +41,63 @@ func init() {
 		log.Fatal(err)
 	}
 
-	storyTimeTextGenModel = func() string { return cfg.StoryTimeTextGenModel }
+	if cfg.TextGenModel == "" {
+		log.Fatal("No story time text generation model specified")
+	}
 
-	resp, err := http.Get(hfapigo.APIBaseURL + storyTimeTextGenModel())
+	resp, err := http.Get(hfapigo.APIBaseURL + cfg.TextGenModel)
 	if err != nil {
 		log.Fatal(err)
 	}
 	if resp.StatusCode != http.StatusOK {
 		log.Fatal("invalid text generation model:", http.StatusText(resp.StatusCode))
+	}
+
+	storyTimeCfg = func() storyTimeConfig {
+		var (
+			topK       *int     = nil
+			topP       *float64 = nil
+			temp       *float64 = nil
+			repPen     *float64 = nil
+			maxNewToks *int     = nil
+			maxTime    *float64 = nil
+		)
+
+		// Make copies of pointer values so that they can't be accidentally modified
+		if cfg.TopK != nil {
+			tmpTopK := *cfg.TopK
+			topK = &tmpTopK
+		}
+		if cfg.TopP != nil {
+			tmpTopP := *cfg.TopP
+			topP = &tmpTopP
+		}
+		if cfg.Temperature != nil {
+			tmpTemp := *cfg.Temperature
+			temp = &tmpTemp
+		}
+		if cfg.RepetitionPenalty != nil {
+			tmpRepPen := *cfg.RepetitionPenalty
+			repPen = &tmpRepPen
+		}
+		if cfg.MaxNewTokens != nil {
+			tmpMaxNewToks := *cfg.MaxNewTokens
+			maxNewToks = &tmpMaxNewToks
+		}
+		if cfg.MaxTime != nil {
+			tmpMaxTime := *cfg.MaxTime
+			maxTime = &tmpMaxTime
+		}
+
+		return storyTimeConfig{
+			TextGenModel:      cfg.TextGenModel,
+			TopK:              topK,
+			TopP:              topP,
+			Temperature:       temp,
+			RepetitionPenalty: repPen,
+			MaxNewTokens:      maxNewToks,
+			MaxTime:           maxTime,
+		}
 	}
 }
 
@@ -64,10 +120,18 @@ func storyTime(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		return
 	}
 
-	textResps, err := hfapigo.SendTextGenerationRequest(storyTimeTextGenModel(), &hfapigo.TextGenerationRequest{
-		Inputs:     []string{i.ApplicationCommandData().Options[0].StringValue()},
-		Parameters: *hfapigo.NewTextGenerationParameters().SetReturnFullText(true).SetMaxNewTokens(250),
-		Options:    *hfapigo.NewOptions().SetWaitForModel(true).SetUseCache(false),
+	cfg := storyTimeCfg()
+	textResps, err := hfapigo.SendTextGenerationRequest(cfg.TextGenModel, &hfapigo.TextGenerationRequest{
+		Inputs:  []string{i.ApplicationCommandData().Options[0].StringValue()},
+		Options: *hfapigo.NewOptions().SetWaitForModel(true).SetUseCache(false),
+		Parameters: *(&hfapigo.TextGenerationParameters{
+			TopK:              cfg.TopK,
+			TopP:              cfg.TopP,
+			Temperature:       cfg.Temperature,
+			RepetitionPenalty: cfg.RepetitionPenalty,
+			MaxNewTokens:      cfg.MaxNewTokens,
+			MaxTime:           cfg.MaxTime,
+		}).SetReturnFullText(true),
 	})
 	if err != nil {
 		log.Error(err)
