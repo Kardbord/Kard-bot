@@ -22,6 +22,7 @@ func botInfo(s *discordgo.Session, i *discordgo.InteractionCreate) {
 
 	if isSelf, err := authorIsSelf(s, i); err != nil {
 		log.Error(err)
+		interactionRespondWithEphemeralErrorAndNotifyOwner(s, i, discordgo.InteractionResponseChannelMessageWithSource, err)
 		return
 	} else if isSelf {
 		log.Trace("Ignoring message from self")
@@ -32,17 +33,20 @@ func botInfo(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	fd, err := os.Open(roboCatPng)
 	if err != nil {
 		log.Error(err)
+		interactionRespondWithEphemeralErrorAndNotifyOwner(s, i, discordgo.InteractionResponseChannelMessageWithSource, err)
 		return
 	}
 	defer fd.Close()
 	mimeType, err := mimetype.DetectReader(fd)
 	if err != nil {
 		log.Error(err)
+		interactionRespondWithEphemeralErrorAndNotifyOwner(s, i, discordgo.InteractionResponseChannelMessageWithSource, err)
 		return
 	}
 	_, err = fd.Seek(0, 0)
 	if err != nil {
 		log.Error(err)
+		interactionRespondWithEphemeralErrorAndNotifyOwner(s, i, discordgo.InteractionResponseChannelMessageWithSource, err)
 		return
 	}
 
