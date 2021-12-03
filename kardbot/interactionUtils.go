@@ -1,11 +1,84 @@
 package kardbot
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 
+	"github.com/TannerKvarfordt/Kard-bot/kardbot/dg_helpers"
 	"github.com/bwmarrin/discordgo"
+	log "github.com/sirupsen/logrus"
 )
+
+const InteractionResponseFlagEphemeral = 1 << 6
+
+const genericErrorString = "an error occurred. :'("
+
+func interactionRespondWithEphemeralError(s *discordgo.Session, i *discordgo.InteractionCreate, respType discordgo.InteractionResponseType, errStr string) {
+	if s == nil {
+		log.Error("nil session")
+		return
+	}
+	if i == nil {
+		log.Error("nil interaction")
+		return
+	}
+	if errStr == "" {
+		log.Warn("empty errStr, using generic error: ", genericErrorString)
+		errStr = genericErrorString
+	}
+
+	err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: respType,
+		Data: &discordgo.InteractionResponseData{
+			Content: errStr,
+			Flags:   InteractionResponseFlagEphemeral,
+		},
+	})
+	if err != nil {
+		log.Error(err)
+	}
+}
+
+func interactionRespondWithEphemeralErrorAndNotifyOwner(s *discordgo.Session, i *discordgo.InteractionCreate, respType discordgo.InteractionResponseType, errResp error) {
+	ownerID := getOwnerID()
+	if ownerID == "" {
+		ownerID = "The bot owner"
+	} else {
+		ownerID = fmt.Sprintf("<@%s>", ownerID)
+	}
+	interactionRespondWithEphemeralError(s, i, respType, fmt.Sprintf("Something went wrong while processing your command. 😔 %s has been notified.", ownerID))
+
+	metadata, err := getInteractionMetaData(i)
+	if err != nil {
+		log.Error(err)
+		return
+	}
+
+	uc, err := bot().Session.UserChannelCreate(metadata.AuthorID)
+	if err != nil {
+		log.Error(err)
+	}
+
+	cmdJson, err := json.MarshalIndent(i.ApplicationCommandData(), "", "  ")
+	if err != nil {
+		log.Error(err)
+		cmdJson = []byte(`"error": "Error marshalling application command"`)
+	}
+
+	_, err = bot().Session.ChannelMessageSendComplex(uc.ID, &discordgo.MessageSend{
+		Embed: dg_helpers.NewEmbed().
+			SetTitle("Error Report").
+			AddField("Afflicted User", metadata.AuthorMention).
+			AddField("Issued Command", fmt.Sprintf("```json\n%s\n```", cmdJson)).
+			AddField("Error", fmt.Sprintf("```\n%s\n```", errResp)).
+			Truncate().
+			MessageEmbed,
+	})
+	if err != nil {
+		log.Error(err)
+	}
+}
 
 func authorIsSelf(s *discordgo.Session, i *discordgo.InteractionCreate) (bool, error) {
 	if s == nil || i == nil {
