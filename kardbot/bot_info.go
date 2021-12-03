@@ -65,6 +65,7 @@ func botInfo(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
+			Flags:  InteractionResponseFlagEphemeral,
 			Embeds: []*discordgo.MessageEmbed{embed.Truncate().MessageEmbed},
 			Files: []*discordgo.File{
 				{
@@ -77,5 +78,6 @@ func botInfo(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	})
 	if err != nil {
 		log.Error(err)
+		interactionRespondWithEphemeralErrorAndNotifyOwner(s, i, discordgo.InteractionResponseChannelMessageWithSource, err)
 	}
 }
