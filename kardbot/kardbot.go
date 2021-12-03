@@ -233,7 +233,7 @@ func (kbot *kardbot) prepInteractionHandlers() {
 			// Won't do any good if the panic came from another goroutine.
 			if r := recover(); r != nil {
 				if panicErr, ok := r.(error); ok {
-					interactionRespondWithEphemeralErrorAndNotifyOwner(s, i, discordgo.InteractionResponseChannelMessageWithSource, panicErr)
+					interactionRespondWithEphemeralErrorAndNotifyOwner(s, i, panicErr)
 				}
 				log.Fatalf("Panicked!\n%v", r)
 			}

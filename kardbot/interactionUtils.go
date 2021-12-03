@@ -14,7 +14,7 @@ const InteractionResponseFlagEphemeral = uint64(1 << 6)
 
 const genericErrorString = "an error occurred. :'("
 
-func interactionRespondWithEphemeralError(s *discordgo.Session, i *discordgo.InteractionCreate, respType discordgo.InteractionResponseType, errStr string) {
+func interactionRespondWithEphemeralError(s *discordgo.Session, i *discordgo.InteractionCreate, errStr string) {
 	if s == nil {
 		log.Error("nil session")
 		return
@@ -29,7 +29,7 @@ func interactionRespondWithEphemeralError(s *discordgo.Session, i *discordgo.Int
 	}
 
 	err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-		Type: respType,
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			Content: errStr,
 			Flags:   InteractionResponseFlagEphemeral,
@@ -40,14 +40,14 @@ func interactionRespondWithEphemeralError(s *discordgo.Session, i *discordgo.Int
 	}
 }
 
-func interactionRespondWithEphemeralErrorAndNotifyOwner(s *discordgo.Session, i *discordgo.InteractionCreate, respType discordgo.InteractionResponseType, errResp error) {
+func interactionRespondWithEphemeralErrorAndNotifyOwner(s *discordgo.Session, i *discordgo.InteractionCreate, errResp error) {
 	ownerID := getOwnerID()
 	if ownerID == "" {
 		ownerID = "The bot owner"
 	} else {
 		ownerID = fmt.Sprintf("<@%s>", ownerID)
 	}
-	interactionRespondWithEphemeralError(s, i, respType, fmt.Sprintf("Something went wrong while processing your command. 😔 %s has been notified.", ownerID))
+	interactionRespondWithEphemeralError(s, i, fmt.Sprintf("Something went wrong while processing your command. 😔 %s has been notified.", ownerID))
 
 	metadata, err := getInteractionMetaData(i)
 	if err != nil {
