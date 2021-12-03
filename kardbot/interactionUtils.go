@@ -10,7 +10,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const InteractionResponseFlagEphemeral = 1 << 6
+const InteractionResponseFlagEphemeral = uint64(1 << 6)
 
 const genericErrorString = "an error occurred. :'("
 
