@@ -228,6 +228,17 @@ func (kbot *kardbot) validateInitialization() {
 
 func (kbot *kardbot) prepInteractionHandlers() {
 	kbot.Session.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+		defer func() {
+			// Attempt to quit gracefully in the event of a panic.
+			// Won't do any good if the panic came from another goroutine.
+			if r := recover(); r != nil {
+				if panicErr, ok := r.(error); ok {
+					interactionRespondWithEphemeralErrorAndNotifyOwner(s, i, discordgo.InteractionResponseChannelMessageWithSource, panicErr)
+				}
+				log.Fatalf("Panicked!\n%v", r)
+			}
+		}()
+
 		cmd := i.ApplicationCommandData().Name
 		if strMatchesMemeCmdPattern(cmd) {
 			cmd = memeCommand
