@@ -219,12 +219,15 @@ func buildAMeme(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	})
 	if err != nil {
 		log.Error(err)
+		interactionRespondWithEphemeralErrorAndNotifyOwner(s, i, err)
 		return
 	}
 
 	template, ok := memeTemplates()[i.ApplicationCommandData().Options[templateOptIdx].StringValue()]
 	if !ok {
-		log.Errorf("No template found with name %s", i.ApplicationCommandData().Options[0].Name)
+		errmsg := fmt.Sprintf("Error! No template found with name %s", i.ApplicationCommandData().Options[0].Name)
+		log.Error(errmsg)
+		interactionFollowUpWithEphemeralError(s, i, errmsg)
 		return
 	}
 
@@ -256,6 +259,7 @@ func buildAMeme(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			boxIdx, err := strconv.Atoi(arg.Name)
 			if err != nil {
 				log.Error(err)
+				interactionFollowUpWithEphemeralErrorAndNotifyOwner(s, i, err)
 				return
 			}
 			if boxIdx >= len(boxes) {
@@ -289,6 +293,7 @@ func buildAMeme(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	})
 	if err != nil {
 		log.Error(err)
+		interactionFollowUpWithEphemeralErrorAndNotifyOwner(s, i, err)
 		return
 	}
 
@@ -302,5 +307,6 @@ func buildAMeme(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	})
 	if err != nil {
 		log.Error(err)
+		interactionFollowUpWithEphemeralErrorAndNotifyOwner(s, i, err)
 	}
 }

@@ -48,7 +48,52 @@ func interactionRespondWithEphemeralErrorAndNotifyOwner(s *discordgo.Session, i 
 		ownerID = fmt.Sprintf("<@%s>", ownerID)
 	}
 	interactionRespondWithEphemeralError(s, i, fmt.Sprintf("Something went wrong while processing your command. 😔 %s has been notified.", ownerID))
+	dmOwnerErrorReport(s, i, errResp)
+}
 
+// Assumes that a deferred response has already been sent.
+// Will delete the deferred response and send an ephemeral follow up response.
+func interactionFollowUpWithEphemeralError(s *discordgo.Session, i *discordgo.InteractionCreate, errStr string) {
+	if s == nil {
+		log.Error("nil session")
+		return
+	}
+	if i == nil {
+		log.Error("nil interaction")
+		return
+	}
+	if errStr == "" {
+		log.Warn("empty errStr, using generic error: ", genericErrorString)
+		errStr = genericErrorString
+	}
+
+	err := s.InteractionResponseDelete(s.State.User.ID, i.Interaction)
+	if err != nil {
+		log.Error(err)
+	}
+	_, err = s.FollowupMessageCreate(s.State.User.ID, i.Interaction, false, &discordgo.WebhookParams{
+		Content: errStr,
+		Flags:   InteractionResponseFlagEphemeral,
+	})
+	if err != nil {
+		log.Error(err)
+	}
+}
+
+// Assumes that a deferred response has already been sent.
+// Will delete the deferred response and send an ephemeral follow up response.
+func interactionFollowUpWithEphemeralErrorAndNotifyOwner(s *discordgo.Session, i *discordgo.InteractionCreate, errResp error) {
+	ownerID := getOwnerID()
+	if ownerID == "" {
+		ownerID = "The bot owner"
+	} else {
+		ownerID = fmt.Sprintf("<@%s>", ownerID)
+	}
+	interactionFollowUpWithEphemeralError(s, i, fmt.Sprintf("Something went wrong while processing your command. 😔 %s has been notified.", ownerID))
+	dmOwnerErrorReport(s, i, errResp)
+}
+
+func dmOwnerErrorReport(s *discordgo.Session, i *discordgo.InteractionCreate, errResp error) {
 	metadata, err := getInteractionMetaData(i)
 	if err != nil {
 		log.Error(err)
