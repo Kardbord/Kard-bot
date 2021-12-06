@@ -9,8 +9,10 @@ require (
 	github.com/deadshot465/owoify-go v1.0.1
 	github.com/gabriel-vasile/mimetype v1.4.0
 	github.com/go-co-op/gocron v1.9.0
+	github.com/google/uuid v1.3.0
 	github.com/joho/godotenv v1.4.0
 	github.com/lucasb-eyer/go-colorful v1.2.0
+	github.com/orcaman/concurrent-map v0.0.0-20210501183033-44dafcb38ecc
 	github.com/sirupsen/logrus v1.8.1
 	github.com/vartanbeno/go-reddit/v2 v2.0.1
 	go.uber.org/atomic v1.9.0
