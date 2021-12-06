@@ -238,6 +238,11 @@ func handleErrorReportSelection(s *discordgo.Session, i *discordgo.InteractionCr
 	} else {
 		ownerMention = fmt.Sprintf("<@%s>", getOwnerID())
 	}
+
+	buttonPrefix := ""
+	if selection.Anonymous {
+		buttonPrefix = "Anonymous "
+	}
 	err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseUpdateMessage,
 		Data: &discordgo.InteractionResponseData{
@@ -252,7 +257,7 @@ func handleErrorReportSelection(s *discordgo.Session, i *discordgo.InteractionCr
 					Components: []discordgo.MessageComponent{
 						discordgo.Button{
 							CustomID: "no_handler",
-							Label:    "Error Report Submitted",
+							Label:    fmt.Sprintf("%sError Report Submitted", buttonPrefix),
 							Style:    discordgo.SecondaryButton,
 							Disabled: true,
 						},
