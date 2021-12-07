@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"runtime"
 
 	"github.com/TannerKvarfordt/Kard-bot/kardbot/dg_helpers"
 	"github.com/bwmarrin/discordgo"
@@ -43,6 +44,10 @@ type errorReport struct {
 	InteractionCreate discordgo.InteractionCreate
 	// The error that arose during the InteractionCreate event
 	Err error
+	// The filename where the error occurred
+	Filename string
+	// The line where the error occurred
+	Line int
 }
 
 var (
@@ -141,10 +146,16 @@ func interactionRespondEphemeralError(s *discordgo.Session, i *discordgo.Interac
 		log.Error(err)
 		return
 	}
+	_, filename, line, ok := runtime.Caller(1)
+	if !ok {
+		log.Error("couldn't obtain stack data")
+	}
 	errsToReport.Set(fmt.Sprint(errUUID), errorReport{
 		UUID:              errUUID,
 		Err:               errResp,
 		InteractionCreate: *i,
+		Filename:          filename,
+		Line:              line,
 	})
 }
 
@@ -190,10 +201,16 @@ func interactionFollowUpEphemeralError(s *discordgo.Session, i *discordgo.Intera
 		log.Error(err)
 		return
 	}
+	_, filename, line, ok := runtime.Caller(1)
+	if !ok {
+		log.Error("couldn't obtain stack data")
+	}
 	errsToReport.Set(fmt.Sprint(errUUID), errorReport{
 		UUID:              errUUID,
 		Err:               errResp,
 		InteractionCreate: *i,
+		Filename:          filename,
+		Line:              line,
 	})
 }
 
@@ -298,7 +315,7 @@ func dmOwnerErrorReport(s *discordgo.Session, errReport errorReport, anonymous b
 	_, err = s.ChannelMessageSendComplex(uc.ID, &discordgo.MessageSend{
 		Embed: embed.SetTitle("Error Report").
 			AddField("Issued Command", fmt.Sprintf("```json\n%s\n```", cmdJson)).
-			AddField("Error", fmt.Sprintf("```\n%s\n```", errReport.Err)).
+			AddField("Error", fmt.Sprintf("```\n%s:%d %s\n```", errReport.Filename, errReport.Line, errReport.Err)).
 			Truncate().
 			MessageEmbed,
 	})
