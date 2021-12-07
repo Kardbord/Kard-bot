@@ -166,7 +166,7 @@ func interactionFollowUpEphemeralError(s *discordgo.Session, i *discordgo.Intera
 
 	err := s.InteractionResponseDelete(s.State.User.ID, i.Interaction)
 	if err != nil {
-		log.Error(err)
+		log.Warn(err)
 	}
 
 	if !notifyOwner {

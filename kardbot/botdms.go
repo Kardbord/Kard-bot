@@ -20,6 +20,7 @@ func deleteBotDMs(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	fromSelf, err := authorIsSelf(s, i)
 	if err != nil {
 		log.Error(err)
+		interactionRespondEphemeralError(s, i, true, err)
 		return
 	}
 	if fromSelf {
@@ -30,58 +31,69 @@ func deleteBotDMs(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	imeta, err := getInteractionMetaData(i)
 	if err != nil {
 		log.Error(err)
+		interactionRespondEphemeralError(s, i, true, err)
 		return
 	}
 
 	err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Flags: InteractionResponseFlagEphemeral,
+		},
 	})
 	if err != nil {
 		log.Error(err)
+		interactionFollowUpEphemeralError(s, i, true, err)
 		return
 	}
 
 	ch, err := s.Channel(imeta.ChannelID)
 	if err != nil {
 		log.Error(err)
+		interactionFollowUpEphemeralError(s, i, true, err)
 		return
 	}
 	if ch.Type != discordgo.ChannelTypeDM {
 		uc, err := s.UserChannelCreate(imeta.AuthorID)
 		if err != nil {
 			log.Error(err)
+			interactionFollowUpEphemeralError(s, i, true, err)
 			return
 		}
 
 		_, err = s.ChannelMessageSend(uc.ID, fmt.Sprintf("Looks like you tried to use `/%s` outside of our DMs. Run it from here instead! :)", delBotDMCmd))
 		if err != nil {
 			log.Error(err)
+			interactionFollowUpEphemeralError(s, i, true, err)
 			return
 		}
 
 		time.Sleep(time.Millisecond * 100)
-		err = s.InteractionResponseDelete(s.State.User.ID, i.Interaction)
-		if err != nil {
-			log.Error(err)
-		}
+		s.InteractionResponseEdit(s.State.User.ID, i.Interaction, &discordgo.WebhookEdit{
+			Content: fmt.Sprintf("looks like you tried to use `/%s` outside of our DMs. Run it from there instead! :)", delBotDMCmd),
+		})
 		return
 	}
 
 	msgsToDelete := int(i.ApplicationCommandData().Options[0].IntValue())
 	if msgsToDelete <= 0 {
-		_, err = s.InteractionResponseEdit(s.State.User.ID, i.Interaction, &discordgo.WebhookEdit{
-			Content: fmt.Sprintf("Cannot delete %d messages", msgsToDelete),
-		})
-		if err != nil {
-			log.Error(err)
-		}
+		interactionFollowUpEphemeralError(s, i, false, fmt.Errorf("you must specify a positive, non-zero number of messages to delete"))
 		return
 	}
 
 	msgs, err := s.ChannelMessages(ch.ID, MinOf(msgsToDelete, msgLimit), ch.LastMessageID, "", "")
 	if err != nil {
 		log.Error(err)
+		interactionFollowUpEphemeralError(s, i, true, err)
 		return
+	} else {
+		lastMsg, err := s.ChannelMessage(ch.ID, ch.LastMessageID)
+		if err != nil {
+			log.Error(err)
+			interactionFollowUpEphemeralError(s, i, true, err)
+			return
+		}
+		msgs = append(msgs, lastMsg)
 	}
 
 	// No way to bulk delete messages in a DM channel
@@ -112,5 +124,6 @@ func deleteBotDMs(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	})
 	if err != nil {
 		log.Error(err)
+		interactionFollowUpEphemeralError(s, i, true, err)
 	}
 }
