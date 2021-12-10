@@ -41,9 +41,12 @@ func updateLogLevel(s *discordgo.Session, i *discordgo.InteractionCreate) {
 
 	if isOwner, err := authorIsOwner(i); err != nil {
 		log.Error(err)
+		interactionRespondEphemeralError(s, i, true, err)
 		return
 	} else if !isOwner {
-		log.Warnf("User %s (%s) does not have privilege to update log level", metadata.AuthorUsername, metadata.AuthorID)
+		err = fmt.Errorf("user %s (%s) does not have privilege to update log level", metadata.AuthorUsername, metadata.AuthorID)
+		log.Warn(err)
+		interactionRespondEphemeralError(s, i, false, err)
 		return
 	}
 
@@ -58,7 +61,7 @@ func updateLogLevel(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			s.LogLevel = logrusToDiscordGo()[lvl]
 			bot().dgLoggingMutex.Unlock()
 		}
-		err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
 				Content: info,
@@ -66,9 +69,11 @@ func updateLogLevel(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		})
 		if err != nil {
 			log.Error(err)
+			interactionRespondEphemeralError(s, i, true, err)
 		}
 	} else {
 		log.Error(err)
+		interactionRespondEphemeralError(s, i, true, err)
 	}
 }
 
