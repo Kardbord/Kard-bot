@@ -28,5 +28,6 @@ func whatAreTheOdds(s *discordgo.Session, i *discordgo.InteractionCreate) {
 
 	if err != nil {
 		log.Error(err)
+		interactionRespondEphemeralError(s, i, true, err)
 	}
 }

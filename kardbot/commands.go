@@ -381,3 +381,9 @@ func validateCmdRegex() bool {
 
 	return conforms
 }
+
+func getComponentImpls() map[string]onInteractionHandler {
+	return map[string]onInteractionHandler{
+		selectMenuErrorReport: handleErrorReportSelection,
+	}
+}

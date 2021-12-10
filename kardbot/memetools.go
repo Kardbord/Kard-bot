@@ -1,6 +1,7 @@
 package kardbot
 
 import (
+	"errors"
 	"fmt"
 	"math"
 	"regexp"
@@ -132,7 +133,7 @@ func buildMemeCommands() []*discordgo.ApplicationCommand {
 			memecmd.Options[previewOptIdx] = &discordgo.ApplicationCommandOption{
 				Type:        discordgo.ApplicationCommandOptionBoolean,
 				Name:        previewOpt,
-				Description: "Preview the meme via DM.",
+				Description: "Preview the meme (only you will be able to see it).",
 				Required:    true,
 			}
 		}
@@ -206,17 +207,28 @@ func buildAMeme(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	wg := bot().updateLastActive()
 	defer wg.Wait()
 
+	flags := uint64(0)
+	isPreview := i.ApplicationCommandData().Options[previewOptIdx].BoolValue()
+	if isPreview {
+		flags = InteractionResponseFlagEphemeral
+	}
 	err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Flags: flags,
+		},
 	})
 	if err != nil {
 		log.Error(err)
+		interactionRespondEphemeralError(s, i, true, err)
 		return
 	}
 
 	template, ok := memeTemplates()[i.ApplicationCommandData().Options[templateOptIdx].StringValue()]
 	if !ok {
-		log.Errorf("No template found with name %s", i.ApplicationCommandData().Options[0].Name)
+		errmsg := fmt.Sprintf("Error! No template found with name %s", i.ApplicationCommandData().Options[0].Name)
+		log.Error(errmsg)
+		interactionFollowUpEphemeralError(s, i, true, errors.New(errmsg))
 		return
 	}
 
@@ -248,6 +260,7 @@ func buildAMeme(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			boxIdx, err := strconv.Atoi(arg.Name)
 			if err != nil {
 				log.Error(err)
+				interactionFollowUpEphemeralError(s, i, true, err)
 				return
 			}
 			if boxIdx >= len(boxes) {
@@ -281,6 +294,7 @@ func buildAMeme(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	})
 	if err != nil {
 		log.Error(err)
+		interactionFollowUpEphemeralError(s, i, true, err)
 		return
 	}
 
@@ -289,38 +303,11 @@ func buildAMeme(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		SetColor(int(hexColor)).
 		SetImage(resp.Data.URL)
 
-	isPreview := i.ApplicationCommandData().Options[previewOptIdx].BoolValue()
-	if isPreview {
-		metadata, err := getInteractionMetaData(i)
-		if err != nil {
-			log.Error(err)
-			return
-		}
-
-		uc, err := s.UserChannelCreate(metadata.AuthorID)
-		if err != nil {
-			log.Error(err)
-			return
-		}
-
-		_, err = s.ChannelMessageSendEmbed(uc.ID, embed.MessageEmbed)
-		if err != nil {
-			log.Error(err)
-			return
-		}
-
-		err = s.InteractionResponseDelete(s.State.User.ID, i.Interaction)
-		if err != nil {
-			log.Error(err)
-		}
-
-		return
-	}
-
 	_, err = s.InteractionResponseEdit(s.State.User.ID, i.Interaction, &discordgo.WebhookEdit{
 		Embeds: []*discordgo.MessageEmbed{embed.MessageEmbed},
 	})
 	if err != nil {
 		log.Error(err)
+		interactionFollowUpEphemeralError(s, i, true, err)
 	}
 }

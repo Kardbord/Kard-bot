@@ -2,6 +2,8 @@ package kardbot
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"math/rand"
 	"os"
 	"os/signal"
@@ -228,12 +230,40 @@ func (kbot *kardbot) validateInitialization() {
 
 func (kbot *kardbot) prepInteractionHandlers() {
 	kbot.Session.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		cmd := i.ApplicationCommandData().Name
-		if strMatchesMemeCmdPattern(cmd) {
-			cmd = memeCommand
-		}
-		if h, ok := getCommandImpls()[cmd]; ok {
-			h(s, i)
+		defer func() {
+			// Attempt to quit gracefully in the event of a panic.
+			// Won't do any good if the panic came from another goroutine.
+			if r := recover(); r != nil {
+				if panicErr, ok := r.(error); ok && i.Type == discordgo.InteractionApplicationCommand {
+					interactionRespondEphemeralError(s, i, true, panicErr)
+				}
+				log.Fatalf("Panicked!\n%v", r)
+			}
+		}()
+
+		switch i.Type {
+		case discordgo.InteractionApplicationCommand:
+			cmd := i.ApplicationCommandData().Name
+			if strMatchesMemeCmdPattern(cmd) {
+				cmd = memeCommand
+			}
+			if h, ok := getCommandImpls()[cmd]; ok {
+				h(s, i)
+			} else {
+				errStr := fmt.Sprintf("Unknown command received: %s", i.ApplicationCommandData().Name)
+				log.Error(errStr)
+				interactionRespondEphemeralError(s, i, true, errors.New(errStr))
+			}
+
+		case discordgo.InteractionMessageComponent:
+			if h, ok := getComponentImpls()[i.MessageComponentData().CustomID]; ok {
+				h(s, i)
+			} else {
+				log.Errorf(`unknown message component ID "%s"`, i.MessageComponentData().CustomID)
+			}
+
+		default:
+			log.Errorf("Unknown interaction type received: %s", i.Type.String())
 		}
 	})
 }

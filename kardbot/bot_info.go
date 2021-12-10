@@ -22,6 +22,7 @@ func botInfo(s *discordgo.Session, i *discordgo.InteractionCreate) {
 
 	if isSelf, err := authorIsSelf(s, i); err != nil {
 		log.Error(err)
+		interactionRespondEphemeralError(s, i, true, err)
 		return
 	} else if isSelf {
 		log.Trace("Ignoring message from self")
@@ -32,17 +33,20 @@ func botInfo(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	fd, err := os.Open(roboCatPng)
 	if err != nil {
 		log.Error(err)
+		interactionRespondEphemeralError(s, i, true, err)
 		return
 	}
 	defer fd.Close()
 	mimeType, err := mimetype.DetectReader(fd)
 	if err != nil {
 		log.Error(err)
+		interactionRespondEphemeralError(s, i, true, err)
 		return
 	}
 	_, err = fd.Seek(0, 0)
 	if err != nil {
 		log.Error(err)
+		interactionRespondEphemeralError(s, i, true, err)
 		return
 	}
 
@@ -61,6 +65,7 @@ func botInfo(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
+			Flags:  InteractionResponseFlagEphemeral,
 			Embeds: []*discordgo.MessageEmbed{embed.Truncate().MessageEmbed},
 			Files: []*discordgo.File{
 				{
@@ -73,5 +78,6 @@ func botInfo(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	})
 	if err != nil {
 		log.Error(err)
+		interactionRespondEphemeralError(s, i, true, err)
 	}
 }

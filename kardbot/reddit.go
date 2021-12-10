@@ -41,10 +41,20 @@ func redditRoulette(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	defer wg.Wait()
 
 	if isSelf, err := authorIsSelf(s, i); err != nil {
+		interactionRespondEphemeralError(s, i, true, err)
 		log.Error(err)
 		return
 	} else if isSelf {
 		log.Trace("Ignoring message from self")
+		return
+	}
+
+	err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
+	})
+	if err != nil {
+		log.Error(err)
+		interactionRespondEphemeralError(s, i, true, err)
 		return
 	}
 
@@ -83,50 +93,55 @@ func redditRoulette(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			metadata, err := getInteractionMetaData(i)
 			if err != nil {
 				log.Error(err)
+				interactionFollowUpEphemeralError(s, i, true, err)
 				return
 			}
-			err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Content: fmt.Sprintf("%s tried to use `/reddit-roulette nsfw` in a SFW channel, that was naughty! :(", metadata.AuthorUsername),
-				},
+			_, err = s.InteractionResponseEdit(s.State.User.ID, i.Interaction, &discordgo.WebhookEdit{
+				Content: fmt.Sprintf("%s tried to use `/reddit-roulette nsfw` in a SFW channel, that was naughty! :(", metadata.AuthorUsername),
 			})
 			if err != nil {
 				log.Error(err)
+				interactionFollowUpEphemeralError(s, i, true, err)
 			}
 			return
 		}
 	default:
-		log.Error("Reached unreachable case...")
+		err = fmt.Errorf("reached unreachable case")
+		log.Error(err)
+		interactionFollowUpEphemeralError(s, i, true, err)
 		return
 	}
 	if err != nil {
 		log.Error(err)
+		interactionFollowUpEphemeralError(s, i, true, err)
 		return
 	}
 	if post == nil {
-		log.Error("post is nil")
+		err = fmt.Errorf("post is nil")
+		log.Error(err)
+		interactionFollowUpEphemeralError(s, i, true, err)
 		return
 	}
 
 	embed, err := buildRedditPostEmbed(post)
 	if err != nil {
 		log.Error(err)
+		interactionFollowUpEphemeralError(s, i, true, err)
 		return
 	}
 	if embed == nil {
-		log.Error("embed is nil")
+		err = fmt.Errorf("embed is nil")
+		log.Error(err)
+		interactionFollowUpEphemeralError(s, i, true, err)
 		return
 	}
 
-	err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Embeds: []*discordgo.MessageEmbed{embed},
-		},
+	_, err = s.InteractionResponseEdit(s.State.User.ID, i.Interaction, &discordgo.WebhookEdit{
+		Embeds: []*discordgo.MessageEmbed{embed},
 	})
 	if err != nil {
 		log.Error(err)
+		interactionFollowUpEphemeralError(s, i, true, err)
 	}
 }
 

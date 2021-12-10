@@ -3,6 +3,7 @@ package kardbot
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"math/rand"
 	"os"
@@ -126,10 +127,14 @@ func servePasta(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		content, err = p.makePasta()
 		if err != nil {
 			log.Error(err)
+			interactionRespondEphemeralError(s, i, true, err)
 			return
 		}
 	} else {
-		log.Error("invalid selection: ", selection)
+		err := fmt.Errorf("invalid selection: %s", selection)
+		log.Error(err)
+		interactionRespondEphemeralError(s, i, true, err)
+		return
 	}
 
 	tts := false
@@ -164,5 +169,6 @@ func servePasta(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	})
 	if err != nil {
 		log.Error(err)
+		interactionRespondEphemeralError(s, i, true, err)
 	}
 }

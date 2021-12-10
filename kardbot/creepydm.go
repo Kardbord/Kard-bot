@@ -108,23 +108,28 @@ func creepyDMHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		return
 	}
 
+	var err error
 	switch i.ApplicationCommandData().Options[0].Name {
 	case creepyDMGet:
-		getCreepyDM(s, i)
+		err = getCreepyDM(s, i)
 	case creepyDMOptIn:
-		creepyDMsOptIn(s, i)
+		err = creepyDMsOptIn(s, i)
 	case creepyDMOptOut:
-		creepyDMsOptOut(s, i)
+		err = creepyDMsOptOut(s, i)
 	default:
-		log.Error("Unknown subcommand")
+		err = fmt.Errorf("unknown subcommand")
+	}
+
+	if err != nil {
+		log.Error(err)
+		interactionRespondEphemeralError(s, i, true, err)
 	}
 }
 
-func creepyDMsOptIn(s *discordgo.Session, i *discordgo.InteractionCreate) {
+func creepyDMsOptIn(s *discordgo.Session, i *discordgo.InteractionCreate) error {
 	metadata, err := getInteractionMetaData(i)
 	if err != nil {
-		log.Error(err)
-		return
+		return err
 	}
 
 	creepyDMSubsMutex.Lock()
@@ -133,36 +138,31 @@ func creepyDMsOptIn(s *discordgo.Session, i *discordgo.InteractionCreate) {
 
 	err = writeCreepyDmSubscribersToConfig()
 	if err != nil {
-		log.Errorf("Error persisting user %s's subscription: %v", metadata.AuthorUsername, err)
 		err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
 				Content: fmt.Sprintf("%s, you are subscribed to creepy DMs as long as the bot remains up, but there was an error persisting your subscription. Please try to opt-in again.", metadata.AuthorUsername),
+				Flags:   InteractionResponseFlagEphemeral,
 			},
 		})
 		if err != nil {
-			log.Error(err)
+			return err
 		}
-		return
+		return nil
 	}
 
-	log.Infof("User %s subscribed to creepy DMs", metadata.AuthorUsername)
-	err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+	return s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			Content: fmt.Sprintf("%s subscribed to creepy DMs 😈", metadata.AuthorUsername),
 		},
 	})
-	if err != nil {
-		log.Error(err)
-	}
 }
 
-func creepyDMsOptOut(s *discordgo.Session, i *discordgo.InteractionCreate) {
+func creepyDMsOptOut(s *discordgo.Session, i *discordgo.InteractionCreate) error {
 	metadata, err := getInteractionMetaData(i)
 	if err != nil {
-		log.Error(err)
-		return
+		return err
 	}
 
 	creepyDMSubsMutex.Lock()
@@ -171,7 +171,6 @@ func creepyDMsOptOut(s *discordgo.Session, i *discordgo.InteractionCreate) {
 
 	err = writeCreepyDmSubscribersToConfig()
 	if err != nil {
-		log.Errorf("Error persisting user %s's opt-out: %v", metadata.AuthorUsername, err)
 		err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
@@ -179,25 +178,20 @@ func creepyDMsOptOut(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			},
 		})
 		if err != nil {
-			log.Error(err)
+			return err
 		}
-		return
+		return nil
 	}
 
-	log.Infof("User %s unsubscribed from creepy DMs", metadata.AuthorUsername)
-
-	err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+	return s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			Content: fmt.Sprintf("%s unsubscribed from creepy DMs 👿", metadata.AuthorUsername),
 		},
 	})
-	if err != nil {
-		log.Error(err)
-	}
 }
 
-func getCreepyDM(s *discordgo.Session, i *discordgo.InteractionCreate) {
+func getCreepyDM(s *discordgo.Session, i *discordgo.InteractionCreate) error {
 	msg := creepyDMs[rand.Intn(len(creepyDMs))]
 
 	sendToChannel := false
@@ -213,43 +207,35 @@ func getCreepyDM(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			},
 		})
 		if err != nil {
-			log.Error(err)
+			return err
 		}
-		return
-	}
-
-	err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
-	})
-	if err != nil {
-		log.Error(err)
-		return
+		return nil
 	}
 
 	metadata, err := getInteractionMetaData(i)
 	if err != nil {
-		log.Error(err)
-		return
+		return err
 	}
 
 	uc, err := s.UserChannelCreate(metadata.AuthorID)
 	if err != nil {
-		log.Error(err)
-		return
+		return err
 	}
 
 	_, err = s.ChannelMessageSend(uc.ID, msg)
 	if err != nil {
-		log.Error(err)
-		return
+		return err
 	}
 	log.Tracef("Sent %s a creepy DM", metadata.AuthorUsername)
 
 	time.Sleep(time.Millisecond * 250) // sleep a bit for the initial response to be received
-	err = s.InteractionResponseDelete(s.State.User.ID, i.Interaction)
-	if err != nil {
-		log.Error(err)
-	}
+	return s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Content: "Sent you a creepy DM 😈",
+			Flags:   InteractionResponseFlagEphemeral,
+		},
+	})
 }
 
 // sendCreepyDMs is run every day. It spawns a goroutine for each
