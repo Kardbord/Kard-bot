@@ -50,6 +50,7 @@ func uwuify(s *discordgo.Session, i *discordgo.InteractionCreate) {
 
 	if isSelf, err := authorIsSelf(s, i); err != nil {
 		log.Error(err)
+		interactionRespondEphemeralError(s, i, true, err)
 		return
 	} else if isSelf {
 		log.Trace("Ignoring message from self")
@@ -63,6 +64,7 @@ func uwuify(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			content, err = p.makePasta()
 			if err != nil {
 				log.Error(err)
+				interactionRespondEphemeralError(s, i, true, err)
 				return
 			}
 		}
@@ -91,5 +93,6 @@ func uwuify(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	})
 	if err != nil {
 		log.Error(err)
+		interactionRespondEphemeralError(s, i, true, err)
 	}
 }
