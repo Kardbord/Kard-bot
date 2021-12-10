@@ -1,6 +1,7 @@
 package kardbot
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -44,9 +45,8 @@ func updateLogLevel(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		interactionRespondEphemeralError(s, i, true, err)
 		return
 	} else if !isOwner {
-		err = fmt.Errorf("user %s (%s) does not have privilege to update log level", metadata.AuthorUsername, metadata.AuthorID)
-		log.Warn(err)
-		interactionRespondEphemeralError(s, i, false, err)
+		log.Warnf("user %s (%s) does not have privilege to update log level", metadata.AuthorUsername, metadata.AuthorID)
+		interactionRespondEphemeralError(s, i, false, errors.New("you do not have permissions to update the log level. :("))
 		return
 	}
 
