@@ -26,26 +26,30 @@ func rollDice(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		return
 	}
 
-	count := i.ApplicationCommandData().Options[0].UintValue()
+	count := i.ApplicationCommandData().Options[0].IntValue()
 	if count < 1 {
-		log.Error("cannot roll a die <1 times")
+		err := fmt.Errorf("cannot roll a die <1 times")
+		log.Error(err)
+		interactionRespondEphemeralError(s, i, false, err)
 		return
 	}
 
 	sides, err := parseDieSides(i.ApplicationCommandData().Options[1].StringValue())
 	if err != nil {
 		log.Error(err)
+		interactionRespondEphemeralError(s, i, false, err)
 		return
 	}
 
 	output := fmt.Sprintf("Rolling %d D%d's...\n", count, sides)
-	printIndividualRolls := count*uint64(len(strconv.FormatUint(sides, 10)))+uint64(len(output)) < MaxDiscordMsgLen
+	printIndividualRolls := uint64(count)*uint64(len(strconv.FormatUint(sides, 10)))+uint64(len(output)) < MaxDiscordMsgLen
 	total := uint64(0)
 	if printIndividualRolls {
-		for i := uint64(0); i < count; i++ {
+		for j := int64(0); j < count; j++ {
 			roll, err := randFromRange(DieStartVal, sides)
 			if err != nil {
 				log.Error(err)
+				interactionRespondEphemeralError(s, i, true, err)
 				return
 			}
 			total += roll
@@ -55,9 +59,10 @@ func rollDice(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		}
 	} else {
 		// No need to track individual dice rolls if we are only printing a total
-		roll, err := randFromRange(DieStartVal*count, sides*count)
+		roll, err := randFromRange(DieStartVal*uint64(count), sides*uint64(count))
 		if err != nil {
 			log.Error(err)
+			interactionRespondEphemeralError(s, i, true, err)
 			return
 		}
 		total = roll
@@ -78,6 +83,7 @@ func rollDice(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		},
 	})
 	if err != nil {
+		interactionRespondEphemeralError(s, i, true, err)
 		log.Error(err)
 	}
 }
