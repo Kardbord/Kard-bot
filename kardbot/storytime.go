@@ -112,6 +112,7 @@ func storyTime(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	defer wg.Wait()
 	if isSelf, err := authorIsSelf(s, i); err != nil {
 		log.Error(err)
+		interactionRespondEphemeralError(s, i, true, err)
 		return
 	} else if isSelf {
 		log.Trace("Ignoring message from self")
@@ -135,10 +136,12 @@ func storyTime(s *discordgo.Session, i *discordgo.InteractionCreate) {
 				Type: discordgo.InteractionResponseChannelMessageWithSource,
 				Data: &discordgo.InteractionResponseData{
 					Embeds: []*discordgo.MessageEmbed{buildStoryTimeHelpEmbed()},
+					Flags:  InteractionResponseFlagEphemeral,
 				},
 			})
 			if err != nil {
 				log.Error(err)
+				interactionRespondEphemeralError(s, i, true, err)
 			}
 			return
 		default:
@@ -152,10 +155,12 @@ func storyTime(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
 				Content: fmt.Sprintf("%s is not a valid model", model),
+				Flags:   InteractionResponseFlagEphemeral,
 			},
 		})
 		if err2 != nil {
 			log.Error(err)
+			interactionRespondEphemeralError(s, i, true, err2)
 		}
 		return
 	}
@@ -165,6 +170,7 @@ func storyTime(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	})
 	if err != nil {
 		log.Error(err)
+		interactionRespondEphemeralError(s, i, true, err)
 		return
 	}
 
@@ -182,10 +188,13 @@ func storyTime(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	})
 	if err != nil {
 		log.Error(err)
+		interactionFollowUpEphemeralError(s, i, true, err)
 		return
 	}
 	if len(textResps) == 0 || len(textResps[0].GeneratedTexts) == 0 || textResps[0].GeneratedTexts[0] == "" {
-		log.Error("Received no text generation responses")
+		err = fmt.Errorf("received no text generation responses")
+		log.Error(err)
+		interactionFollowUpEphemeralError(s, i, true, err)
 		return
 	}
 
@@ -201,6 +210,7 @@ func storyTime(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	})
 	if err != nil {
 		log.Error(err)
+		interactionFollowUpEphemeralError(s, i, true, err)
 	}
 }
 
