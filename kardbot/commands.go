@@ -397,7 +397,8 @@ func validateCmdRegex() bool {
 func getComponentImpls() map[string]onInteractionHandler {
 	return map[string]onInteractionHandler{
 		selectMenuErrorReport: handleErrorReportSelection,
-		dndDieButtonIDPrefix:  handleDnDButtonPress,
-		dndButtonDiceCount:    handleDiceCountMenuSelection,
+		dndRollButtonID:       handleDnDButtonPress,
+		dndDiceCountSelectID:  handleDiceCountMenuSelection,
+		dndDiceFacesSelectID:  handleDiceFacesMenuSelection,
 	}
 }

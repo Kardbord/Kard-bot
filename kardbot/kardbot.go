@@ -7,7 +7,6 @@ import (
 	"math/rand"
 	"os"
 	"os/signal"
-	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -257,11 +256,7 @@ func (kbot *kardbot) prepInteractionHandlers() {
 			}
 
 		case discordgo.InteractionMessageComponent:
-			component := i.MessageComponentData().CustomID
-			if strings.Contains(component, dndDieButtonIDPrefix) {
-				component = dndDieButtonIDPrefix
-			}
-			if h, ok := getComponentImpls()[component]; ok {
+			if h, ok := getComponentImpls()[i.MessageComponentData().CustomID]; ok {
 				h(s, i)
 			} else {
 				log.Errorf(`unknown message component ID "%s"`, i.MessageComponentData().CustomID)

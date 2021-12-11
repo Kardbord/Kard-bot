@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"regexp"
 	"strconv"
-	"strings"
 
 	"github.com/bwmarrin/discordgo"
 	cmap "github.com/orcaman/concurrent-map"
@@ -169,17 +168,11 @@ func (d *dndDie) parseFromString(s string) error {
 	return nil
 }
 
-func (d dndDie) buttonID() string {
-	return dndDieButtonIDPrefix + d.String()
-}
-
-func (d *dndDie) parseFromButtonID(buttonID string) error {
-	return d.parseFromString(strings.TrimPrefix(buttonID, dndDieButtonIDPrefix))
-}
-
 const (
-	dndDieButtonIDPrefix = "dndDieButton"
-	dndButtonDiceCount   = "dndButtonDiceCount"
+	dndRollButtonID      = "roll"
+	dndDieSelectID       = "dndDieSelect"
+	dndDiceCountSelectID = "dndButtonDiceCount"
+	dndDiceFacesSelectID = "dndDiceFacesSelect"
 
 	d4   dndDie = 4
 	d6   dndDie = 6
@@ -188,24 +181,48 @@ const (
 	d12  dndDie = 12
 	d20  dndDie = 20
 	d100 dndDie = 100
+
+	defaultDnDButtonDieFaces dndDie = d20
 )
+
+func allDnDDice() []dndDie {
+	return []dndDie{d4, d6, d8, d10, d12, d20, d100}
+}
 
 func addDnDButtons(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	const maxNumDice = 10
-	diceCountMenu := discordgo.SelectMenu{
-		CustomID:    dndButtonDiceCount,
-		Placeholder: "How many 🎲?",
+	diceCountSelectMenu := discordgo.SelectMenu{
+		CustomID:    dndDiceCountSelectID,
+		Placeholder: "How many dice?",
 		Options:     make([]discordgo.SelectMenuOption, maxNumDice),
 	}
 	for i := maxNumDice; i > 0; i-- {
-		diceCountMenu.Options[i-1] = discordgo.SelectMenuOption{
+		diceCountSelectMenu.Options[i-1] = discordgo.SelectMenuOption{
 			Label:       fmt.Sprintf("%d 🎲", i),
 			Description: fmt.Sprintf("Roll %d dice", i),
 			Value:       fmt.Sprint(i),
 			Default:     false,
 		}
 	}
-	diceCountMenu.Options[0].Default = true
+	diceCountSelectMenu.Options[0].Default = true
+
+	diceFacesSelectMenu := discordgo.SelectMenu{
+		CustomID:    dndDiceFacesSelectID,
+		Placeholder: "How many faces?",
+		Options:     make([]discordgo.SelectMenuOption, len(allDnDDice())),
+	}
+	for i, die := range allDnDDice() {
+		dflt := false
+		if die == d20 {
+			dflt = true
+		}
+		diceFacesSelectMenu.Options[i] = discordgo.SelectMenuOption{
+			Label:       fmt.Sprintf("%s 🔢", die),
+			Description: fmt.Sprintf("Roll a %s", die),
+			Value:       fmt.Sprint(die),
+			Default:     dflt,
+		}
+	}
 
 	err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
@@ -213,52 +230,17 @@ func addDnDButtons(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			Content: "Select the desired options, then press the button to roll the dice!",
 			Components: []discordgo.MessageComponent{
 				discordgo.ActionsRow{
-					Components: []discordgo.MessageComponent{diceCountMenu},
+					Components: []discordgo.MessageComponent{diceCountSelectMenu},
+				},
+				discordgo.ActionsRow{
+					Components: []discordgo.MessageComponent{diceFacesSelectMenu},
 				},
 				discordgo.ActionsRow{
 					Components: []discordgo.MessageComponent{
 						discordgo.Button{
-							Label:    d4.String(),
+							Label:    "Roll the 🎲!",
 							Style:    discordgo.PrimaryButton,
-							CustomID: d4.buttonID(),
-						},
-						discordgo.Button{
-							Label:    d6.String(),
-							Style:    discordgo.PrimaryButton,
-							CustomID: d6.buttonID(),
-						},
-						discordgo.Button{
-							Label:    d8.String(),
-							Style:    discordgo.PrimaryButton,
-							CustomID: d8.buttonID(),
-						},
-					},
-				},
-				discordgo.ActionsRow{
-					Components: []discordgo.MessageComponent{
-						discordgo.Button{
-							Label:    d10.String(),
-							Style:    discordgo.PrimaryButton,
-							CustomID: d10.buttonID(),
-						},
-						discordgo.Button{
-							Label:    d12.String(),
-							Style:    discordgo.PrimaryButton,
-							CustomID: d12.buttonID(),
-						},
-						discordgo.Button{
-							Label:    d20.String(),
-							Style:    discordgo.PrimaryButton,
-							CustomID: d20.buttonID(),
-						},
-					},
-				},
-				discordgo.ActionsRow{
-					Components: []discordgo.MessageComponent{
-						discordgo.Button{
-							Label:    d100.String(),
-							Style:    discordgo.PrimaryButton,
-							CustomID: d100.buttonID(),
+							CustomID: dndRollButtonID,
 						},
 					},
 				},
@@ -272,14 +254,6 @@ func addDnDButtons(s *discordgo.Session, i *discordgo.InteractionCreate) {
 }
 
 func handleDnDButtonPress(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	var die dndDie
-	err := die.parseFromButtonID(i.MessageComponentData().CustomID)
-	if err != nil {
-		log.Error(err)
-		interactionRespondEphemeralError(s, i, true, err)
-		return
-	}
-
 	metadata, err := getInteractionMetaData(i)
 	if err != nil {
 		log.Error(err)
@@ -289,12 +263,9 @@ func handleDnDButtonPress(s *discordgo.Session, i *discordgo.InteractionCreate) 
 
 	iCfg, ok := dndDiceRollMsgConfigs.Get(metadata.MessageID)
 	if !ok {
-		iCfg = dndButtonsMsgConfig{
-			MsgID:     metadata.MessageID,
-			DiceCount: 1,
-		}
+		iCfg = newDnDRollButtonConfig(metadata.MessageID)
 	}
-	cfg, ok := iCfg.(dndButtonsMsgConfig)
+	cfg, ok := iCfg.(dndRollButtonConfig)
 	if !ok {
 		err = fmt.Errorf("bad cast to dndButtonsMsgConfig")
 		log.Error(err)
@@ -302,11 +273,12 @@ func handleDnDButtonPress(s *discordgo.Session, i *discordgo.InteractionCreate) 
 		return
 	}
 
-	content := fmt.Sprintf("Rolled %d%s:\n", cfg.DiceCount, die)
+	faces := cfg.Faces
+	content := fmt.Sprintf("Rolled %d%s:\n", cfg.DiceCount, faces)
 
 	total := uint64(0)
 	for j := uint64(0); j < cfg.DiceCount; j++ {
-		rollResult, err := randFromRange(1, uint64(die))
+		rollResult, err := randFromRange(1, uint64(faces))
 		if err != nil {
 			log.Error(err)
 			interactionRespondEphemeralError(s, i, true, err)
@@ -342,11 +314,9 @@ func handleDiceCountMenuSelection(s *discordgo.Session, i *discordgo.Interaction
 
 	iCfg, ok := dndDiceRollMsgConfigs.Get(metadata.MessageID)
 	if !ok {
-		iCfg = dndButtonsMsgConfig{
-			MsgID: metadata.MessageID,
-		}
+		iCfg = newDnDRollButtonConfig(metadata.MessageID)
 	}
-	cfg, ok := iCfg.(dndButtonsMsgConfig)
+	cfg, ok := iCfg.(dndRollButtonConfig)
 	if !ok {
 		err = fmt.Errorf("bad cast to dndButtonsMsgConfig")
 		log.Error(err)
@@ -384,10 +354,70 @@ func handleDiceCountMenuSelection(s *discordgo.Session, i *discordgo.Interaction
 	}
 }
 
-type dndButtonsMsgConfig struct {
-	MsgID     string `json:"msg_id"`
-	DiceCount uint64 `json:"dice_count,omitempty"`
+func handleDiceFacesMenuSelection(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	metadata, err := getInteractionMetaData(i)
+	if err != nil {
+		log.Error(err)
+		interactionRespondEphemeralError(s, i, true, err)
+		return
+	}
+
+	iCfg, ok := dndDiceRollMsgConfigs.Get(metadata.MessageID)
+	if !ok {
+		iCfg = newDnDRollButtonConfig(metadata.MessageID)
+	}
+	cfg, ok := iCfg.(dndRollButtonConfig)
+	if !ok {
+		err = fmt.Errorf("bad cast to dndButtonsMsgConfig")
+		log.Error(err)
+		interactionRespondEphemeralError(s, i, true, err)
+		return
+	}
+
+	if len(i.MessageComponentData().Values) == 0 {
+		err = fmt.Errorf("no values sent")
+		log.Error(err)
+		interactionRespondEphemeralError(s, i, true, err)
+		return
+	}
+
+	var die dndDie
+	err = die.parseFromString(i.MessageComponentData().Values[0])
+	if err != nil {
+		log.Error(err)
+		interactionRespondEphemeralError(s, i, true, err)
+		return
+	}
+
+	cfg.Faces = die
+	dndDiceRollMsgConfigs.Set(metadata.MessageID, cfg)
+
+	err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Content: fmt.Sprintf("Dice rolls from this message will now roll a %s", cfg.Faces),
+			Flags:   InteractionResponseFlagEphemeral,
+		},
+	})
+	if err != nil {
+		log.Error(err)
+		interactionRespondEphemeralError(s, i, true, err)
+	}
 }
 
-// Map of message IDs to settings
+type dndRollButtonConfig struct {
+	MsgID     string `json:"msg_id"`
+	DiceCount uint64 `json:"dice_count,omitempty"`
+	Faces     dndDie `json:"faces,omitempty"`
+}
+
+func newDnDRollButtonConfig(msgID string) dndRollButtonConfig {
+	return dndRollButtonConfig{
+		MsgID:     msgID,
+		DiceCount: 1,
+		Faces:     defaultDnDButtonDieFaces,
+	}
+}
+
+// Map of message IDs to dndRollButtonConfigs
 var dndDiceRollMsgConfigs = cmap.New()
