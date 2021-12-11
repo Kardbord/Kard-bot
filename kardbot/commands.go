@@ -398,5 +398,6 @@ func getComponentImpls() map[string]onInteractionHandler {
 	return map[string]onInteractionHandler{
 		selectMenuErrorReport: handleErrorReportSelection,
 		dndDieButtonIDPrefix:  handleDnDButtonPress,
+		dndButtonDiceCount:    handleDiceCountMenuSelection,
 	}
 }
