@@ -18,20 +18,32 @@ const (
 func getCommands() []*discordgo.ApplicationCommand {
 	allcmds := []*discordgo.ApplicationCommand{
 		{
-			Name:        "roll",
-			Description: "Rolls a D{X} die {Y} times, where X and Y are provided by the user.",
+			Name:        RollCmd,
+			Description: "Dice rolling fun!",
 			Options: []*discordgo.ApplicationCommandOption{
 				{
-					Type:        discordgo.ApplicationCommandOptionInteger,
-					Name:        "dice-count",
-					Description: "How many dice should be rolled?",
-					Required:    true,
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        RollSubCmdDnD,
+					Description: "Get a set of buttons for rolling DnD dice.",
 				},
 				{
-					Type:        discordgo.ApplicationCommandOptionString,
-					Name:        "dice-sides",
-					Description: "How many sides on the dice? Can optionally be prefixed with 'D' or 'd'.",
-					Required:    true,
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        RollSubCmdCustom,
+					Description: "Rolls a D{X} die {Y} times, where X and Y are provided by the user.",
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionInteger,
+							Name:        "dice-count",
+							Description: "How many dice should be rolled?",
+							Required:    true,
+						},
+						{
+							Type:        discordgo.ApplicationCommandOptionString,
+							Name:        "dice-sides",
+							Description: "How many sides on the dice? Can optionally be prefixed with 'D' or 'd'.",
+							Required:    true,
+						},
+					},
 				},
 			},
 		},
@@ -323,7 +335,7 @@ func getCommands() []*discordgo.ApplicationCommand {
 
 func getCommandImpls() map[string]onInteractionHandler {
 	return map[string]onInteractionHandler{
-		"roll":              rollDice,
+		RollCmd:             roll,
 		"loglevel":          updateLogLevel,
 		"pasta":             servePasta,
 		"reddit-roulette":   redditRoulette,
@@ -385,5 +397,6 @@ func validateCmdRegex() bool {
 func getComponentImpls() map[string]onInteractionHandler {
 	return map[string]onInteractionHandler{
 		selectMenuErrorReport: handleErrorReportSelection,
+		dndDieButtonIDPrefix:  handleDnDButtonPress,
 	}
 }
