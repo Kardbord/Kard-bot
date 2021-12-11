@@ -227,7 +227,7 @@ func addDnDButtons(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
-			Content: "Select the desired options, then press the button to roll the dice!",
+			Content: "Select the desired options, then press the button to roll the dice!\nNote that if the bot is restarted, you'll need to reselect your options.",
 			Components: []discordgo.MessageComponent{
 				discordgo.ActionsRow{
 					Components: []discordgo.MessageComponent{diceCountSelectMenu},
