@@ -227,7 +227,7 @@ func addDnDButtons(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
-			Content: "Select the desired options, then press the button to roll the dice!\nNote that if the bot is restarted, you'll need to reselect your options.",
+			Content: "Select the desired options, then press the button to roll the dice!",
 			Components: []discordgo.MessageComponent{
 				discordgo.ActionsRow{
 					Components: []discordgo.MessageComponent{diceCountSelectMenu},
@@ -261,7 +261,7 @@ func handleDnDButtonPress(s *discordgo.Session, i *discordgo.InteractionCreate) 
 		return
 	}
 
-	iCfg, ok := dndDiceRollMsgConfigs.Get(metadata.MessageID)
+	iCfg, ok := dndDiceRollMsgConfigs.Get(string(getDndDiceRollMsgKey(*metadata)))
 	if !ok {
 		iCfg = newDnDRollButtonConfig(metadata.MessageID)
 	}
@@ -312,7 +312,7 @@ func handleDiceCountMenuSelection(s *discordgo.Session, i *discordgo.Interaction
 		return
 	}
 
-	iCfg, ok := dndDiceRollMsgConfigs.Get(metadata.MessageID)
+	iCfg, ok := dndDiceRollMsgConfigs.Get(string(getDndDiceRollMsgKey(*metadata)))
 	if !ok {
 		iCfg = newDnDRollButtonConfig(metadata.MessageID)
 	}
@@ -339,7 +339,7 @@ func handleDiceCountMenuSelection(s *discordgo.Session, i *discordgo.Interaction
 	}
 
 	cfg.DiceCount = diceCount
-	dndDiceRollMsgConfigs.Set(metadata.MessageID, cfg)
+	dndDiceRollMsgConfigs.Set(string(getDndDiceRollMsgKey(*metadata)), cfg)
 
 	err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
@@ -362,7 +362,7 @@ func handleDiceFacesMenuSelection(s *discordgo.Session, i *discordgo.Interaction
 		return
 	}
 
-	iCfg, ok := dndDiceRollMsgConfigs.Get(metadata.MessageID)
+	iCfg, ok := dndDiceRollMsgConfigs.Get(string(getDndDiceRollMsgKey(*metadata)))
 	if !ok {
 		iCfg = newDnDRollButtonConfig(metadata.MessageID)
 	}
@@ -390,7 +390,7 @@ func handleDiceFacesMenuSelection(s *discordgo.Session, i *discordgo.Interaction
 	}
 
 	cfg.Faces = die
-	dndDiceRollMsgConfigs.Set(metadata.MessageID, cfg)
+	dndDiceRollMsgConfigs.Set(string(getDndDiceRollMsgKey(*metadata)), cfg)
 
 	err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
@@ -419,5 +419,11 @@ func newDnDRollButtonConfig(msgID string) dndRollButtonConfig {
 	}
 }
 
-// Map of message IDs to dndRollButtonConfigs
+type dndDiceRollMsgKey string
+
+// Map of dndDiceRollMsgKey to dndRollButtonConfigs
 var dndDiceRollMsgConfigs = cmap.New()
+
+func getDndDiceRollMsgKey(mdata interactionMetaData) dndDiceRollMsgKey {
+	return dndDiceRollMsgKey(mdata.MessageID + mdata.AuthorID)
+}
