@@ -169,10 +169,14 @@ func (d *dndDie) parseFromString(s string) error {
 }
 
 const (
-	dndRollButtonID      = "roll"
-	dndDieSelectID       = "dndDieSelect"
-	dndDiceCountSelectID = "dndButtonDiceCount"
-	dndDiceFacesSelectID = "dndDiceFacesSelect"
+	dndRollButtonID         = "roll"
+	dndDieSelectID          = "dndDieSelect"
+	dndDiceCountSelectID    = "dndButtonDiceCountSelect"
+	dndDiceFacesSelectID    = "dndDiceFacesSelect"
+	dndOtherOptionsSelectID = "dndOtherOptsSelect"
+	dndDiceRollOptEphemeral = "Ephemeral 🔮"
+	dndDiceRollOptDM        = "DM 📫"
+	dndDiceRollOptNone      = "None ❌"
 
 	d4   dndDie = 4
 	d6   dndDie = 6
@@ -237,6 +241,31 @@ func addDnDButtons(s *discordgo.Session, i *discordgo.InteractionCreate) {
 				},
 				discordgo.ActionsRow{
 					Components: []discordgo.MessageComponent{
+						discordgo.SelectMenu{
+							CustomID:    dndOtherOptionsSelectID,
+							Placeholder: "Additional Options ❔",
+							Options: []discordgo.SelectMenuOption{
+								{
+									Label:       dndDiceRollOptNone,
+									Description: "No additional options desired",
+									Value:       dndDiceRollOptNone,
+								},
+								{
+									Label:       dndDiceRollOptDM,
+									Description: "Get the result as a direct message.",
+									Value:       dndDiceRollOptDM,
+								},
+								{
+									Label:       dndDiceRollOptEphemeral,
+									Description: "Get the result as a message that only you can see and dismiss.",
+									Value:       dndDiceRollOptEphemeral,
+								},
+							},
+						},
+					},
+				},
+				discordgo.ActionsRow{
+					Components: []discordgo.MessageComponent{
 						discordgo.Button{
 							Label:    "Roll the 🎲!",
 							Style:    discordgo.PrimaryButton,
@@ -249,7 +278,7 @@ func addDnDButtons(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	})
 	if err != nil {
 		log.Error(err)
-		interactionFollowUpEphemeralError(s, i, true, err)
+		interactionRespondEphemeralError(s, i, true, err)
 	}
 }
 
@@ -263,7 +292,7 @@ func handleDnDButtonPress(s *discordgo.Session, i *discordgo.InteractionCreate) 
 
 	iCfg, ok := dndDiceRollMsgConfigs.Get(string(getDndDiceRollMsgKey(*metadata)))
 	if !ok {
-		iCfg = newDnDRollButtonConfig(metadata.MessageID)
+		iCfg = newDnDRollButtonConfig(metadata.MessageID, metadata.AuthorID)
 	}
 	cfg, ok := iCfg.(dndRollButtonConfig)
 	if !ok {
@@ -291,10 +320,35 @@ func handleDnDButtonPress(s *discordgo.Session, i *discordgo.InteractionCreate) 
 		content += fmt.Sprintf("Total: %d", total)
 	}
 
+	flags := uint64(0)
+	if cfg.Ephemeral {
+		flags = InteractionResponseFlagEphemeral
+	}
+
+	if cfg.DM {
+		uc, err := s.UserChannelCreate(metadata.AuthorID)
+		if err != nil {
+			log.Error(err)
+			interactionRespondEphemeralError(s, i, true, err)
+			return
+		}
+
+		_, err = s.ChannelMessageSend(uc.ID, content)
+		if err != nil {
+			log.Error(err)
+			interactionRespondEphemeralError(s, i, true, err)
+			return
+		}
+
+		content = "DM'd you the result"
+		flags = InteractionResponseFlagEphemeral
+	}
+
 	err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			Content: content,
+			Flags:   flags,
 		},
 	})
 	if err != nil {
@@ -314,7 +368,7 @@ func handleDiceCountMenuSelection(s *discordgo.Session, i *discordgo.Interaction
 
 	iCfg, ok := dndDiceRollMsgConfigs.Get(string(getDndDiceRollMsgKey(*metadata)))
 	if !ok {
-		iCfg = newDnDRollButtonConfig(metadata.MessageID)
+		iCfg = newDnDRollButtonConfig(metadata.MessageID, metadata.AuthorID)
 	}
 	cfg, ok := iCfg.(dndRollButtonConfig)
 	if !ok {
@@ -364,7 +418,7 @@ func handleDiceFacesMenuSelection(s *discordgo.Session, i *discordgo.Interaction
 
 	iCfg, ok := dndDiceRollMsgConfigs.Get(string(getDndDiceRollMsgKey(*metadata)))
 	if !ok {
-		iCfg = newDnDRollButtonConfig(metadata.MessageID)
+		iCfg = newDnDRollButtonConfig(metadata.MessageID, metadata.AuthorID)
 	}
 	cfg, ok := iCfg.(dndRollButtonConfig)
 	if !ok {
@@ -405,17 +459,73 @@ func handleDiceFacesMenuSelection(s *discordgo.Session, i *discordgo.Interaction
 	}
 }
 
-type dndRollButtonConfig struct {
-	MsgID     string `json:"msg_id"`
-	DiceCount uint64 `json:"dice_count,omitempty"`
-	Faces     dndDie `json:"faces,omitempty"`
+func handleDnDOtherOptionsSelection(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	metadata, err := getInteractionMetaData(i)
+	if err != nil {
+		log.Error(err)
+		interactionRespondEphemeralError(s, i, true, err)
+		return
+	}
+
+	iCfg, ok := dndDiceRollMsgConfigs.Get(string(getDndDiceRollMsgKey(*metadata)))
+	if !ok {
+		iCfg = newDnDRollButtonConfig(metadata.MessageID, metadata.AuthorID)
+	}
+	cfg, ok := iCfg.(dndRollButtonConfig)
+	if !ok {
+		err = fmt.Errorf("bad cast to dndButtonsMsgConfig")
+		log.Error(err)
+		interactionRespondEphemeralError(s, i, true, err)
+		return
+	}
+
+	dm := false
+	ephemeral := false
+	for _, val := range i.MessageComponentData().Values {
+		if val == dndDiceRollOptNone {
+			dm = false
+			ephemeral = false
+			break
+		} else if val == dndDiceRollOptEphemeral {
+			ephemeral = true
+		} else if val == dndDiceRollOptDM {
+			dm = true
+		}
+	}
+
+	cfg.DM = dm
+	cfg.Ephemeral = ephemeral
+	dndDiceRollMsgConfigs.Set(string(getDndDiceRollMsgKey(*metadata)), cfg)
+	err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Content: fmt.Sprintf("Settings applied:\nDM: `%t`\nEphemeral: `%t`", dm, ephemeral),
+			Flags:   InteractionResponseFlagEphemeral,
+		},
+	})
+	if err != nil {
+		log.Error(err)
+		interactionRespondEphemeralError(s, i, true, err)
+	}
 }
 
-func newDnDRollButtonConfig(msgID string) dndRollButtonConfig {
+type dndRollButtonConfig struct {
+	UserID    string
+	MsgID     string
+	DiceCount uint64
+	Faces     dndDie
+	Ephemeral bool
+	DM        bool
+}
+
+func newDnDRollButtonConfig(msgID, userID string) dndRollButtonConfig {
 	return dndRollButtonConfig{
+		UserID:    userID,
 		MsgID:     msgID,
 		DiceCount: 1,
 		Faces:     defaultDnDButtonDieFaces,
+		Ephemeral: false,
+		DM:        false,
 	}
 }
 
