@@ -194,7 +194,7 @@ func allDnDDice() []dndDie {
 }
 
 func addDnDButtons(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	const maxNumDice = 10
+	const maxNumDice = 25
 	diceCountSelectMenu := discordgo.SelectMenu{
 		CustomID:    dndDiceCountSelectID,
 		Placeholder: "How many dice?",
