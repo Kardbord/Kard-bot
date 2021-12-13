@@ -48,11 +48,17 @@ type interactionMetaData struct {
 	GuildID        string
 	ChannelID      string
 	InteractionID  string
+	MessageID      string
 }
 
 func getInteractionMetaData(i *discordgo.InteractionCreate) (*interactionMetaData, error) {
 	if i == nil {
 		return nil, errors.New("interaction is nil")
+	}
+
+	msgID := ""
+	if i.Message != nil {
+		msgID = i.Message.ID
 	}
 
 	if i.Member != nil {
@@ -67,6 +73,7 @@ func getInteractionMetaData(i *discordgo.InteractionCreate) (*interactionMetaDat
 			GuildID:        i.GuildID,
 			ChannelID:      i.ChannelID,
 			InteractionID:  i.ID,
+			MessageID:      msgID,
 		}, nil
 	}
 
@@ -79,6 +86,7 @@ func getInteractionMetaData(i *discordgo.InteractionCreate) (*interactionMetaDat
 			GuildID:        i.GuildID,
 			ChannelID:      i.ChannelID,
 			InteractionID:  i.ID,
+			MessageID:      msgID,
 		}, nil
 	}
 
