@@ -303,7 +303,7 @@ func handleDnDButtonPress(s *discordgo.Session, i *discordgo.InteractionCreate) 
 	}
 
 	faces := cfg.Faces
-	content := fmt.Sprintf("Rolled %d%s:\n", cfg.DiceCount, faces)
+	content := fmt.Sprintf("%s rolled %d%s:\n", metadata.AuthorMention, cfg.DiceCount, faces)
 
 	total := uint64(0)
 	for j := uint64(0); j < cfg.DiceCount; j++ {
