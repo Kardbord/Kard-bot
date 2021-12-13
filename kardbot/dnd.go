@@ -339,9 +339,14 @@ func handleDnDButtonPress(s *discordgo.Session, i *discordgo.InteractionCreate) 
 			interactionRespondEphemeralError(s, i, true, err)
 			return
 		}
-
-		content = "DM'd you the result"
-		flags = InteractionResponseFlagEphemeral
+		err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseDeferredMessageUpdate,
+		})
+		if err != nil {
+			log.Error(err)
+			interactionRespondEphemeralError(s, i, true, err)
+		}
+		return
 	}
 
 	err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
@@ -396,11 +401,7 @@ func handleDiceCountMenuSelection(s *discordgo.Session, i *discordgo.Interaction
 	dndDiceRollMsgConfigs.Set(string(getDndDiceRollMsgKey(*metadata)), cfg)
 
 	err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Content: fmt.Sprintf("Dice rolls from this message will now roll %d dice.", cfg.DiceCount),
-			Flags:   InteractionResponseFlagEphemeral,
-		},
+		Type: discordgo.InteractionResponseDeferredMessageUpdate,
 	})
 	if err != nil {
 		log.Error(err)
@@ -447,11 +448,7 @@ func handleDiceFacesMenuSelection(s *discordgo.Session, i *discordgo.Interaction
 	dndDiceRollMsgConfigs.Set(string(getDndDiceRollMsgKey(*metadata)), cfg)
 
 	err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Content: fmt.Sprintf("Dice rolls from this message will now roll a %s", cfg.Faces),
-			Flags:   InteractionResponseFlagEphemeral,
-		},
+		Type: discordgo.InteractionResponseDeferredMessageUpdate,
 	})
 	if err != nil {
 		log.Error(err)
@@ -497,11 +494,7 @@ func handleDnDOtherOptionsSelection(s *discordgo.Session, i *discordgo.Interacti
 	cfg.Ephemeral = ephemeral
 	dndDiceRollMsgConfigs.Set(string(getDndDiceRollMsgKey(*metadata)), cfg)
 	err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Content: fmt.Sprintf("Settings applied:\nDM: `%t`\nEphemeral: `%t`", dm, ephemeral),
-			Flags:   InteractionResponseFlagEphemeral,
-		},
+		Type: discordgo.InteractionResponseDeferredMessageUpdate,
 	})
 	if err != nil {
 		log.Error(err)
