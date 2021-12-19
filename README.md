@@ -88,7 +88,7 @@ TZ="Your time zone here ex: America/Boise"
 Next, edit the `slash-cmd-guilds` entry in the `config/setup.json` file to include the guild (server) IDs of each server you invited the bot to.
 
 With your token in place and your config updated, you can simply run `docker-compose up -d` from the untarred directory to get your bot started!
-The Docker daemon will automatically download the needed docker image from [Docker Hub](https://hub.docker.com/repository/docker/tkvarfordt/kardbot/) or the
+The Docker daemon will automatically download the needed docker image from [Docker Hub](https://hub.docker.com/r/tkvarfordt/kardbot/tags) or the
 [GitHub Container Registry](https://github.com/TannerKvarfordt/Kard-bot/pkgs/container/kard-bot). 
 To check the status of the docker container, you can use `docker ps -a` or `docker logs <CONTAINER-NAME>`.
 
