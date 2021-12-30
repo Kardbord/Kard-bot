@@ -1,4 +1,5 @@
 {
   "enable-dg-logging": false,
-  "default-log-level": "info"
+  "default-log-level": "info",
+  "unregister-all-cmds-on-startup": false
 }

@@ -31,7 +31,8 @@ type kardbot struct {
 	Session        *discordgo.Session
 	dgLoggingMutex sync.Mutex
 
-	EnableDGLogging bool `json:"enable-dg-logging"`
+	EnableDGLogging            bool `json:"enable-dg-logging"`
+	UnregisterAllCmdsOnStartup bool `json:"unregister-all-cmds-on-startup"`
 
 	// Initialized in kardbot.Run, used to determine when
 	// kardbot.Stop has been called.
@@ -155,7 +156,7 @@ func (kbot *kardbot) initialize() {
 
 	kbot.addOnCreateHandlers()
 	log.Info("OnCreate handlers registered")
-	kbot.addInteractionHandlers(false)
+	kbot.addInteractionHandlers(kbot.UnregisterAllCmdsOnStartup)
 	log.Info("Interaction handlers registered")
 }
 
@@ -387,7 +388,7 @@ func (kbot *kardbot) unregisterAllGuildCommands() {
 		}
 		if cmds, err := kbot.Session.ApplicationCommands(kbot.Session.State.User.ID, g.ID); err == nil {
 			for _, cmd := range cmds {
-				log.Infof("Unregistering cmd '%s' in guild %s", cmd.Name, g.ID)
+				log.Infof("Unregistering cmd '%s' in guild %s", cmd.Name, g.Name)
 				err = kbot.Session.ApplicationCommandDelete(kbot.Session.State.User.ID, g.ID, cmd.ID)
 				if err != nil {
 					log.Error(err)
