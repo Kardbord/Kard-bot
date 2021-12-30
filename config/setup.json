@@ -1,5 +1,4 @@
 {
   "enable-dg-logging": false,
-  "default-log-level": "info",
-  "slash-cmd-guilds": []
+  "default-log-level": "info"
 }
