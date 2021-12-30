@@ -363,6 +363,7 @@ func (kbot *kardbot) bulkOverwriteTestGuildcommands() {
 		log.Info("No testbed guild specified")
 		return
 	}
+	log.Info("Bulk overwriting testbed guild commands")
 	_, err := kbot.Session.ApplicationCommandBulkOverwrite(kbot.Session.State.User.ID, getTestbedGuild(), getCommands())
 	if err != nil {
 		log.Fatalf("Failed to register commands in guild %s: %v", getTestbedGuild(), err)
