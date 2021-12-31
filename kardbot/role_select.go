@@ -181,52 +181,28 @@ func init() {
 	roleRegex = func() *regexp.Regexp { return r }
 }
 
-func createRoleSelect(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	if s == nil || i == nil {
-		log.Errorf("nil Session pointer (%v) and/or InteractionCreate pointer (%v)", s, i)
-		return
-	}
-	wg := bot().updateLastActive()
-	defer wg.Wait()
+const roleMentionDelimiter = "<@&"
 
-	metadata, err := getInteractionMetaData(i)
-	if err != nil {
-		interactionRespondEphemeralError(s, i, true, err)
-		log.Error(err)
-		return
+func parseRoles(i *discordgo.InteractionCreate) ([]string, error) {
+	if !strings.HasPrefix(i.ApplicationCommandData().Options[roleSelectRolesOptIdx].StringValue(), roleMentionDelimiter) {
+		return nil, fmt.Errorf("the first argument to `%s` must be a role mention", roleSelectRolesOpt)
 	}
 
-	if metadata.AuthorPermissions&discordgo.PermissionAdministrator == 0 {
-		err = fmt.Errorf("you must be a server administrator to run this command")
-		interactionRespondEphemeralError(s, i, false, err)
-		log.Error(err)
-		return
-	}
-
-	err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
-	})
-	if err != nil {
-		interactionRespondEphemeralError(s, i, true, err)
-		log.Error(err)
-		return
-	}
-
-	const roleMentionDelim = "<@&"
-	if !strings.HasPrefix(i.ApplicationCommandData().Options[roleSelectRolesOptIdx].StringValue(), roleMentionDelim) {
-		interactionFollowUpEphemeralError(s, i, false, fmt.Errorf("the first argument to `%s` must be a role mention", roleSelectRolesOpt))
-		return
-	}
-	rolesAndCtx := strings.Split(i.ApplicationCommandData().Options[roleSelectRolesOptIdx].StringValue(), roleMentionDelim)[1:]
+	rolesAndCtx := strings.Split(i.ApplicationCommandData().Options[roleSelectRolesOptIdx].StringValue(), roleMentionDelimiter)[1:]
 	if len(rolesAndCtx) > maxDiscordSelectMenuOpts*maxDiscordActionRowSize {
-		interactionFollowUpEphemeralError(s, i, false, fmt.Errorf("you may only specify up to %d roles", maxDiscordSelectMenuOpts*maxDiscordActionRowSize))
-		log.Error(err)
-		return
+		return nil, fmt.Errorf("you may only specify up to %d roles", maxDiscordSelectMenuOpts*maxDiscordActionRowSize)
 	}
+
 	if len(rolesAndCtx) == 0 {
-		interactionFollowUpEphemeralError(s, i, false, fmt.Errorf("you must specify at least one role"))
-		log.Error(err)
-		return
+		return nil, fmt.Errorf("you must specify at least one role")
+	}
+
+	return rolesAndCtx, nil
+}
+
+func buildRoleSelectMenus(s *discordgo.Session, i *discordgo.InteractionCreate, rolesAndCtx []string) ([]discordgo.SelectMenu, error) {
+	if s == nil || i == nil {
+		return nil, fmt.Errorf("nil session (%v) or interaction (%v)", s, i)
 	}
 
 	sMenus := make([]discordgo.SelectMenu, int(math.Ceil(float64(len(rolesAndCtx))/float64(maxDiscordSelectMenuOpts))))
@@ -237,22 +213,22 @@ func createRoleSelect(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		}
 	}
 
+	metadata, err := getInteractionMetaData(i)
+	if err != nil {
+		return nil, err
+	}
+
 	roleMap, err := guildRoleMap(s, metadata.GuildID)
 	if err != nil {
-		interactionFollowUpEphemeralError(s, i, true, err)
-		log.Error(err)
-		return
+		return nil, err
 	}
 
 	for idx := range rolesAndCtx {
-		rolesAndCtx[idx] = roleMentionDelim + rolesAndCtx[idx]
-		roleID := strings.Replace(strings.Replace(roleRegex().FindString(rolesAndCtx[idx]), "<@&", "", 1), ">", "", 1)
+		rolesAndCtx[idx] = roleMentionDelimiter + rolesAndCtx[idx]
+		roleID := strings.Replace(strings.Replace(roleRegex().FindString(rolesAndCtx[idx]), roleMentionDelimiter, "", 1), ">", "", 1)
 		role, ok := roleMap[roleID]
 		if !ok {
-			err = fmt.Errorf("no role found for ID: %s", roleID)
-			interactionFollowUpEphemeralError(s, i, true, err)
-			log.Error(err)
-			return
+			return nil, fmt.Errorf("no role found for ID: %s", roleID)
 		}
 
 		smIdx := idx / 25
@@ -264,39 +240,7 @@ func createRoleSelect(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		})
 	}
 
-	e := buildRoleSelectMenuEmbed(i)
-	if e.URL != "" && !isReachableURL(e.URL) {
-		interactionFollowUpEphemeralError(s, i, false, fmt.Errorf("unreachable URL provided: %s", e.URL))
-		return
-	}
-	if e.Thumbnail != nil && e.Thumbnail.URL != "" && !isReachableURL(e.Thumbnail.URL) {
-		interactionFollowUpEphemeralError(s, i, false, fmt.Errorf("unreachable thumbnail URL provided: %s", e.Thumbnail.URL))
-		return
-	}
-
-	iEdit := &discordgo.WebhookEdit{
-		Embeds: []*discordgo.MessageEmbed{e.Truncate().MessageEmbed},
-		AllowedMentions: &discordgo.MessageAllowedMentions{
-			Parse: []discordgo.AllowedMentionType{
-				discordgo.AllowedMentionTypeEveryone,
-				discordgo.AllowedMentionTypeRoles,
-				discordgo.AllowedMentionTypeUsers,
-			},
-		},
-	}
-	for _, m := range sMenus {
-		m.MaxValues = len(m.Options)
-		iEdit.Components = append(iEdit.Components, discordgo.ActionsRow{
-			Components: []discordgo.MessageComponent{m},
-		})
-	}
-
-	_, err = s.InteractionResponseEdit(s.State.User.ID, i.Interaction, iEdit)
-	if err != nil {
-		interactionFollowUpEphemeralError(s, i, true, err)
-		log.Error(err)
-		return
-	}
+	return sMenus, nil
 }
 
 func buildRoleSelectMenuEmbed(i *discordgo.InteractionCreate) *dg_helpers.Embed {
@@ -324,4 +268,83 @@ func buildRoleSelectMenuEmbed(i *discordgo.InteractionCreate) *dg_helpers.Embed 
 	}
 
 	return embedArgs
+}
+
+func validateRoleSelectEmbedURLs(e *dg_helpers.Embed) error {
+	if e.URL != "" && !isReachableURL(e.URL) {
+		return fmt.Errorf("unreachable URL provided: %s", e.URL)
+	}
+	if e.Thumbnail != nil && e.Thumbnail.URL != "" && !isReachableURL(e.Thumbnail.URL) {
+		return fmt.Errorf("unreachable thumbnail URL provided: %s", e.Thumbnail.URL)
+	}
+	return nil
+}
+
+func createRoleSelect(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	if s == nil || i == nil {
+		log.Errorf("nil Session pointer (%v) and/or InteractionCreate pointer (%v)", s, i)
+		return
+	}
+	wg := bot().updateLastActive()
+	defer wg.Wait()
+
+	if isAdmin, err := isInteractionIssuerAdmin(i); err != nil {
+		interactionRespondEphemeralError(s, i, true, err)
+		log.Error(err)
+		return
+	} else if !isAdmin {
+		interactionRespondEphemeralError(s, i, false, fmt.Errorf("you must be a server administrator to run this command"))
+		return
+	}
+
+	err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
+	})
+	if err != nil {
+		interactionRespondEphemeralError(s, i, true, err)
+		log.Error(err)
+		return
+	}
+
+	rolesAndCtx, err := parseRoles(i)
+	if err != nil {
+		interactionFollowUpEphemeralError(s, i, false, err)
+		return
+	}
+
+	sMenus, err := buildRoleSelectMenus(s, i, rolesAndCtx)
+	if err != nil {
+		interactionFollowUpEphemeralError(s, i, true, err)
+		return
+	}
+
+	e := buildRoleSelectMenuEmbed(i)
+	err = validateRoleSelectEmbedURLs(e)
+	if err != nil {
+		interactionFollowUpEphemeralError(s, i, false, err)
+	}
+
+	iEdit := &discordgo.WebhookEdit{
+		Embeds: []*discordgo.MessageEmbed{e.Truncate().MessageEmbed},
+		AllowedMentions: &discordgo.MessageAllowedMentions{
+			Parse: []discordgo.AllowedMentionType{
+				discordgo.AllowedMentionTypeEveryone,
+				discordgo.AllowedMentionTypeRoles,
+				discordgo.AllowedMentionTypeUsers,
+			},
+		},
+	}
+	for _, m := range sMenus {
+		m.MaxValues = len(m.Options)
+		iEdit.Components = append(iEdit.Components, discordgo.ActionsRow{
+			Components: []discordgo.MessageComponent{m},
+		})
+	}
+
+	_, err = s.InteractionResponseEdit(s.State.User.ID, i.Interaction, iEdit)
+	if err != nil {
+		interactionFollowUpEphemeralError(s, i, true, err)
+		log.Error(err)
+		return
+	}
 }

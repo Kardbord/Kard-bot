@@ -120,3 +120,15 @@ func channelIsNSFW(s *discordgo.Session, i *discordgo.InteractionCreate) (bool, 
 
 	return ch.NSFW, nil
 }
+
+func isInteractionIssuerAdmin(i *discordgo.InteractionCreate) (bool, error) {
+	if i == nil {
+		return false, errors.New("nil interaction")
+	}
+
+	metadata, err := getInteractionMetaData(i)
+	if err != nil {
+		return false, err
+	}
+	return metadata.AuthorPermissions&discordgo.PermissionAdministrator != 0, nil
+}
