@@ -14,7 +14,7 @@ const (
 	BotTokenEnv         = "KARDBOT_TOKEN"
 	BotOwnerEnv         = "KARDBOT_OWNER_ID"
 	TestbedGuildEnv     = "KARDBOT_TESTBED_GUILD"
-	Intents             = discordgo.IntentsAllWithoutPrivileged
+	Intents             = discordgo.IntentsAll
 	ImgflipUserEnv      = "IMGFLIP_API_USERNAME"
 	ImgflipPassEnv      = "IMGFLIP_API_PASSWORD"
 	HuggingFaceTokenEnv = "HUGGING_FACE_TOKEN"

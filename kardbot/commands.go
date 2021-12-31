@@ -13,6 +13,8 @@ type onInteractionHandler func(*discordgo.Session, *discordgo.InteractionCreate)
 const (
 	maxDiscordCommandOptions = 25
 	maxDiscordOptionChoices  = 25
+	maxDiscordSelectMenuOpts = 25
+	maxDiscordActionRowSize  = 5
 )
 
 func getCommands() []*discordgo.ApplicationCommand {
@@ -321,6 +323,11 @@ func getCommands() []*discordgo.ApplicationCommand {
 			},
 		},
 		{
+			Name:        createRoleSelectCommand,
+			Description: "Allow users to select roles for themselves",
+			Options:     roleSelectCmdOpts(),
+		},
+		{
 			Name:        "help",
 			Description: "Get helpful information about the bot.",
 		},
@@ -335,18 +342,19 @@ func getCommands() []*discordgo.ApplicationCommand {
 
 func getCommandImpls() map[string]onInteractionHandler {
 	return map[string]onInteractionHandler{
-		RollCmd:             roll,
-		"loglevel":          updateLogLevel,
-		"pasta":             servePasta,
-		"reddit-roulette":   redditRoulette,
-		"uwu":               uwuify,
-		"compliments":       complimentHandler,
-		"creepy-dms":        creepyDMHandler,
-		"help":              botInfo,
-		"what-are-the-odds": whatAreTheOdds,
-		memeCommand:         buildAMeme,
-		delBotDMCmd:         deleteBotDMs,
-		storyTimeCmd:        storyTime,
+		RollCmd:                 roll,
+		"loglevel":              updateLogLevel,
+		"pasta":                 servePasta,
+		"reddit-roulette":       redditRoulette,
+		"uwu":                   uwuify,
+		"compliments":           complimentHandler,
+		"creepy-dms":            creepyDMHandler,
+		"help":                  botInfo,
+		"what-are-the-odds":     whatAreTheOdds,
+		memeCommand:             buildAMeme,
+		delBotDMCmd:             deleteBotDMs,
+		storyTimeCmd:            storyTime,
+		createRoleSelectCommand: createRoleSelect,
 	}
 }
 
