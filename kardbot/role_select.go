@@ -6,22 +6,49 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/TannerKvarfordt/Kard-bot/kardbot/dg_helpers"
 	"github.com/bwmarrin/discordgo"
 	log "github.com/sirupsen/logrus"
 )
 
 const (
-	createRoleSelectCommand = "create-role-select"
+	createRoleSelectCommand = "create-role-menu"
 
-	roleSelectContentOpt    = "msg-content"
-	roleSelectContentOptIdx = 0
+	roleSelectMenuTitleOpt    = "title"
+	roleSelectMenuTitleOptReq = true
 
 	roleSelectRolesOpt    = "roles"
-	roleSelectRolesOptIdx = 1
+	roleSelectRolesOptReq = true
 
-	roleSelectOptCount = 2
+	roleSelectMenuDescOpt    = "description"
+	roleSelectMenuDescOptReq = false
+
+	roleSelectMenuURLOpt    = "url"
+	roleSelectMenuURLOptReq = false
+
+	roleSelectMenuImageOpt    = "image-url"
+	roleSelectMenuImageOptReq = false
+
+	roleSelectMenuThumbnailOpt    = "thumbnail-url"
+	roleSelectMenuThumbnailOptReq = false
+
+	roleSelectMenuColorOpt    = "embed-color"
+	roleSelectMenuColorOptReq = false
 
 	roleSelectMenuComponentIDPrefix = "role-select-menu"
+)
+
+const (
+	roleSelectMenuTitleOptIdx = iota
+	roleSelectRolesOptIdx
+	roleSelectMenuDescOptIdx      // index only valid when registering the command, since this is an optional argument.
+	roleSelectMenuURLOptIdx       // index only valid when registering the command, since this is an optional argument.
+	roleSelectMenuFooterOptIdx    // index only valid when registering the command, since this is an optional argument.
+	roleSelectMenuThumbnailOptIdx // index only valid when registering the command, since this is an optional argument.
+	roleSelectMenuColorOptIdx     // index only valid when registering the command, since this is an optional argument.
+
+	// This MUST be the last constant defined in this block
+	roleSelectOptCount
 )
 
 func roleSelectCmdOpts() []*discordgo.ApplicationCommandOption {
@@ -29,19 +56,92 @@ func roleSelectCmdOpts() []*discordgo.ApplicationCommandOption {
 	for i := range opts {
 		switch i {
 		// TODO: Add a help option
-		case roleSelectContentOptIdx:
+		case roleSelectMenuTitleOptIdx:
 			opts[i] = &discordgo.ApplicationCommandOption{
 				Type:        discordgo.ApplicationCommandOptionString,
-				Name:        roleSelectContentOpt,
-				Description: "Context for this role select menu.",
-				Required:    true,
+				Name:        roleSelectMenuTitleOpt,
+				Description: "Title describing this selection of roles",
+				Required:    roleSelectMenuTitleOptReq,
 			}
 		case roleSelectRolesOptIdx:
 			opts[i] = &discordgo.ApplicationCommandOption{
 				Type:        discordgo.ApplicationCommandOptionString,
 				Name:        roleSelectRolesOpt,
 				Description: fmt.Sprintf("Roles (up to %d) and their context. Ex: @SomeRole context 😺 @NextRole next role context", maxDiscordSelectMenuOpts*maxDiscordActionRowSize),
-				Required:    true,
+				Required:    roleSelectRolesOptReq,
+			}
+		case roleSelectMenuDescOptIdx:
+			opts[i] = &discordgo.ApplicationCommandOption{
+				Type:        discordgo.ApplicationCommandOptionString,
+				Name:        roleSelectMenuDescOpt,
+				Description: "Description of this selection of roles",
+				Required:    roleSelectMenuDescOptReq,
+			}
+		case roleSelectMenuURLOptIdx:
+			opts[i] = &discordgo.ApplicationCommandOption{
+				Type:        discordgo.ApplicationCommandOptionString,
+				Name:        roleSelectMenuURLOpt,
+				Description: "URL associated with this selection of roles",
+				Required:    roleSelectMenuURLOptReq,
+			}
+		case roleSelectMenuFooterOptIdx:
+			opts[i] = &discordgo.ApplicationCommandOption{
+				Type:        discordgo.ApplicationCommandOptionString,
+				Name:        roleSelectMenuImageOpt,
+				Description: "Image URL for this selection of roles",
+				Required:    roleSelectMenuImageOptReq,
+			}
+		case roleSelectMenuThumbnailOptIdx:
+			opts[i] = &discordgo.ApplicationCommandOption{
+				Type:        discordgo.ApplicationCommandOptionString,
+				Name:        roleSelectMenuThumbnailOpt,
+				Description: "Thumbnail URL for this selection of roles",
+				Required:    roleSelectMenuThumbnailOptReq,
+			}
+		case roleSelectMenuColorOptIdx:
+			opts[i] = &discordgo.ApplicationCommandOption{
+				Type:        discordgo.ApplicationCommandOptionInteger,
+				Name:        roleSelectMenuColorOpt,
+				Description: "Color to use when creating the message embed",
+				Required:    roleSelectMenuColorOptReq,
+				Choices: []*discordgo.ApplicationCommandOptionChoice{
+					{
+						Name:  "Red",
+						Value: 0xFF0000,
+					},
+					{
+						Name:  "Orange",
+						Value: 0xFFA500,
+					},
+					{
+						Name:  "Yellow",
+						Value: 0xFFFF00,
+					},
+					{
+						Name:  "Green",
+						Value: 0x008000,
+					},
+					{
+						Name:  "Blue",
+						Value: 0x0000FF,
+					},
+					{
+						Name:  "Purple",
+						Value: 0x800080,
+					},
+					{
+						Name:  "Brown",
+						Value: 0x964B00,
+					},
+					{
+						Name:  "Black",
+						Value: 0x000000,
+					},
+					{
+						Name:  "White",
+						Value: 0xFFFFFF,
+					},
+				},
 			}
 		}
 	}
@@ -164,9 +264,18 @@ func createRoleSelect(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		})
 	}
 
+	e := buildRoleSelectMenuEmbed(i)
+	if e.URL != "" && !isReachableURL(e.URL) {
+		interactionFollowUpEphemeralError(s, i, false, fmt.Errorf("unreachable URL provided: %s", e.URL))
+		return
+	}
+	if e.Thumbnail != nil && e.Thumbnail.URL != "" && !isReachableURL(e.Thumbnail.URL) {
+		interactionFollowUpEphemeralError(s, i, false, fmt.Errorf("unreachable thumbnail URL provided: %s", e.Thumbnail.URL))
+		return
+	}
+
 	iEdit := &discordgo.WebhookEdit{
-		// TODO: Use an embed instead?
-		Content: i.ApplicationCommandData().Options[roleSelectContentOptIdx].StringValue(),
+		Embeds: []*discordgo.MessageEmbed{e.Truncate().MessageEmbed},
 		AllowedMentions: &discordgo.MessageAllowedMentions{
 			Parse: []discordgo.AllowedMentionType{
 				discordgo.AllowedMentionTypeEveryone,
@@ -188,4 +297,31 @@ func createRoleSelect(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		log.Error(err)
 		return
 	}
+}
+
+func buildRoleSelectMenuEmbed(i *discordgo.InteractionCreate) *dg_helpers.Embed {
+	embedArgs := dg_helpers.NewEmbed()
+	if i == nil {
+		log.Error("nil interaction")
+		return embedArgs
+	}
+
+	for _, opt := range i.ApplicationCommandData().Options {
+		switch opt.Name {
+		case roleSelectMenuTitleOpt:
+			embedArgs.SetTitle(opt.StringValue())
+		case roleSelectMenuDescOpt:
+			embedArgs.SetDescription(opt.StringValue())
+		case roleSelectMenuImageOpt:
+			embedArgs.SetImage(opt.StringValue())
+		case roleSelectMenuURLOpt:
+			embedArgs.SetURL(opt.StringValue())
+		case roleSelectMenuThumbnailOpt:
+			embedArgs.SetThumbnail(opt.StringValue())
+		case roleSelectMenuColorOpt:
+			embedArgs.SetColor(int(opt.IntValue()))
+		}
+	}
+
+	return embedArgs
 }

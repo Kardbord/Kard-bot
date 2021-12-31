@@ -59,6 +59,11 @@ func RandomBoolean() bool {
 	return rand.Int31()&0x01 == 0
 }
 
+func isReachableURL(url string) bool {
+	_, err := http.Get(url)
+	return err == nil
+}
+
 func isHTTPS(url string) bool {
 	resp, err := http.Get(url)
 	if err != nil {
