@@ -7,6 +7,7 @@ require (
 	github.com/TannerKvarfordt/imgflipgo v1.0.5
 	github.com/bwmarrin/discordgo v0.23.3-0.20210821175000-0fad116c6c2a
 	github.com/deadshot465/owoify-go v1.0.1
+	github.com/forPelevin/gomoji v1.1.1
 	github.com/gabriel-vasile/mimetype v1.4.0
 	github.com/go-co-op/gocron v1.9.0
 	github.com/google/uuid v1.3.0
@@ -24,6 +25,7 @@ require (
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/gorilla/schema v1.2.0 // indirect
 	github.com/gorilla/websocket v1.4.2 // indirect
+	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/robfig/cron/v3 v3.0.1 // indirect
 	golang.org/x/crypto v0.0.0-20211117183948-ae814b36b871 // indirect
 	golang.org/x/net v0.0.0-20211123203042-d83791d6bcd9 // indirect

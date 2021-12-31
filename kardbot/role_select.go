@@ -8,6 +8,7 @@ import (
 
 	"github.com/TannerKvarfordt/Kard-bot/kardbot/dg_helpers"
 	"github.com/bwmarrin/discordgo"
+	"github.com/forPelevin/gomoji"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -231,16 +232,51 @@ func buildRoleSelectMenus(s *discordgo.Session, i *discordgo.InteractionCreate, 
 			return nil, fmt.Errorf("no role found for ID: %s", roleID)
 		}
 
+		emojiComp, scrubbedRoleAndCtx, err := detectAndScrubDiscordEmojis(rolesAndCtx[idx])
+		if err != nil {
+			return nil, err
+		}
+
 		smIdx := idx / 25
 		sMenus[smIdx].Options = append(sMenus[smIdx].Options, discordgo.SelectMenuOption{
 			Label: role.Name,
 			Value: role.ID,
-			// TODO: detect emojis and place them in the appropriate field
-			Description: roleRegex().ReplaceAllString(rolesAndCtx[idx], ""),
+			// Description is whatever is left over after scrubbing Discord emojis and role mentions
+			Description: roleRegex().ReplaceAllString(scrubbedRoleAndCtx, ""),
+			Emoji:       emojiComp,
 		})
 	}
 
 	return sMenus, nil
+}
+
+// Scans a string for discord emojis and returns the first one it encounters.
+// Also scrubs the provided string of any discord emojis and returns the scrubbed string.
+func detectAndScrubDiscordEmojis(str string) (discordgo.ComponentEmoji, string, error) {
+	emojiStr := discordgo.EmojiRegex.FindString(str)
+	if emojiStr == "" {
+		// No discord emojis, so check for unicode emojis.
+		uEmojis := gomoji.FindAll(str)
+		if len(uEmojis) == 0 {
+			return discordgo.ComponentEmoji{}, str, nil
+		}
+		return discordgo.ComponentEmoji{Name: uEmojis[0].Character}, str, nil
+	}
+
+	// See https://discord.com/developers/docs/reference#message-formatting-formats
+	const emojiDelim = ":"
+	emojiToks := strings.Split(emojiStr, emojiDelim)
+	if len(emojiToks) != 3 {
+		return discordgo.ComponentEmoji{}, str, fmt.Errorf("unexpected number of emoji tokens when delimiting \"%s\" on \"%s\"", emojiStr, emojiDelim)
+	}
+
+	emoji := discordgo.ComponentEmoji{
+		Name:     emojiToks[1],
+		ID:       strings.TrimSuffix(emojiToks[2], ">"),
+		Animated: strings.HasPrefix(emojiToks[0], "<a"),
+	}
+
+	return emoji, discordgo.EmojiRegex.ReplaceAllString(str, ""), nil
 }
 
 func buildRoleSelectMenuEmbed(i *discordgo.InteractionCreate) *dg_helpers.Embed {
