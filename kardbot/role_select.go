@@ -28,6 +28,7 @@ func roleSelectCmdOpts() []*discordgo.ApplicationCommandOption {
 	opts := make([]*discordgo.ApplicationCommandOption, roleSelectOptCount)
 	for i := range opts {
 		switch i {
+		// TODO: Add a help option
 		case roleSelectContentOptIdx:
 			opts[i] = &discordgo.ApplicationCommandOption{
 				Type:        discordgo.ApplicationCommandOptionString,
@@ -39,7 +40,7 @@ func roleSelectCmdOpts() []*discordgo.ApplicationCommandOption {
 			opts[i] = &discordgo.ApplicationCommandOption{
 				Type:        discordgo.ApplicationCommandOptionString,
 				Name:        roleSelectRolesOpt,
-				Description: "Roles and any associated text. Ex: @SomeRole context and an emoji 😺 @NextRole next role context",
+				Description: fmt.Sprintf("Roles (up to %d) and their context. Ex: @SomeRole context 😺 @NextRole next role context", maxDiscordSelectMenuOpts*maxDiscordActionRowSize),
 				Required:    true,
 			}
 		}
@@ -156,8 +157,8 @@ func createRoleSelect(s *discordgo.Session, i *discordgo.InteractionCreate) {
 
 		smIdx := idx / 25
 		sMenus[smIdx].Options = append(sMenus[smIdx].Options, discordgo.SelectMenuOption{
-			Label:       role.Name,
-			Value:       role.ID,
+			Label: role.Name,
+			Value: role.ID,
 			// TODO: detect emojis and place them in the appropriate field
 			Description: roleRegex().ReplaceAllString(rolesAndCtx[idx], ""),
 		})
