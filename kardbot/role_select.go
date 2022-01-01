@@ -5,6 +5,7 @@ import (
 	"math"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/TannerKvarfordt/Kard-bot/kardbot/dg_helpers"
 	"github.com/bwmarrin/discordgo"
@@ -38,6 +39,20 @@ const (
 
 	roleSelectMenuComponentIDPrefix = "role-select-menu"
 )
+
+var roleSelectMenuIDRegex = func() *regexp.Regexp { return nil }
+
+func init() {
+	r := regexp.MustCompile(fmt.Sprintf(`%s\d*`, roleSelectMenuComponentIDPrefix))
+	if r == nil {
+		log.Fatal("failed to compile roleSelectMenuComponentIDPrefix regex")
+	}
+	roleSelectMenuIDRegex = func() *regexp.Regexp { return r }
+}
+
+func strMatchesRoleSelectMenuID(str string) bool {
+	return roleSelectMenuIDRegex().MatchString(str)
+}
 
 const (
 	roleSelectMenuTitleOptIdx = iota
@@ -382,5 +397,99 @@ func createRoleSelect(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		interactionFollowUpEphemeralError(s, i, true, err)
 		log.Error(err)
 		return
+	}
+}
+
+func getPossibleRoleIDs(i *discordgo.InteractionCreate) (map[string]bool, error) {
+	if i == nil {
+		return nil, fmt.Errorf("nil interaction")
+	}
+
+	var possibleRoleIDs map[string]bool
+	for _, ar := range i.Message.Components {
+		if ar == nil {
+			continue
+		}
+		actionRow, ok := ar.(discordgo.ActionsRow)
+		if !ok {
+			return nil, fmt.Errorf("bad cast to discordgo.ActionsRow, type is %v", ar.Type())
+		}
+
+		for _, sm := range actionRow.Components {
+			if sm == nil {
+				continue
+			}
+			selectMenu, ok := sm.(discordgo.SelectMenu)
+			if !ok {
+				return nil, fmt.Errorf("bad cast to discordgo.SelectMenu, type is %v", sm.Type())
+			}
+
+			if selectMenu.CustomID == i.MessageComponentData().CustomID {
+				possibleRoleIDs = make(map[string]bool, len(selectMenu.Options))
+				for _, opt := range selectMenu.Options {
+					possibleRoleIDs[opt.Value] = false
+				}
+				break
+			}
+		}
+		if len(possibleRoleIDs) > 0 {
+			break
+		}
+	}
+	if len(possibleRoleIDs) == 0 {
+		return nil, fmt.Errorf("no possible role IDs found, is the select menu empty?")
+	}
+	return possibleRoleIDs, nil
+}
+
+func handleRoleSelection(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	if s == nil || i == nil {
+		log.Errorf("nil Session pointer (%v) and/or InteractionCreate pointer (%v)", s, i)
+		return
+	}
+	wg := bot().updateLastActive()
+	defer wg.Wait()
+
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
+	})
+
+	selectedRoleIDMap, err := getPossibleRoleIDs(i)
+	if err != nil {
+		time.Sleep(time.Millisecond * 200) // wait a bit for the deferred response to be received
+		interactionFollowUpEphemeralError(s, i, true, err)
+		log.Error(err)
+		return
+	}
+
+	for _, roleID := range i.MessageComponentData().Values {
+		if _, ok := selectedRoleIDMap[roleID]; !ok {
+			time.Sleep(time.Millisecond * 200) // wait a bit for the deferred response to be received
+			err = fmt.Errorf("%s is not a valid role ID, there is a bug. :(", roleID)
+			interactionFollowUpEphemeralError(s, i, true, err)
+			log.Error(err)
+			return
+		}
+		selectedRoleIDMap[roleID] = true
+	}
+
+	metadata, err := getInteractionMetaData(i)
+	if err != nil {
+		interactionFollowUpEphemeralError(s, i, true, err)
+		log.Error(err)
+		return
+	}
+
+	for roleID, isSelected := range selectedRoleIDMap {
+		if isSelected {
+			err = s.GuildMemberRoleAdd(metadata.GuildID, metadata.AuthorID, roleID)
+		} else {
+			err = s.GuildMemberRoleRemove(metadata.GuildID, metadata.AuthorID, roleID)
+		}
+		if err != nil {
+			interactionFollowUpEphemeralError(s, i, true, err)
+			log.Error(err)
+			return
+		}
 	}
 }

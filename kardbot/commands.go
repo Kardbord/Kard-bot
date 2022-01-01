@@ -404,10 +404,11 @@ func validateCmdRegex() bool {
 
 func getComponentImpls() map[string]onInteractionHandler {
 	return map[string]onInteractionHandler{
-		selectMenuErrorReport:   handleErrorReportSelection,
-		dndRollButtonID:         handleDnDButtonPress,
-		dndDiceCountSelectID:    handleDiceCountMenuSelection,
-		dndDiceFacesSelectID:    handleDiceFacesMenuSelection,
-		dndOtherOptionsSelectID: handleDnDOtherOptionsSelection,
+		selectMenuErrorReport:           handleErrorReportSelection,
+		dndRollButtonID:                 handleDnDButtonPress,
+		dndDiceCountSelectID:            handleDiceCountMenuSelection,
+		dndDiceFacesSelectID:            handleDiceFacesMenuSelection,
+		dndOtherOptionsSelectID:         handleDnDOtherOptionsSelection,
+		roleSelectMenuComponentIDPrefix: handleRoleSelection,
 	}
 }

@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"os"
 	"os/signal"
+	"runtime/debug"
 	"sync"
 	"syscall"
 	"time"
@@ -224,7 +225,7 @@ func (kbot *kardbot) prepInteractionHandlers() {
 				if panicErr, ok := r.(error); ok && i.Type == discordgo.InteractionApplicationCommand {
 					interactionRespondEphemeralError(s, i, true, panicErr)
 				}
-				log.Fatalf("Panicked!\n%v", r)
+				log.Fatalf("Panicked!\n%v\nStack Trace:%s\n", r, debug.Stack())
 			}
 		}()
 
@@ -243,7 +244,11 @@ func (kbot *kardbot) prepInteractionHandlers() {
 			}
 
 		case discordgo.InteractionMessageComponent:
-			if h, ok := getComponentImpls()[i.MessageComponentData().CustomID]; ok {
+			buttonID := i.MessageComponentData().CustomID
+			if strMatchesRoleSelectMenuID(buttonID) {
+				buttonID = roleSelectMenuComponentIDPrefix
+			}
+			if h, ok := getComponentImpls()[buttonID]; ok {
 				h(s, i)
 			} else {
 				log.Errorf(`unknown message component ID "%s"`, i.MessageComponentData().CustomID)

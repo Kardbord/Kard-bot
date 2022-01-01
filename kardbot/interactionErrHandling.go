@@ -302,7 +302,12 @@ func dmOwnerErrorReport(s *discordgo.Session, errReport errorReport, anonymous b
 	if err != nil {
 		return err
 	}
-	cmdJson, err := json.MarshalIndent(errReport.InteractionCreate.ApplicationCommandData(), "", "  ")
+	var cmdJson []byte
+	if errReport.InteractionCreate.Type == discordgo.InteractionMessageComponent {
+		cmdJson, err = json.MarshalIndent(errReport.InteractionCreate.MessageComponentData(), "", "  ")
+	} else if errReport.InteractionCreate.Type == discordgo.InteractionApplicationCommand {
+		cmdJson, err = json.MarshalIndent(errReport.InteractionCreate.ApplicationCommandData(), "", "  ")
+	}
 	if err != nil {
 		return err
 	}
