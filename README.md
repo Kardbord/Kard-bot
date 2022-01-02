@@ -85,7 +85,6 @@ set the time zone by setting the `TZ` variable.
 KARDBOT_TOKEN="Your bot token here"
 TZ="Your time zone here ex: America/Boise"
 ```
-Next, edit the `slash-cmd-guilds` entry in the `config/setup.json` file to include the guild (server) IDs of each server you invited the bot to.
 
 With your token in place and your config updated, you can simply run `docker-compose up -d` from the untarred directory to get your bot started!
 The Docker daemon will automatically download the needed docker image from [Docker Hub](https://hub.docker.com/r/tkvarfordt/kardbot/tags) or the
@@ -112,8 +111,6 @@ environment variables take precedence over anything in the `.env` file.
 ```shell
 KARDBOT_TOKEN="Your bot token here"
 ```
-
-You will also need to edit the `slash-cmd-guilds` entry in the `config/setup.json` file to include the guild (server) IDs of each server you invited the bot to.
 
 With your token in place and your config updated, you can simply run the Kard-bot binary to bring it to life!
 For a more robust running solution, consider creating a [systemd service](https://docs.fedoraproject.org/en-US/quick-docs/understanding-and-administering-systemd/#creating-new-systemd-services) or [using the provided Docker image](#host-using-docker).

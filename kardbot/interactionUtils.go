@@ -41,14 +41,16 @@ func authorIsOwner(i *discordgo.InteractionCreate) (bool, error) {
 }
 
 type interactionMetaData struct {
-	AuthorID       string
-	AuthorUsername string
-	AuthorMention  string
-	AuthorEmail    string
-	GuildID        string
-	ChannelID      string
-	InteractionID  string
-	MessageID      string
+	AuthorID          string
+	AuthorUsername    string
+	AuthorMention     string
+	AuthorPermissions int64
+	AuthorEmail       string
+	AuthorGuildRoles  []string
+	GuildID           string
+	ChannelID         string
+	InteractionID     string
+	MessageID         string
 }
 
 func getInteractionMetaData(i *discordgo.InteractionCreate) (*interactionMetaData, error) {
@@ -66,27 +68,31 @@ func getInteractionMetaData(i *discordgo.InteractionCreate) (*interactionMetaDat
 			return nil, errors.New("member.user is nil")
 		}
 		return &interactionMetaData{
-			AuthorID:       i.Member.User.ID,
-			AuthorUsername: i.Member.User.Username,
-			AuthorMention:  i.Member.User.Mention(),
-			AuthorEmail:    i.Member.User.Email,
-			GuildID:        i.GuildID,
-			ChannelID:      i.ChannelID,
-			InteractionID:  i.ID,
-			MessageID:      msgID,
+			AuthorID:          i.Member.User.ID,
+			AuthorUsername:    i.Member.User.Username,
+			AuthorMention:     i.Member.User.Mention(),
+			AuthorEmail:       i.Member.User.Email,
+			AuthorPermissions: i.Member.Permissions,
+			AuthorGuildRoles:  i.Member.Roles,
+			GuildID:           i.GuildID,
+			ChannelID:         i.ChannelID,
+			InteractionID:     i.ID,
+			MessageID:         msgID,
 		}, nil
 	}
 
 	if i.User != nil {
+		bot()
 		return &interactionMetaData{
-			AuthorID:       i.User.ID,
-			AuthorUsername: i.User.Username,
-			AuthorMention:  i.User.Mention(),
-			AuthorEmail:    i.User.Email,
-			GuildID:        i.GuildID,
-			ChannelID:      i.ChannelID,
-			InteractionID:  i.ID,
-			MessageID:      msgID,
+			AuthorID:          i.User.ID,
+			AuthorUsername:    i.User.Username,
+			AuthorMention:     i.User.Mention(),
+			AuthorEmail:       i.User.Email,
+			AuthorPermissions: 0,
+			GuildID:           i.GuildID,
+			ChannelID:         i.ChannelID,
+			InteractionID:     i.ID,
+			MessageID:         msgID,
 		}, nil
 	}
 
@@ -115,4 +121,16 @@ func channelIsNSFW(s *discordgo.Session, i *discordgo.InteractionCreate) (bool, 
 	}
 
 	return ch.NSFW, nil
+}
+
+func isInteractionIssuerAdmin(i *discordgo.InteractionCreate) (bool, error) {
+	if i == nil {
+		return false, errors.New("nil interaction")
+	}
+
+	metadata, err := getInteractionMetaData(i)
+	if err != nil {
+		return false, err
+	}
+	return metadata.AuthorPermissions&discordgo.PermissionAdministrator != 0, nil
 }
