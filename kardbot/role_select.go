@@ -14,115 +14,120 @@ import (
 )
 
 const (
-	createRoleSelectCommand = "create-role-menu"
-
-	roleSelectMenuTitleOpt    = "title"
-	roleSelectMenuTitleOptReq = true
-
-	roleSelectRolesOpt    = "roles"
-	roleSelectRolesOptReq = true
 	maxRoleSelectMenus    = 4
+	roleSelectMenuCommand = "role-select-menu"
+	// TODO: Add a help subcommand
+)
 
-	roleSelectMenuDescOpt    = "description"
-	roleSelectMenuDescOptReq = false
+const (
+	roleSelectMenuSubCmdCreate = "create"
 
-	roleSelectMenuURLOpt    = "url"
-	roleSelectMenuURLOptReq = false
+	roleSelectMenuCreateOptTitle        = "title"
+	roleSelectMenuCreateOptReqTitle     = true
+	roleSelectMenuCreateOptRoles        = "roles"
+	roleSelectMenuCreateOptReqRoles     = true
+	roleSelectMenuCreateOptDesc         = "description"
+	roleSelectMenuCreateOptReqDesc      = false
+	roleSelectMenuCreateOptURL          = "url"
+	roleSelectMenuCreateOptReqURL       = false
+	roleSelectMenuCreateOptImage        = "image-url"
+	roleSelectMenuCreateOptReqImage     = false
+	roleSelectMenuCreateOptThumbnail    = "thumbnail-url"
+	roleSelectMenuCreateOptReqThumbnail = false
+	roleSelectMenuCreateOptColor        = "embed-color"
+	roleSelectMenuCreateOptReqColor     = false
+)
+const (
+	roleSelectMenuCreateOptIdxTitle = iota
+	roleSelectMenuCreateOptIdxRoles
+	roleSelectMenuCreateOptIdxDesc      // index only valid when registering the command, since this is an optional argument.
+	roleSelectMenuCreateOptIdxURL       // index only valid when registering the command, since this is an optional argument.
+	roleSelectMenuCreateOptIdxImage     // index only valid when registering the command, since this is an optional argument.
+	roleSelectMenuCreateOptIdxThumbnail // index only valid when registering the command, since this is an optional argument.
+	roleSelectMenuCreateOptIdxColor     // index only valid when registering the command, since this is an optional argument.
+	roleSelectMenuSubCmdCreateOptCount  // This MUST be the last constant defined in this block
+)
 
-	roleSelectMenuImageOpt    = "image-url"
-	roleSelectMenuImageOptReq = false
+const (
+	roleSelectMenuSubCmdUpdate = "update"
 
-	roleSelectMenuThumbnailOpt    = "thumbnail-url"
-	roleSelectMenuThumbnailOptReq = false
+	roleSelectMenuUpdateOptAction          = "action"
+	roleSelectMenuUpdateOptReqAction       = true
+	roleSelectMenuUpdateOptActionChoiceAdd = "add"
+	roleSelectMenuUpdateOptActionChoiceDel = "delete"
+	roleSelectMenuUpdateOptMsgID           = "message-id"
+	roleSelectMenuUpdateOptReqMsgID        = true
+	roleSelectMenuUpdateOptRole            = "role"
+	roleSelectMenuUpdateOptReqRole         = true
+	roleSelectMenuUpdateOptCtx             = "role-context"
+	roleSelectMenuUpdateOptReqCtx          = false
+)
+const (
+	roleSelectMenuUpdateOptIdxAction = iota
+	roleSelectMenuUpdateOptIdxMsgID
+	roleSelectMenuUpdateOptIdxRole
+	roleSelectMenuUpdateOptIdxCtx      // index only valid when registering the command, since this is an optional argument.
+	roleSelectMenuSubCmdUpdateOptCount // This MUST be the last constant defined in this block
+)
 
-	roleSelectMenuColorOpt    = "embed-color"
-	roleSelectMenuColorOptReq = false
-
+const (
 	roleSelectMenuComponentIDPrefix = "role-select-menu"
 	roleSelectResetButtonID         = "role-select-reset"
 	roleSelectResetButtonLabel      = "Reset your role selection"
 )
 
-var roleSelectMenuIDRegex = func() *regexp.Regexp { return nil }
-
-func init() {
-	r := regexp.MustCompile(fmt.Sprintf(`%s\d*`, roleSelectMenuComponentIDPrefix))
-	if r == nil {
-		log.Fatal("failed to compile roleSelectMenuComponentIDPrefix regex")
-	}
-	roleSelectMenuIDRegex = func() *regexp.Regexp { return r }
-}
-
-func strMatchesRoleSelectMenuID(str string) bool {
-	return roleSelectMenuIDRegex().MatchString(str)
-}
-
-const (
-	roleSelectMenuTitleOptIdx = iota
-	roleSelectRolesOptIdx
-	roleSelectMenuDescOptIdx      // index only valid when registering the command, since this is an optional argument.
-	roleSelectMenuURLOptIdx       // index only valid when registering the command, since this is an optional argument.
-	roleSelectMenuFooterOptIdx    // index only valid when registering the command, since this is an optional argument.
-	roleSelectMenuThumbnailOptIdx // index only valid when registering the command, since this is an optional argument.
-	roleSelectMenuColorOptIdx     // index only valid when registering the command, since this is an optional argument.
-
-	// This MUST be the last constant defined in this block
-	roleSelectOptCount
-)
-
-func roleSelectCmdOpts() []*discordgo.ApplicationCommandOption {
-	opts := make([]*discordgo.ApplicationCommandOption, roleSelectOptCount)
+func roleSelectMenuSubCmdCreateOpts() []*discordgo.ApplicationCommandOption {
+	opts := make([]*discordgo.ApplicationCommandOption, roleSelectMenuSubCmdCreateOptCount)
 	for i := range opts {
 		switch i {
-		// TODO: Add a help option
-		case roleSelectMenuTitleOptIdx:
+		case roleSelectMenuCreateOptIdxTitle:
 			opts[i] = &discordgo.ApplicationCommandOption{
 				Type:        discordgo.ApplicationCommandOptionString,
-				Name:        roleSelectMenuTitleOpt,
+				Name:        roleSelectMenuCreateOptTitle,
 				Description: "Title describing this selection of roles",
-				Required:    roleSelectMenuTitleOptReq,
+				Required:    roleSelectMenuCreateOptReqTitle,
 			}
-		case roleSelectRolesOptIdx:
+		case roleSelectMenuCreateOptIdxRoles:
 			opts[i] = &discordgo.ApplicationCommandOption{
 				Type:        discordgo.ApplicationCommandOptionString,
-				Name:        roleSelectRolesOpt,
+				Name:        roleSelectMenuCreateOptRoles,
 				Description: fmt.Sprintf("Roles (up to %d) and their context. Ex: @SomeRole context 😺 @NextRole next role context", maxDiscordSelectMenuOpts*maxRoleSelectMenus),
-				Required:    roleSelectRolesOptReq,
+				Required:    roleSelectMenuCreateOptReqRoles,
 			}
-		case roleSelectMenuDescOptIdx:
+		case roleSelectMenuCreateOptIdxDesc:
 			opts[i] = &discordgo.ApplicationCommandOption{
 				Type:        discordgo.ApplicationCommandOptionString,
-				Name:        roleSelectMenuDescOpt,
+				Name:        roleSelectMenuCreateOptDesc,
 				Description: "Description of this selection of roles",
-				Required:    roleSelectMenuDescOptReq,
+				Required:    roleSelectMenuCreateOptReqDesc,
 			}
-		case roleSelectMenuURLOptIdx:
+		case roleSelectMenuCreateOptIdxURL:
 			opts[i] = &discordgo.ApplicationCommandOption{
 				Type:        discordgo.ApplicationCommandOptionString,
-				Name:        roleSelectMenuURLOpt,
+				Name:        roleSelectMenuCreateOptURL,
 				Description: "URL associated with this selection of roles",
-				Required:    roleSelectMenuURLOptReq,
+				Required:    roleSelectMenuCreateOptReqURL,
 			}
-		case roleSelectMenuFooterOptIdx:
+		case roleSelectMenuCreateOptIdxImage:
 			opts[i] = &discordgo.ApplicationCommandOption{
 				Type:        discordgo.ApplicationCommandOptionString,
-				Name:        roleSelectMenuImageOpt,
+				Name:        roleSelectMenuCreateOptImage,
 				Description: "Image URL for this selection of roles",
-				Required:    roleSelectMenuImageOptReq,
+				Required:    roleSelectMenuCreateOptReqImage,
 			}
-		case roleSelectMenuThumbnailOptIdx:
+		case roleSelectMenuCreateOptIdxThumbnail:
 			opts[i] = &discordgo.ApplicationCommandOption{
 				Type:        discordgo.ApplicationCommandOptionString,
-				Name:        roleSelectMenuThumbnailOpt,
+				Name:        roleSelectMenuCreateOptThumbnail,
 				Description: "Thumbnail URL for this selection of roles",
-				Required:    roleSelectMenuThumbnailOptReq,
+				Required:    roleSelectMenuCreateOptReqThumbnail,
 			}
-		case roleSelectMenuColorOptIdx:
+		case roleSelectMenuCreateOptIdxColor:
 			opts[i] = &discordgo.ApplicationCommandOption{
 				Type:        discordgo.ApplicationCommandOptionInteger,
-				Name:        roleSelectMenuColorOpt,
+				Name:        roleSelectMenuCreateOptColor,
 				Description: "Color to use when creating the message embed",
-				Required:    roleSelectMenuColorOptReq,
+				Required:    roleSelectMenuCreateOptReqColor,
 				Choices: []*discordgo.ApplicationCommandOptionChoice{
 					{
 						Name:  "Red",
@@ -162,10 +167,104 @@ func roleSelectCmdOpts() []*discordgo.ApplicationCommandOption {
 					},
 				},
 			}
+		default:
+			log.Fatalf("Unknown index (%d). There is a bug. :(", i)
 		}
 	}
-
 	return opts
+}
+
+func roleSelectMenuSubCmdUpdateOpts() []*discordgo.ApplicationCommandOption {
+	opts := make([]*discordgo.ApplicationCommandOption, roleSelectMenuSubCmdUpdateOptCount)
+	for i := range opts {
+		switch i {
+		case roleSelectMenuUpdateOptIdxAction:
+			opts[i] = &discordgo.ApplicationCommandOption{
+				Type:        discordgo.ApplicationCommandOptionString,
+				Name:        roleSelectMenuUpdateOptAction,
+				Description: "Are we adding or removing a role from the menu?",
+				Required:    roleSelectMenuUpdateOptReqAction,
+				Choices: []*discordgo.ApplicationCommandOptionChoice{
+					{
+						Name:  roleSelectMenuUpdateOptActionChoiceAdd,
+						Value: roleSelectMenuUpdateOptActionChoiceAdd,
+					},
+					{
+						Name:  roleSelectMenuUpdateOptActionChoiceDel,
+						Value: roleSelectMenuUpdateOptActionChoiceDel,
+					},
+				},
+			}
+		case roleSelectMenuUpdateOptIdxMsgID:
+			opts[i] = &discordgo.ApplicationCommandOption{
+				Type:        discordgo.ApplicationCommandOptionString,
+				Name:        roleSelectMenuUpdateOptMsgID,
+				Description: "ID of the message to update (Enable dev mode -> Right Click Msg -> Copy ID)",
+				Required:    roleSelectMenuUpdateOptReqMsgID,
+			}
+		case roleSelectMenuUpdateOptIdxRole:
+			opts[i] = &discordgo.ApplicationCommandOption{
+				Type:        discordgo.ApplicationCommandOptionRole,
+				Name:        roleSelectMenuUpdateOptRole,
+				Description: "Role to add or remove",
+				Required:    roleSelectMenuUpdateOptReqRole,
+			}
+		case roleSelectMenuUpdateOptIdxCtx:
+			opts[i] = &discordgo.ApplicationCommandOption{
+				Type:        discordgo.ApplicationCommandOptionString,
+				Name:        roleSelectMenuUpdateOptCtx,
+				Description: "Context and emojis for this role. This option is ignored if removing the role.",
+				Required:    roleSelectMenuUpdateOptReqCtx,
+			}
+		default:
+			log.Fatalf("Unknown index (%d). There is a bug. :(", i)
+		}
+	}
+	return opts
+}
+
+func roleSelectCmdOpts() []*discordgo.ApplicationCommandOption {
+	return []*discordgo.ApplicationCommandOption{
+		{
+			Type:        discordgo.ApplicationCommandOptionSubCommand,
+			Name:        roleSelectMenuSubCmdCreate,
+			Description: "Create a new role selection menu",
+			Options:     roleSelectMenuSubCmdCreateOpts(),
+		},
+		{
+			Type:        discordgo.ApplicationCommandOptionSubCommand,
+			Name:        roleSelectMenuSubCmdUpdate,
+			Description: "Edit an existing role selection menu",
+			Options:     roleSelectMenuSubCmdUpdateOpts(),
+		},
+	}
+}
+
+var roleSelectMenuIDRegex = func() *regexp.Regexp { return nil }
+
+func init() {
+	r := regexp.MustCompile(fmt.Sprintf(`%s\d*`, roleSelectMenuComponentIDPrefix))
+	if r == nil {
+		log.Fatal("failed to compile roleSelectMenuComponentIDPrefix regex")
+	}
+	roleSelectMenuIDRegex = func() *regexp.Regexp { return r }
+}
+
+func strMatchesRoleSelectMenuID(str string) bool {
+	return roleSelectMenuIDRegex().MatchString(str)
+}
+
+func handleRoleSelectMenuCommand(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	switch i.ApplicationCommandData().Options[0].Name {
+	case roleSelectMenuSubCmdCreate:
+		handleRoleSelectMenuCreate(s, i)
+	case roleSelectMenuSubCmdUpdate:
+		interactionRespondEphemeralError(s, i, false, fmt.Errorf("this command not yet implemented"))
+	default:
+		err := fmt.Errorf(`unknown command: "%s"`, i.ApplicationCommandData().Options[0].Name)
+		log.Error(err)
+		interactionRespondEphemeralError(s, i, true, err)
+	}
 }
 
 // Given a discordgo Session and guildID, returns a map of roleID's to Roles for that guild
@@ -202,12 +301,12 @@ func init() {
 
 const roleMentionDelimiter = "<@&"
 
-func parseRoles(i *discordgo.InteractionCreate) ([]string, error) {
-	if !strings.HasPrefix(i.ApplicationCommandData().Options[roleSelectRolesOptIdx].StringValue(), roleMentionDelimiter) {
-		return nil, fmt.Errorf("the first argument to `%s` must be a role mention", roleSelectRolesOpt)
+func parseRoles(rolesOpt string) ([]string, error) {
+	if !strings.HasPrefix(rolesOpt, roleMentionDelimiter) {
+		return nil, fmt.Errorf("the first argument to `%s` must be a role mention", roleSelectMenuCreateOptRoles)
 	}
 
-	rolesAndCtx := strings.Split(i.ApplicationCommandData().Options[roleSelectRolesOptIdx].StringValue(), roleMentionDelimiter)[1:]
+	rolesAndCtx := strings.Split(rolesOpt, roleMentionDelimiter)[1:]
 	if len(rolesAndCtx) > maxDiscordSelectMenuOpts*maxRoleSelectMenus {
 		return nil, fmt.Errorf("you may only specify up to %d roles", maxDiscordSelectMenuOpts*maxRoleSelectMenus)
 	}
@@ -232,9 +331,9 @@ func parseRoles(i *discordgo.InteractionCreate) ([]string, error) {
 	return filteredRolesAndCtx, nil
 }
 
-func buildRoleSelectMenus(s *discordgo.Session, i *discordgo.InteractionCreate, rolesAndCtx []string) ([]discordgo.SelectMenu, error) {
-	if s == nil || i == nil {
-		return nil, fmt.Errorf("nil session (%v) or interaction (%v)", s, i)
+func buildRoleSelectMenus(s *discordgo.Session, metadata interactionMetaData, rolesAndCtx []string) ([]discordgo.SelectMenu, error) {
+	if s == nil {
+		return nil, fmt.Errorf("nil session (%v)", s)
 	}
 
 	sMenus := make([]discordgo.SelectMenu, int(math.Ceil(float64(len(rolesAndCtx))/float64(maxDiscordSelectMenuOpts))))
@@ -243,11 +342,6 @@ func buildRoleSelectMenus(s *discordgo.Session, i *discordgo.InteractionCreate, 
 			CustomID:    roleSelectMenuComponentIDPrefix + fmt.Sprint(i),
 			Placeholder: "Select any roles you would like to be added to. 🎭",
 		}
-	}
-
-	metadata, err := getInteractionMetaData(i)
-	if err != nil {
-		return nil, err
 	}
 
 	roleMap, err := guildRoleMap(s, metadata.GuildID)
@@ -311,26 +405,26 @@ func detectAndScrubDiscordEmojis(str string) (discordgo.ComponentEmoji, string, 
 	return emoji, discordgo.EmojiRegex.ReplaceAllString(str, ""), nil
 }
 
-func buildRoleSelectMenuEmbed(i *discordgo.InteractionCreate) *dg_helpers.Embed {
+func buildRoleSelectMenuEmbed(opts []*discordgo.ApplicationCommandInteractionDataOption) *dg_helpers.Embed {
 	embed := dg_helpers.NewEmbed()
-	if i == nil {
-		log.Error("nil interaction")
+	if opts == nil {
+		log.Error("nil opts")
 		return embed
 	}
 
-	for _, opt := range i.ApplicationCommandData().Options {
+	for _, opt := range opts {
 		switch opt.Name {
-		case roleSelectMenuTitleOpt:
+		case roleSelectMenuCreateOptTitle:
 			embed.SetTitle(opt.StringValue())
-		case roleSelectMenuDescOpt:
+		case roleSelectMenuCreateOptDesc:
 			embed.SetDescription(opt.StringValue())
-		case roleSelectMenuImageOpt:
+		case roleSelectMenuCreateOptImage:
 			embed.SetImage(opt.StringValue())
-		case roleSelectMenuURLOpt:
+		case roleSelectMenuCreateOptURL:
 			embed.SetURL(opt.StringValue())
-		case roleSelectMenuThumbnailOpt:
+		case roleSelectMenuCreateOptThumbnail:
 			embed.SetThumbnail(opt.StringValue())
-		case roleSelectMenuColorOpt:
+		case roleSelectMenuCreateOptColor:
 			embed.SetColor(int(opt.IntValue()))
 		}
 	}
@@ -349,7 +443,7 @@ func validateRoleSelectEmbedURLs(e *dg_helpers.Embed) error {
 	return nil
 }
 
-func createRoleSelect(s *discordgo.Session, i *discordgo.InteractionCreate) {
+func handleRoleSelectMenuCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	if s == nil || i == nil {
 		log.Errorf("nil Session pointer (%v) and/or InteractionCreate pointer (%v)", s, i)
 		return
@@ -375,19 +469,25 @@ func createRoleSelect(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		return
 	}
 
-	rolesAndCtx, err := parseRoles(i)
+	rolesAndCtx, err := parseRoles(i.ApplicationCommandData().Options[0].Options[roleSelectMenuCreateOptIdxRoles].StringValue())
 	if err != nil {
 		interactionFollowUpEphemeralError(s, i, false, err)
 		return
 	}
 
-	sMenus, err := buildRoleSelectMenus(s, i, rolesAndCtx)
+	metadata, err := getInteractionMetaData(i)
+	if err != nil {
+		interactionFollowUpEphemeralError(s, i, true, err)
+		log.Error(err)
+		return
+	}
+	sMenus, err := buildRoleSelectMenus(s, *metadata, rolesAndCtx)
 	if err != nil {
 		interactionFollowUpEphemeralError(s, i, true, err)
 		return
 	}
 
-	e := buildRoleSelectMenuEmbed(i)
+	e := buildRoleSelectMenuEmbed(i.ApplicationCommandData().Options[0].Options)
 	err = validateRoleSelectEmbedURLs(e)
 	if err != nil {
 		interactionFollowUpEphemeralError(s, i, false, err)
