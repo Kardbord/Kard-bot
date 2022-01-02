@@ -14,7 +14,7 @@ const (
 	maxDiscordCommandOptions = 25
 	maxDiscordOptionChoices  = 25
 	maxDiscordSelectMenuOpts = 25
-	maxDiscordActionRowSize  = 5
+	maxDiscordActionRows     = 5
 )
 
 func getCommands() []*discordgo.ApplicationCommand {
@@ -410,5 +410,6 @@ func getComponentImpls() map[string]onInteractionHandler {
 		dndDiceFacesSelectID:            handleDiceFacesMenuSelection,
 		dndOtherOptionsSelectID:         handleDnDOtherOptionsSelection,
 		roleSelectMenuComponentIDPrefix: handleRoleSelection,
+		roleSelectResetButtonID:         handleRoleSelectReset,
 	}
 }

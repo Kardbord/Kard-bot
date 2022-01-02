@@ -46,6 +46,7 @@ type interactionMetaData struct {
 	AuthorMention     string
 	AuthorPermissions int64
 	AuthorEmail       string
+	AuthorGuildRoles  []string
 	GuildID           string
 	ChannelID         string
 	InteractionID     string
@@ -72,6 +73,7 @@ func getInteractionMetaData(i *discordgo.InteractionCreate) (*interactionMetaDat
 			AuthorMention:     i.Member.User.Mention(),
 			AuthorEmail:       i.Member.User.Email,
 			AuthorPermissions: i.Member.Permissions,
+			AuthorGuildRoles:  i.Member.Roles,
 			GuildID:           i.GuildID,
 			ChannelID:         i.ChannelID,
 			InteractionID:     i.ID,

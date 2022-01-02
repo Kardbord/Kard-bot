@@ -21,6 +21,7 @@ const (
 
 	roleSelectRolesOpt    = "roles"
 	roleSelectRolesOptReq = true
+	maxRoleSelectMenus    = 4
 
 	roleSelectMenuDescOpt    = "description"
 	roleSelectMenuDescOptReq = false
@@ -38,6 +39,8 @@ const (
 	roleSelectMenuColorOptReq = false
 
 	roleSelectMenuComponentIDPrefix = "role-select-menu"
+	roleSelectResetButtonID         = "role-select-reset"
+	roleSelectResetButtonLabel      = "Reset your role selection"
 )
 
 var roleSelectMenuIDRegex = func() *regexp.Regexp { return nil }
@@ -83,7 +86,7 @@ func roleSelectCmdOpts() []*discordgo.ApplicationCommandOption {
 			opts[i] = &discordgo.ApplicationCommandOption{
 				Type:        discordgo.ApplicationCommandOptionString,
 				Name:        roleSelectRolesOpt,
-				Description: fmt.Sprintf("Roles (up to %d) and their context. Ex: @SomeRole context 😺 @NextRole next role context", maxDiscordSelectMenuOpts*maxDiscordActionRowSize),
+				Description: fmt.Sprintf("Roles (up to %d) and their context. Ex: @SomeRole context 😺 @NextRole next role context", maxDiscordSelectMenuOpts*maxRoleSelectMenus),
 				Required:    roleSelectRolesOptReq,
 			}
 		case roleSelectMenuDescOptIdx:
@@ -205,8 +208,8 @@ func parseRoles(i *discordgo.InteractionCreate) ([]string, error) {
 	}
 
 	rolesAndCtx := strings.Split(i.ApplicationCommandData().Options[roleSelectRolesOptIdx].StringValue(), roleMentionDelimiter)[1:]
-	if len(rolesAndCtx) > maxDiscordSelectMenuOpts*maxDiscordActionRowSize {
-		return nil, fmt.Errorf("you may only specify up to %d roles", maxDiscordSelectMenuOpts*maxDiscordActionRowSize)
+	if len(rolesAndCtx) > maxDiscordSelectMenuOpts*maxRoleSelectMenus {
+		return nil, fmt.Errorf("you may only specify up to %d roles", maxDiscordSelectMenuOpts*maxRoleSelectMenus)
 	}
 
 	if len(rolesAndCtx) == 0 {
@@ -253,6 +256,7 @@ func buildRoleSelectMenus(s *discordgo.Session, i *discordgo.InteractionCreate, 
 		}
 
 		smIdx := idx / 25
+		// TODO: Add a "None of these" option to deselect all roles
 		sMenus[smIdx].Options = append(sMenus[smIdx].Options, discordgo.SelectMenuOption{
 			Label: role.Name,
 			Value: role.ID,
@@ -295,30 +299,31 @@ func detectAndScrubDiscordEmojis(str string) (discordgo.ComponentEmoji, string, 
 }
 
 func buildRoleSelectMenuEmbed(i *discordgo.InteractionCreate) *dg_helpers.Embed {
-	embedArgs := dg_helpers.NewEmbed()
+	embed := dg_helpers.NewEmbed()
 	if i == nil {
 		log.Error("nil interaction")
-		return embedArgs
+		return embed
 	}
 
 	for _, opt := range i.ApplicationCommandData().Options {
 		switch opt.Name {
 		case roleSelectMenuTitleOpt:
-			embedArgs.SetTitle(opt.StringValue())
+			embed.SetTitle(opt.StringValue())
 		case roleSelectMenuDescOpt:
-			embedArgs.SetDescription(opt.StringValue())
+			embed.SetDescription(opt.StringValue())
 		case roleSelectMenuImageOpt:
-			embedArgs.SetImage(opt.StringValue())
+			embed.SetImage(opt.StringValue())
 		case roleSelectMenuURLOpt:
-			embedArgs.SetURL(opt.StringValue())
+			embed.SetURL(opt.StringValue())
 		case roleSelectMenuThumbnailOpt:
-			embedArgs.SetThumbnail(opt.StringValue())
+			embed.SetThumbnail(opt.StringValue())
 		case roleSelectMenuColorOpt:
-			embedArgs.SetColor(int(opt.IntValue()))
+			embed.SetColor(int(opt.IntValue()))
 		}
 	}
+	embed.SetFooter(fmt.Sprintf(`Warning! Selecting the "%s" button will remove you from any roles present in this menu.`, roleSelectResetButtonLabel))
 
-	return embedArgs
+	return embed
 }
 
 func validateRoleSelectEmbedURLs(e *dg_helpers.Embed) error {
@@ -387,10 +392,23 @@ func createRoleSelect(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	}
 	for _, m := range sMenus {
 		m.MaxValues = len(m.Options)
+		m.MinValues = 0
 		iEdit.Components = append(iEdit.Components, discordgo.ActionsRow{
 			Components: []discordgo.MessageComponent{m},
 		})
 	}
+	iEdit.Components = append(iEdit.Components, discordgo.ActionsRow{
+		Components: []discordgo.MessageComponent{
+			discordgo.Button{
+				Label: roleSelectResetButtonLabel,
+				Style: discordgo.DangerButton,
+				Emoji: discordgo.ComponentEmoji{
+					Name: "💣",
+				},
+				CustomID: roleSelectResetButtonID,
+			},
+		},
+	})
 
 	_, err = s.InteractionResponseEdit(s.State.User.ID, i.Interaction, iEdit)
 	if err != nil {
@@ -400,7 +418,9 @@ func createRoleSelect(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	}
 }
 
-func getPossibleRoleIDs(i *discordgo.InteractionCreate) (map[string]bool, error) {
+// Retrieves the selection options from a roleSelectMenu. If a buttonID is provided,
+// only options from that SelectMenu will be included in the returned result.
+func getPossibleRoleIDs(i *discordgo.InteractionCreate, buttonID string) (map[string]bool, error) {
 	if i == nil {
 		return nil, fmt.Errorf("nil interaction")
 	}
@@ -410,21 +430,24 @@ func getPossibleRoleIDs(i *discordgo.InteractionCreate) (map[string]bool, error)
 		if ar == nil {
 			continue
 		}
-		actionRow, ok := ar.(discordgo.ActionsRow)
+		actionRow, ok := ar.(*discordgo.ActionsRow)
 		if !ok {
-			return nil, fmt.Errorf("bad cast to discordgo.ActionsRow, type is %v", ar.Type())
+			return nil, fmt.Errorf("bad cast to *discordgo.ActionsRow, type is %T", ar)
 		}
-
 		for _, sm := range actionRow.Components {
 			if sm == nil {
 				continue
 			}
-			selectMenu, ok := sm.(discordgo.SelectMenu)
-			if !ok {
-				return nil, fmt.Errorf("bad cast to discordgo.SelectMenu, type is %v", sm.Type())
+			if sm.Type() != discordgo.SelectMenuComponent {
+				continue
 			}
 
-			if selectMenu.CustomID == i.MessageComponentData().CustomID {
+			selectMenu, ok := sm.(*discordgo.SelectMenu)
+			if !ok {
+				return nil, fmt.Errorf("bad cast to *discordgo.SelectMenu, type is %T", sm)
+			}
+
+			if selectMenu.CustomID == buttonID || buttonID == "" {
 				possibleRoleIDs = make(map[string]bool, len(selectMenu.Options))
 				for _, opt := range selectMenu.Options {
 					possibleRoleIDs[opt.Value] = false
@@ -452,9 +475,12 @@ func handleRoleSelection(s *discordgo.Session, i *discordgo.InteractionCreate) {
 
 	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Flags: InteractionResponseFlagEphemeral,
+		},
 	})
 
-	selectedRoleIDMap, err := getPossibleRoleIDs(i)
+	selectedRoleIDMap, err := getPossibleRoleIDs(i, i.MessageComponentData().CustomID)
 	if err != nil {
 		time.Sleep(time.Millisecond * 200) // wait a bit for the deferred response to be received
 		interactionFollowUpEphemeralError(s, i, true, err)
@@ -480,11 +506,33 @@ func handleRoleSelection(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		return
 	}
 
+	addedRoles := ""
+	removedRoles := ""
 	for roleID, isSelected := range selectedRoleIDMap {
 		if isSelected {
 			err = s.GuildMemberRoleAdd(metadata.GuildID, metadata.AuthorID, roleID)
+			if err == nil {
+				userHadRole := false
+				for _, r := range metadata.AuthorGuildRoles {
+					if r == roleID {
+						userHadRole = true
+						break
+					}
+				}
+				if !userHadRole {
+					addedRoles += fmt.Sprintf("<@&%s>\n", roleID)
+				}
+			}
 		} else {
 			err = s.GuildMemberRoleRemove(metadata.GuildID, metadata.AuthorID, roleID)
+			if err == nil {
+				for _, r := range metadata.AuthorGuildRoles {
+					if r == roleID {
+						removedRoles += fmt.Sprintf("<@&%s>\n", roleID)
+						break
+					}
+				}
+			}
 		}
 		if err != nil {
 			interactionFollowUpEphemeralError(s, i, true, err)
@@ -492,4 +540,94 @@ func handleRoleSelection(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			return
 		}
 	}
+
+	embedColor, err := fastHappyColorInt64()
+	if err != nil {
+		log.Warn(err)
+		embedColor = 0
+	}
+
+	embed := dg_helpers.NewEmbed().SetTitle("Your Roles Have Been Updated 🎭").SetColor(int(embedColor))
+	if addedRoles != "" {
+		embed.AddField("Added Roles ✅", addedRoles)
+	}
+	if removedRoles != "" {
+		embed.AddField("Removed Roles ❌", removedRoles)
+	}
+	_, err = s.InteractionResponseEdit(s.State.User.ID, i.Interaction, &discordgo.WebhookEdit{
+		Embeds: []*discordgo.MessageEmbed{embed.Truncate().MessageEmbed},
+		AllowedMentions: &discordgo.MessageAllowedMentions{
+			Parse: []discordgo.AllowedMentionType{discordgo.AllowedMentionTypeRoles},
+		},
+	})
+	if err != nil {
+		interactionFollowUpEphemeralError(s, i, true, err)
+		log.Error(err)
+		return
+	}
+}
+
+func handleRoleSelectReset(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	if s == nil || i == nil {
+		log.Errorf("nil Session pointer (%v) and/or InteractionCreate pointer (%v)", s, i)
+		return
+	}
+
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Flags: InteractionResponseFlagEphemeral,
+		},
+	})
+
+	possibleRoleIDs, err := getPossibleRoleIDs(i, "")
+	if err != nil {
+		time.Sleep(time.Millisecond * 200)
+		interactionFollowUpEphemeralError(s, i, true, err)
+		log.Error(err)
+		return
+	}
+
+	metadata, err := getInteractionMetaData(i)
+	if err != nil {
+		interactionFollowUpEphemeralError(s, i, true, err)
+		log.Error(err)
+		return
+	}
+
+	removedRoles := ""
+	for roleID := range possibleRoleIDs {
+		err = s.GuildMemberRoleRemove(metadata.GuildID, metadata.AuthorID, roleID)
+		if err != nil {
+			interactionFollowUpEphemeralError(s, i, true, err)
+			log.Error(err)
+			return
+		}
+		for _, r := range metadata.AuthorGuildRoles {
+			if r == roleID {
+				removedRoles += fmt.Sprintf("<@&%s>\n", roleID)
+				break
+			}
+		}
+	}
+
+	embedColor, err := fastHappyColorInt64()
+	if err != nil {
+		log.Warn(err)
+		embedColor = 0
+	}
+
+	embed := dg_helpers.NewEmbed().SetTitle("Your Roles Have Been Updated 🎭").SetColor(int(embedColor))
+	if removedRoles != "" {
+		embed.AddField("Removed Roles ❌", removedRoles)
+	} else {
+		embed.AddField("Removed Roles ❌", "No roles to remove")
+	}
+
+	s.InteractionResponseEdit(s.State.User.ID, i.Interaction, &discordgo.WebhookEdit{
+		Embeds: []*discordgo.MessageEmbed{embed.Truncate().MessageEmbed},
+		AllowedMentions: &discordgo.MessageAllowedMentions{
+			Parse: []discordgo.AllowedMentionType{discordgo.AllowedMentionTypeRoles},
+		},
+	})
 }
