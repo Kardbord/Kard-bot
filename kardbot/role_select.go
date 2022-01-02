@@ -216,7 +216,20 @@ func parseRoles(i *discordgo.InteractionCreate) ([]string, error) {
 		return nil, fmt.Errorf("you must specify at least one role")
 	}
 
-	return rolesAndCtx, nil
+	// remove any duplicate roles
+	roleSet := map[string]bool{}
+	for _, r := range rolesAndCtx {
+		roleSet[r] = true // this value is just to ensure the role key exists in the set
+	}
+
+	filteredRolesAndCtx := make([]string, len(roleSet))
+	idx := 0
+	for roleAndCtx := range roleSet {
+		filteredRolesAndCtx[idx] = roleAndCtx
+		idx++
+	}
+
+	return filteredRolesAndCtx, nil
 }
 
 func buildRoleSelectMenus(s *discordgo.Session, i *discordgo.InteractionCreate, rolesAndCtx []string) ([]discordgo.SelectMenu, error) {
@@ -378,6 +391,7 @@ func createRoleSelect(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	err = validateRoleSelectEmbedURLs(e)
 	if err != nil {
 		interactionFollowUpEphemeralError(s, i, false, err)
+		return
 	}
 
 	iEdit := &discordgo.WebhookEdit{
