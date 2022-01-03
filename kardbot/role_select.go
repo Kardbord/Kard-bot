@@ -314,6 +314,10 @@ func parseRoles(rolesOpt string) ([]string, error) {
 		return nil, fmt.Errorf("you may only specify up to %d roles", maxDiscordSelectMenuOpts*maxRoleSelectMenus)
 	}
 
+	if len(rolesAndCtx)%maxDiscordSelectMenuOpts == 1 {
+		return nil, fmt.Errorf("discord requires at least two options per select menu, so you must specify a number of roles, `x`, where `x modulo %d` does not equal `1`", maxDiscordActionRows)
+	}
+
 	if len(rolesAndCtx) == 0 {
 		return nil, fmt.Errorf("you must specify at least one role")
 	}
@@ -914,18 +918,28 @@ func handleRoleSelectMenuCreate(s *discordgo.Session, i *discordgo.InteractionCr
 		return
 	}
 
-	err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+	rolesAndCtx, err := parseRoles(i.ApplicationCommandData().Options[0].Options[roleSelectMenuCreateOptIdxRoles].StringValue())
+	if err != nil {
+		err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: fmt.Sprint(err),
+				Flags:   InteractionResponseFlagEphemeral,
+			},
+		})
+		if err != nil {
+			interactionFollowUpEphemeralError(s, i, false, err)
+			log.Error(err)
+		}
+		return
+	}
+
+	err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
 	})
 	if err != nil {
 		interactionRespondEphemeralError(s, i, true, err)
 		log.Error(err)
-		return
-	}
-
-	rolesAndCtx, err := parseRoles(i.ApplicationCommandData().Options[0].Options[roleSelectMenuCreateOptIdxRoles].StringValue())
-	if err != nil {
-		interactionFollowUpEphemeralError(s, i, false, err)
 		return
 	}
 
