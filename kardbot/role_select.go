@@ -53,8 +53,8 @@ const (
 
 	roleSelectMenuUpdateOptAction          = "action"
 	roleSelectMenuUpdateOptReqAction       = true
-	roleSelectMenuUpdateOptActionChoiceAdd = "add"
-	roleSelectMenuUpdateOptActionChoiceDel = "delete"
+	roleSelectMenuUpdateOptActionChoiceAdd = "add-role"
+	roleSelectMenuUpdateOptActionChoiceDel = "delete-role"
 	roleSelectMenuUpdateOptMsgID           = "message-id"
 	roleSelectMenuUpdateOptReqMsgID        = true
 	roleSelectMenuUpdateOptRole            = "role"
