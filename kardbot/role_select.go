@@ -70,11 +70,14 @@ const (
 	roleSelectMenuSubCmdUpdateOptCount // This MUST be the last constant defined in this block
 )
 
+// This block should ONLY contain IDs for components that are guaranteed to be present
+// at least once in a role select menu.
 const (
-	roleSelectMenuComponentIDPrefix = "role-select-menu"
-	roleSelectResetButtonID         = "role-select-reset"
-	roleSelectResetButtonLabel      = "Reset your role selection"
+	roleSelectMenuComponentIDPrefix    = "role-select-menu"
+	roleSelectResetButtonID            = "role-select-reset"
+	roleSelectMenuMsgMinComponentCount = iota // This MUST be the last constant defined in this block
 )
+const roleSelectResetButtonLabel = "Reset your role selection"
 
 func roleSelectMenuSubCmdCreateOpts() []*discordgo.ApplicationCommandOption {
 	opts := make([]*discordgo.ApplicationCommandOption, roleSelectMenuSubCmdCreateOptCount)
@@ -259,7 +262,7 @@ func handleRoleSelectMenuCommand(s *discordgo.Session, i *discordgo.InteractionC
 	case roleSelectMenuSubCmdCreate:
 		handleRoleSelectMenuCreate(s, i)
 	case roleSelectMenuSubCmdUpdate:
-		interactionRespondEphemeralError(s, i, false, fmt.Errorf("this command not yet implemented"))
+		handleRoleSelectMenuUpdate(s, i)
 	default:
 		err := fmt.Errorf(`unknown command: "%s"`, i.ApplicationCommandData().Options[0].Name)
 		log.Error(err)
@@ -439,6 +442,331 @@ func validateRoleSelectEmbedURLs(e *dg_helpers.Embed) error {
 	}
 	if e.Thumbnail != nil && e.Thumbnail.URL != "" && !isReachableURL(e.Thumbnail.URL) {
 		return fmt.Errorf("unreachable thumbnail URL provided: %s", e.Thumbnail.URL)
+	}
+	return nil
+}
+
+func handleRoleSelectMenuUpdate(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	if s == nil || i == nil {
+		log.Errorf("nil Session pointer (%v) and/or InteractionCreate pointer (%v)", s, i)
+		return
+	}
+	wg := bot().updateLastActive()
+	defer wg.Wait()
+
+	if isAdmin, err := isInteractionIssuerAdmin(i); err != nil {
+		interactionRespondEphemeralError(s, i, true, err)
+		log.Error(err)
+		return
+	} else if !isAdmin {
+		interactionRespondEphemeralError(s, i, false, fmt.Errorf("you must run this command from a server you administer"))
+		return
+	}
+
+	err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Flags: InteractionResponseFlagEphemeral,
+		},
+	})
+	if err != nil {
+		interactionRespondEphemeralError(s, i, true, err)
+		log.Error(err)
+		return
+	}
+
+	metadata, err := getInteractionMetaData(i)
+	if err != nil {
+		interactionFollowUpEphemeralError(s, i, true, err)
+		log.Error(err)
+		return
+	}
+
+	optData := i.ApplicationCommandData().Options[0].Options
+	msgToEditID := optData[roleSelectMenuUpdateOptIdxMsgID].StringValue()
+	msg, err := s.ChannelMessage(metadata.ChannelID, msgToEditID)
+	if err != nil || msg == nil {
+		log.Warn(err)
+		interactionFollowUpEphemeralError(s, i, false, fmt.Errorf("could not find any message in this channel with ID: `%s`", msgToEditID))
+		return
+	}
+
+	err = isMessageARoleSelectMenu(s, msg)
+	if err != nil {
+		log.Warn(err)
+		interactionFollowUpEphemeralError(s, i, false, fmt.Errorf("provided message ID does not appear to contain a role select menu:\n\t%v", err))
+		return
+	}
+
+	switch choice := optData[roleSelectMenuUpdateOptIdxAction].StringValue(); choice {
+	case roleSelectMenuUpdateOptActionChoiceAdd:
+		handleRoleSelectMenuUpdateAdd(s, i, *msg)
+	case roleSelectMenuUpdateOptActionChoiceDel:
+		handleRoleSelectMenuUpdateDel(s, i, msg)
+	default:
+		err := fmt.Errorf("unknown update choice: %s", choice)
+		interactionFollowUpEphemeralError(s, i, true, err)
+		log.Error(err)
+		return
+	}
+}
+
+func handleRoleSelectMenuUpdateAdd(s *discordgo.Session, i *discordgo.InteractionCreate, msgToEdit discordgo.Message) {
+	optData := i.ApplicationCommandData().Options[0].Options
+
+	metadata, err := getInteractionMetaData(i)
+	if err != nil {
+		interactionFollowUpEphemeralError(s, i, true, err)
+		log.Error(err)
+		return
+	}
+
+	var roleToAdd *discordgo.Role
+	var roleContext string = ""
+	for _, opt := range optData {
+		switch opt.Name {
+		case roleSelectMenuUpdateOptRole:
+			roleToAdd = opt.RoleValue(s, metadata.GuildID)
+		case roleSelectMenuUpdateOptCtx:
+			roleContext = opt.StringValue()
+		}
+	}
+
+	if roleToAdd == nil || roleToAdd.Name == "" {
+		err = fmt.Errorf("could not retreive role name")
+		interactionFollowUpEphemeralError(s, i, true, err)
+		log.Error(err)
+		return
+	}
+
+	msgEdit := &discordgo.MessageEdit{
+		Embeds: msgToEdit.Embeds,
+		AllowedMentions: &discordgo.MessageAllowedMentions{
+			Parse: []discordgo.AllowedMentionType{
+				discordgo.AllowedMentionTypeEveryone,
+				discordgo.AllowedMentionTypeRoles,
+				discordgo.AllowedMentionTypeUsers,
+			},
+		},
+		ID:      msgToEdit.ID,
+		Channel: metadata.ChannelID,
+	}
+	if msgToEdit.Content != "" {
+		msgEdit.Content = &msgToEdit.Content
+	}
+
+	content := ""
+	if ok, err := isRoleInSelectMenuMsg(roleToAdd.ID, s, &msgToEdit); err != nil {
+		interactionFollowUpEphemeralError(s, i, true, err)
+		log.Error(err)
+		return
+	} else if ok {
+		msgEdit.Components, err = updateExistingRoleSelectMenuOption(s, roleToAdd, roleContext, msgToEdit)
+		if err != nil {
+			interactionFollowUpEphemeralError(s, i, true, err)
+			log.Error(err)
+			return
+		}
+		content = fmt.Sprintf("Updated existing menu option for %s", roleToAdd.Mention())
+	} else {
+		var newOptAdded bool
+		msgEdit.Components, newOptAdded, err = addRoleSelectMenuOption(s, roleToAdd, roleContext, msgToEdit)
+		if err != nil {
+			interactionFollowUpEphemeralError(s, i, true, err)
+			log.Error(err)
+			return
+		}
+		if !newOptAdded {
+			interactionFollowUpEphemeralError(s, i, false, fmt.Errorf("the menu is at max capacity. You'll have to remove an option first or create a new menu"))
+			return
+		}
+		content = fmt.Sprintf("Added %s option to the menu", roleToAdd.Mention())
+	}
+
+	_, err = s.ChannelMessageEditComplex(msgEdit)
+	if err != nil {
+		interactionFollowUpEphemeralError(s, i, true, err)
+		log.Error(err)
+		return
+	}
+
+	_, err = s.InteractionResponseEdit(s.State.User.ID, i.Interaction, &discordgo.WebhookEdit{
+		Content: content,
+		AllowedMentions: &discordgo.MessageAllowedMentions{
+			Parse: []discordgo.AllowedMentionType{discordgo.AllowedMentionTypeRoles},
+		},
+	})
+	if err != nil {
+		interactionFollowUpEphemeralError(s, i, true, err)
+		log.Error(err)
+	}
+}
+
+func isRoleInSelectMenuMsg(roleID string, s *discordgo.Session, msgToEdit *discordgo.Message) (bool, error) {
+	if err := isMessageARoleSelectMenu(s, msgToEdit); err != nil {
+		return false, fmt.Errorf("message is not a role select menu, this should never happen. err: %v", err)
+	}
+
+	for _, ar := range msgToEdit.Components {
+		actionsRow, ok := ar.(*discordgo.ActionsRow)
+		if !ok {
+			return false, fmt.Errorf("bad cast to actions row, this should never happen")
+		}
+		for _, c := range actionsRow.Components {
+			if c.Type() != discordgo.SelectMenuComponent {
+				continue
+			}
+			selectMenu, ok := c.(*discordgo.SelectMenu)
+			if !ok {
+				return false, fmt.Errorf("bad cast to SelectMenu, this should never happen")
+			}
+			if len(selectMenu.Options) == 0 {
+				log.Warn("Empty select menu")
+			}
+			for _, choice := range selectMenu.Options {
+				if choice.Value == roleID {
+					return true, nil
+				}
+			}
+		}
+	}
+	return false, nil
+}
+
+// Returns the updated message components, a bool indicating whether or not there was room for the new option, and an error indicating if something went wrong.
+func addRoleSelectMenuOption(s *discordgo.Session, roleToAdd *discordgo.Role, roleCtx string, msgToEdit discordgo.Message) ([]discordgo.MessageComponent, bool, error) {
+	if err := isMessageARoleSelectMenu(s, &msgToEdit); err != nil {
+		return msgToEdit.Components, false, fmt.Errorf("message is not a role select menu, this should never happen. err: %v", err)
+	}
+
+	for _, ar := range msgToEdit.Components {
+		actionsRow, ok := ar.(*discordgo.ActionsRow)
+		if !ok {
+			return msgToEdit.Components, false, fmt.Errorf("bad cast to actions row, this should never happen")
+		}
+		for _, c := range actionsRow.Components {
+			if c.Type() != discordgo.SelectMenuComponent {
+				continue
+			}
+			selectMenu, ok := c.(*discordgo.SelectMenu)
+			if !ok {
+				return msgToEdit.Components, false, fmt.Errorf("bad cast to SelectMenu, this should never happen")
+			}
+			if len(selectMenu.Options) != maxDiscordSelectMenuOpts {
+				emoji, sanitizedCtx, err := detectAndScrubDiscordEmojis(roleCtx)
+				if err != nil {
+					return msgToEdit.Components, false, err
+				}
+				selectMenu.Options = append(selectMenu.Options, discordgo.SelectMenuOption{
+					Label: roleToAdd.Name,
+					Value: roleToAdd.ID,
+					// Description is whatever is left over after scrubbing Discord emojis and role mentions
+					Description: roleRegex().ReplaceAllString(sanitizedCtx, ""),
+					Emoji:       emoji,
+				})
+				return msgToEdit.Components, true, nil
+			}
+		}
+	}
+
+	return msgToEdit.Components, false, nil
+}
+
+// Returns the updated message components and an error indicating success or failure
+func updateExistingRoleSelectMenuOption(s *discordgo.Session, roleToAdd *discordgo.Role, roleCtx string, msgToEdit discordgo.Message) ([]discordgo.MessageComponent, error) {
+	if err := isMessageARoleSelectMenu(s, &msgToEdit); err != nil {
+		return msgToEdit.Components, fmt.Errorf("message is not a role select menu, this should never happen. err: %v", err)
+	}
+
+	for _, ar := range msgToEdit.Components {
+		actionsRow, ok := ar.(*discordgo.ActionsRow)
+		if !ok {
+			return msgToEdit.Components, fmt.Errorf("bad cast to actions row, this should never happen")
+		}
+		for _, c := range actionsRow.Components {
+			if c.Type() != discordgo.SelectMenuComponent {
+				continue
+			}
+			selectMenu, ok := c.(*discordgo.SelectMenu)
+			if !ok {
+				return msgToEdit.Components, fmt.Errorf("bad cast to SelectMenu, this should never happen")
+			}
+			for idx := range selectMenu.Options {
+				choice := &selectMenu.Options[idx]
+				if choice.Value == roleToAdd.ID {
+					emoji, sanitizedCtx, err := detectAndScrubDiscordEmojis(roleCtx)
+					if err != nil {
+						return nil, err
+					}
+					choice.Description = roleRegex().ReplaceAllString(sanitizedCtx, "")
+					choice.Emoji = emoji
+					return msgToEdit.Components, nil
+				}
+			}
+		}
+	}
+	return msgToEdit.Components, fmt.Errorf("did not find existing role to update")
+}
+
+func handleRoleSelectMenuUpdateDel(s *discordgo.Session, i *discordgo.InteractionCreate, msgToEdit *discordgo.Message) {
+}
+
+func isMessageARoleSelectMenu(s *discordgo.Session, m *discordgo.Message) error {
+	if m == nil {
+		return fmt.Errorf("message is nil")
+	}
+
+	if (m.Author == nil && m.Member == nil) || (m.Author == nil && m.Member.User == nil) {
+		return fmt.Errorf("cannot verify message author is %s", s.State.User.Mention())
+	}
+	if m.Author != nil && m.Author.ID != s.State.User.ID {
+		return fmt.Errorf("message not authored by %s", s.State.User.Mention())
+	}
+	if m.Member != nil && m.Member.User != nil && m.Member.User.ID != s.State.User.ID {
+		return fmt.Errorf("message not authored by %s", s.State.User.Mention())
+	}
+
+	if len(m.Components) < roleSelectMenuMsgMinComponentCount {
+		return fmt.Errorf("message contains unexpected number of components")
+	}
+
+	for arIdx, ar := range m.Components {
+		if ar == nil {
+			return fmt.Errorf("encountered a nil component")
+		}
+
+		actionsRow, ok := ar.(*discordgo.ActionsRow)
+		if !ok {
+			return fmt.Errorf("encountered unexpected component type, expected an ActionsRow")
+		}
+
+		if len(actionsRow.Components) != 1 {
+			// all role SelectMenu message ActionsRows have exactly one component
+			return fmt.Errorf("encountered unexpectedly empty ActionsRow")
+		}
+
+		c := actionsRow.Components[0]
+		if c == nil {
+			return fmt.Errorf("encountered a nil component")
+		}
+		if arIdx == len(m.Components)-1 {
+			// last component is always the reset button
+			button, ok := c.(*discordgo.Button)
+			if !ok {
+				return fmt.Errorf("encountered unexpected component type, expected a Button")
+			}
+			if button.CustomID != roleSelectResetButtonID {
+				return fmt.Errorf("button ID does not belong to a role select menu")
+			}
+		} else {
+			selectMenu, ok := c.(*discordgo.SelectMenu)
+			if !ok {
+				return fmt.Errorf("encountered unexpected component type, expected a SelectMenu")
+			}
+			if !strMatchesRoleSelectMenuID(selectMenu.CustomID) {
+				return fmt.Errorf("encountered select menu ID that does not belong to a role select menu")
+			}
+		}
 	}
 	return nil
 }
