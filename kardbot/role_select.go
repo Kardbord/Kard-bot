@@ -366,7 +366,6 @@ func buildRoleSelectMenus(s *discordgo.Session, metadata interactionMetaData, ro
 		}
 
 		smIdx := idx / 25
-		// TODO: Add a "None of these" option to deselect all roles
 		sMenus[smIdx].Options = append(sMenus[smIdx].Options, discordgo.SelectMenuOption{
 			Label: role.Name,
 			Value: role.ID,
@@ -533,7 +532,7 @@ func handleRoleSelectMenuUpdateAdd(s *discordgo.Session, i *discordgo.Interactio
 	}
 
 	if roleToAdd == nil || roleToAdd.Name == "" {
-		err = fmt.Errorf("could not retreive role name")
+		err = fmt.Errorf("could not retreive role name from user args")
 		interactionFollowUpEphemeralError(s, i, true, err)
 		log.Error(err)
 		return
@@ -595,6 +594,126 @@ func handleRoleSelectMenuUpdateAdd(s *discordgo.Session, i *discordgo.Interactio
 		AllowedMentions: &discordgo.MessageAllowedMentions{
 			Parse: []discordgo.AllowedMentionType{discordgo.AllowedMentionTypeRoles},
 		},
+	})
+	if err != nil {
+		interactionFollowUpEphemeralError(s, i, true, err)
+		log.Error(err)
+	}
+}
+
+func handleRoleSelectMenuUpdateDel(s *discordgo.Session, i *discordgo.InteractionCreate, msgToEdit *discordgo.Message) {
+	optData := i.ApplicationCommandData().Options[0].Options
+
+	metadata, err := getInteractionMetaData(i)
+	if err != nil {
+		interactionFollowUpEphemeralError(s, i, true, err)
+		log.Error(err)
+		return
+	}
+
+	var roleToDel *discordgo.Role
+	for _, opt := range optData {
+		switch opt.Name {
+		case roleSelectMenuUpdateOptRole:
+			roleToDel = opt.RoleValue(s, metadata.GuildID)
+		}
+	}
+
+	if roleToDel == nil {
+		err = fmt.Errorf("could not retreive role name from user args")
+		interactionFollowUpEphemeralError(s, i, true, err)
+		log.Error(err)
+		return
+	}
+
+	if ok, err := isRoleInSelectMenuMsg(roleToDel.ID, s, msgToEdit); err != nil {
+		log.Warn(err)
+		interactionFollowUpEphemeralError(s, i, false, fmt.Errorf("provided message ID does not appear to contain a role select menu:\n\t%v", err))
+		return
+	} else if !ok {
+		_, err := s.InteractionResponseEdit(s.State.User.ID, i.Interaction, &discordgo.WebhookEdit{
+			Content: fmt.Sprintf("%s is not present in the menu, nothing to do.", roleToDel.Mention()),
+		})
+		if err != nil {
+			interactionFollowUpEphemeralError(s, i, true, err)
+			log.Error(err)
+		}
+		return
+	}
+
+	msgEdit := &discordgo.MessageEdit{
+		Embeds: msgToEdit.Embeds,
+		AllowedMentions: &discordgo.MessageAllowedMentions{
+			Parse: []discordgo.AllowedMentionType{
+				discordgo.AllowedMentionTypeEveryone,
+				discordgo.AllowedMentionTypeRoles,
+				discordgo.AllowedMentionTypeUsers,
+			},
+		},
+		ID:         msgToEdit.ID,
+		Channel:    metadata.ChannelID,
+		Components: msgToEdit.Components,
+	}
+	if msgToEdit.Content != "" {
+		msgEdit.Content = &msgToEdit.Content
+	}
+
+	removed := false
+	for _, ar := range msgEdit.Components {
+		actionsRow, ok := ar.(*discordgo.ActionsRow)
+		if !ok {
+			err = fmt.Errorf("bad cast to actions row, this should never happen")
+			log.Error(err)
+			interactionFollowUpEphemeralError(s, i, true, err)
+			return
+		}
+		for _, c := range actionsRow.Components {
+			if c.Type() != discordgo.SelectMenuComponent {
+				continue
+			}
+			selectMenu, ok := c.(*discordgo.SelectMenu)
+			if !ok {
+				err = fmt.Errorf("bad cast to select menu, this should never happen")
+				log.Error(err)
+				interactionFollowUpEphemeralError(s, i, true, err)
+				return
+			}
+			for optIdx := range selectMenu.Options {
+				if selectMenu.Options[optIdx].Value == roleToDel.ID {
+					selectMenu.Options[optIdx] = selectMenu.Options[len(selectMenu.Options)-1]
+					selectMenu.Options = selectMenu.Options[:len(selectMenu.Options)-1]
+					removed = true
+					break
+				}
+			}
+			if removed {
+				if len(selectMenu.Options) < minDiscordSelectMenuOpts {
+					_, err := s.InteractionResponseEdit(s.State.User.ID, i.Interaction, &discordgo.WebhookEdit{
+						Content: fmt.Sprintf("Cannot remove %s. Discord requires at least %d options per select menu.", roleToDel.Mention(), minDiscordSelectMenuOpts),
+					})
+					if err != nil {
+						interactionFollowUpEphemeralError(s, i, true, err)
+						log.Error(err)
+					}
+					return
+				}
+				break
+			}
+		}
+		if removed {
+			break
+		}
+	}
+
+	_, err = s.ChannelMessageEditComplex(msgEdit)
+	if err != nil {
+		interactionFollowUpEphemeralError(s, i, true, err)
+		log.Error(err)
+		return
+	}
+
+	_, err = s.InteractionResponseEdit(s.State.User.ID, i.Interaction, &discordgo.WebhookEdit{
+		Content: fmt.Sprintf("%s was removed from the menu", roleToDel.Mention()),
 	})
 	if err != nil {
 		interactionFollowUpEphemeralError(s, i, true, err)
@@ -706,9 +825,6 @@ func updateExistingRoleSelectMenuOption(s *discordgo.Session, roleToAdd *discord
 		}
 	}
 	return msgToEdit.Components, fmt.Errorf("did not find existing role to update")
-}
-
-func handleRoleSelectMenuUpdateDel(s *discordgo.Session, i *discordgo.InteractionCreate, msgToEdit *discordgo.Message) {
 }
 
 func isMessageARoleSelectMenu(s *discordgo.Session, m *discordgo.Message) error {
