@@ -59,6 +59,8 @@ var pprofServe = func() {
 	log.Info("pprof not enabled (this is normal)")
 }
 
+var PprofCfg = pprofConfig{}
+
 type pprofConfig struct {
 	Enabled              bool   `json:"enabled"`
 	Address              string `json:"address"`
@@ -72,37 +74,39 @@ func init() {
 		log.Fatal(err)
 	}
 
-	cfg := struct {
-		pprofConfig `json:"pprof"`
-	}{}
-
-	err = json.Unmarshal(jsonCfg.Raw, &cfg)
-	if err != nil {
-		log.Fatal(err)
+	{
+		cfg := struct {
+			pprofConfig `json:"pprof"`
+		}{}
+		err = json.Unmarshal(jsonCfg.Raw, &cfg)
+		if err != nil {
+			log.Fatal(err)
+		}
+		PprofCfg = cfg.pprofConfig
 	}
 
-	if !cfg.pprofConfig.Enabled {
+	if !PprofCfg.Enabled {
 		return
 	}
 
-	if cfg.pprofConfig.Address == "" {
+	if PprofCfg.Address == "" {
 		log.Warn("pprof is enabled but address is not set, not starting pprof server")
 		return
 	}
 
-	log.Infof("Setting block profile rate to %d", cfg.pprofConfig.BlockProfileRate)
-	runtime.SetBlockProfileRate(cfg.pprofConfig.BlockProfileRate)
+	log.Infof("Setting block profile rate to %d", PprofCfg.BlockProfileRate)
+	runtime.SetBlockProfileRate(PprofCfg.BlockProfileRate)
 
-	log.Infof("Setting mutex profile fraction to %d", cfg.pprofConfig.MutexProfileFraction)
-	runtime.SetMutexProfileFraction(cfg.pprofConfig.MutexProfileFraction)
+	log.Infof("Setting mutex profile fraction to %d", PprofCfg.MutexProfileFraction)
+	runtime.SetMutexProfileFraction(PprofCfg.MutexProfileFraction)
 
 	pprofServe = func() {
-		log.Infof("Starting pprof server at %s/debug/pprof/", cfg.pprofConfig.Address)
-		log.Info(http.ListenAndServe(cfg.pprofConfig.Address, nil))
+		log.Infof("Starting pprof server at %s/debug/pprof/", PprofCfg.Address)
+		log.Info(http.ListenAndServe(PprofCfg.Address, nil))
 	}
 }
 
 func main() {
 	go pprofServe()
-	kardbot.RunAndBlock()
+	kardbot.RunAndBlock(PprofCfg.Enabled)
 }

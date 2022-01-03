@@ -1,13 +1,14 @@
 package kardbot
 
 import (
+	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"math/rand"
 	"os"
 	"os/signal"
 	"runtime/debug"
+	"runtime/trace"
 	"sync"
 	"syscall"
 	"time"
@@ -35,6 +36,9 @@ type kardbot struct {
 	EnableDGLogging            bool `json:"enable-dg-logging"`
 	UnregisterAllCmdsOnStartup bool `json:"unregister-all-cmds-on-startup"`
 
+	// Enable trace regions for profiling
+	TraceEnabled bool
+
 	// Initialized in kardbot.Run, used to determine when
 	// kardbot.Stop has been called.
 	wg *sync.WaitGroup
@@ -55,18 +59,28 @@ func bot() *kardbot {
 }
 
 // Run initializes and starts the bot.
-// Returns a WaitGroup
-func Run() {
+// Setting traceEnabled to true enables
+// trace regions for profiling.
+func Run(traceEnabled bool) {
 	if gbot != nil {
 		log.Warn("Run has already been called")
 		return
+	}
+
+	if traceEnabled {
+		log.Info("Bot will run with trace regions enabled")
+	} else {
+		log.Info("Bot will run with trace regions disabled (this is normal)")
 	}
 
 	log.RegisterExitHandler(Stop)
 
 	wg := sync.WaitGroup{}
 	wg.Add(1)
-	gbot = &kardbot{wg: &wg}
+	gbot = &kardbot{
+		wg:           &wg,
+		TraceEnabled: traceEnabled,
+	}
 	go handleInterrupt()
 	gbot.initialize()
 	log.Print("Bot is now running. Press CTRL-C to exit.")
@@ -76,8 +90,8 @@ func Block() {
 	bot().wg.Wait()
 }
 
-func RunAndBlock() {
-	Run()
+func RunAndBlock(traceEnabled bool) {
+	Run(traceEnabled)
 	Block()
 }
 
@@ -229,33 +243,42 @@ func (kbot *kardbot) prepInteractionHandlers() {
 			}
 		}()
 
+		var handler func(*discordgo.Session, *discordgo.InteractionCreate) = nil
+		command := "unknown interaction type"
 		switch i.Type {
 		case discordgo.InteractionApplicationCommand:
-			cmd := i.ApplicationCommandData().Name
-			if strMatchesMemeCmdPattern(cmd) {
-				cmd = memeCommand
+			command = i.ApplicationCommandData().Name
+			if strMatchesMemeCmdPattern(command) {
+				command = memeCommand
 			}
-			if h, ok := getCommandImpls()[cmd]; ok {
-				h(s, i)
-			} else {
-				errStr := fmt.Sprintf("Unknown command received: %s", i.ApplicationCommandData().Name)
-				log.Error(errStr)
-				interactionRespondEphemeralError(s, i, true, errors.New(errStr))
+			if h, ok := getCommandImpls()[command]; ok {
+				handler = h
 			}
-
 		case discordgo.InteractionMessageComponent:
-			buttonID := i.MessageComponentData().CustomID
-			if strMatchesRoleSelectMenuID(buttonID) {
-				buttonID = roleSelectMenuComponentIDPrefix
+			command = i.MessageComponentData().CustomID
+			if strMatchesRoleSelectMenuID(command) {
+				command = roleSelectMenuComponentIDPrefix
 			}
-			if h, ok := getComponentImpls()[buttonID]; ok {
-				h(s, i)
-			} else {
-				log.Errorf(`unknown message component ID "%s"`, i.MessageComponentData().CustomID)
+			if h, ok := getComponentImpls()[command]; ok {
+				handler = h
 			}
+		}
 
-		default:
-			log.Errorf("Unknown interaction type received: %s", i.Type.String())
+		if handler == nil {
+			err := fmt.Errorf("interaction failed: %s", command)
+			log.Error(err)
+			interactionRespondEphemeralError(s, i, true, err)
+			return
+		}
+
+		if kbot.TraceEnabled {
+			ctx, task := trace.NewTask(context.Background(), command)
+			defer task.End()
+			r := trace.StartRegion(ctx, command)
+			handler(s, i)
+			r.End()
+		} else {
+			handler(s, i)
 		}
 	})
 }
