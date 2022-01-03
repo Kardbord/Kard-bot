@@ -576,7 +576,17 @@ func handleRoleSelectMenuUpdateAdd(s *discordgo.Session, i *discordgo.Interactio
 			return
 		}
 		if !newOptAdded {
-			interactionFollowUpEphemeralError(s, i, false, fmt.Errorf("the menu is at max capacity. You'll have to remove an option first or create a new menu"))
+			_, err = s.InteractionResponseEdit(s.State.User.ID, i.Interaction, &discordgo.WebhookEdit{
+				Content: fmt.Sprintf(
+					"Congratulations, you've bumped into a Discord API limitation! 🎉 Either you are at the max number of menus (%d), or your existing menus are full and we can't add a new one because discord requires at least %d options per menu. Sorry for the inconvenience! 😔",
+					maxDiscordActionRows,
+					minDiscordSelectMenuOpts,
+				),
+			})
+			if err != nil {
+				interactionFollowUpEphemeralError(s, i, true, err)
+				log.Error(err)
+			}
 			return
 		}
 		content = fmt.Sprintf("Added %s option to the menu", roleToAdd.Mention())
