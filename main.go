@@ -11,6 +11,10 @@ import (
 
 	"github.com/TannerKvarfordt/Kard-bot/kardbot"
 	"github.com/TannerKvarfordt/Kard-bot/kardbot/config"
+
+	// For runtime profiling if enabled in config
+	"net/http"
+	_ "net/http/pprof"
 )
 
 const MainConfigFile = "config/setup.json"
@@ -48,6 +52,57 @@ func init() {
 	}
 }
 
+// Start an http server for pprof profiling data
+// if configured. No-op if not.
+// See https://pkg.go.dev/net/http/pprof
+var pprofServe = func() {
+	log.Info("pprof not enabled (this is normal)")
+}
+
+type pprofConfig struct {
+	Enabled              bool   `json:"enabled"`
+	Address              string `json:"address"`
+	BlockProfileRate     int    `json:"block-profile-rate"`
+	MutexProfileFraction int    `json:"mutex-profile-fraction"`
+}
+
+func init() {
+	jsonCfg, err := config.NewJsonConfig(MainConfigFile)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	cfg := struct {
+		pprofConfig `json:"pprof"`
+	}{}
+
+	err = json.Unmarshal(jsonCfg.Raw, &cfg)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if !cfg.pprofConfig.Enabled {
+		return
+	}
+
+	if cfg.pprofConfig.Address == "" {
+		log.Warn("pprof is enabled but address is not set, not starting pprof server")
+		return
+	}
+
+	log.Infof("Setting block profile rate to %d", cfg.pprofConfig.BlockProfileRate)
+	runtime.SetBlockProfileRate(cfg.pprofConfig.BlockProfileRate)
+
+	log.Infof("Setting mutex profile fraction to %d", cfg.pprofConfig.MutexProfileFraction)
+	runtime.SetMutexProfileFraction(cfg.pprofConfig.MutexProfileFraction)
+
+	pprofServe = func() {
+		log.Infof("Starting pprof server at %s/debug/pprof/", cfg.pprofConfig.Address)
+		log.Info(http.ListenAndServe(cfg.pprofConfig.Address, nil))
+	}
+}
+
 func main() {
+	go pprofServe()
 	kardbot.RunAndBlock()
 }
