@@ -696,6 +696,7 @@ func handleRoleSelectMenuUpdateDel(s *discordgo.Session, i *discordgo.Interactio
 				if selectMenu.Options[optIdx].Value == roleToDel.ID {
 					selectMenu.Options[optIdx] = selectMenu.Options[len(selectMenu.Options)-1]
 					selectMenu.Options = selectMenu.Options[:len(selectMenu.Options)-1]
+					selectMenu.MaxValues = len(selectMenu.Options)
 					removed = true
 					break
 				}
@@ -797,6 +798,7 @@ func addRoleSelectMenuOption(s *discordgo.Session, roleToAdd *discordgo.Role, ro
 					Description: roleRegex().ReplaceAllString(sanitizedCtx, ""),
 					Emoji:       emoji,
 				})
+				selectMenu.MaxValues = len(selectMenu.Options)
 				return msgToEdit.Components, true, nil
 			}
 		}
