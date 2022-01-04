@@ -1007,9 +1007,9 @@ func getPossibleRoleIDs(i *discordgo.InteractionCreate, buttonID string) (map[st
 		return nil, fmt.Errorf("nil interaction")
 	}
 
-	var possibleRoleIDs map[string]bool
+	var possibleRoleIDs map[string]bool = nil
 	for _, ar := range i.Message.Components {
-		if ar == nil {
+		if ar == nil || ar.Type() != discordgo.ActionsRowComponent {
 			continue
 		}
 		actionRow, ok := ar.(*discordgo.ActionsRow)
@@ -1017,10 +1017,7 @@ func getPossibleRoleIDs(i *discordgo.InteractionCreate, buttonID string) (map[st
 			return nil, fmt.Errorf("bad cast to *discordgo.ActionsRow, type is %T", ar)
 		}
 		for _, sm := range actionRow.Components {
-			if sm == nil {
-				continue
-			}
-			if sm.Type() != discordgo.SelectMenuComponent {
+			if sm == nil || sm.Type() != discordgo.SelectMenuComponent {
 				continue
 			}
 
@@ -1030,14 +1027,16 @@ func getPossibleRoleIDs(i *discordgo.InteractionCreate, buttonID string) (map[st
 			}
 
 			if selectMenu.CustomID == buttonID || buttonID == "" {
-				possibleRoleIDs = make(map[string]bool, len(selectMenu.Options))
+				if possibleRoleIDs == nil {
+					possibleRoleIDs = make(map[string]bool, len(selectMenu.Options))
+				}
 				for _, opt := range selectMenu.Options {
 					possibleRoleIDs[opt.Value] = false
 				}
 				break
 			}
 		}
-		if len(possibleRoleIDs) > 0 {
+		if len(possibleRoleIDs) > 0 && buttonID != "" {
 			break
 		}
 	}
