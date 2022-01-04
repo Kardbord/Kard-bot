@@ -15,6 +15,7 @@ const (
 	maxDiscordOptionChoices  = 25
 	maxDiscordSelectMenuOpts = 25
 	maxDiscordActionRows     = 5
+	minDiscordSelectMenuOpts = 2 // discord requires at least this many options per SelectMenu
 )
 
 func getCommands() []*discordgo.ApplicationCommand {
@@ -323,7 +324,7 @@ func getCommands() []*discordgo.ApplicationCommand {
 			},
 		},
 		{
-			Name:        createRoleSelectCommand,
+			Name:        roleSelectMenuCommand,
 			Description: "Allow users to select roles for themselves",
 			Options:     roleSelectCmdOpts(),
 		},
@@ -342,19 +343,19 @@ func getCommands() []*discordgo.ApplicationCommand {
 
 func getCommandImpls() map[string]onInteractionHandler {
 	return map[string]onInteractionHandler{
-		RollCmd:                 roll,
-		"loglevel":              updateLogLevel,
-		"pasta":                 servePasta,
-		"reddit-roulette":       redditRoulette,
-		"uwu":                   uwuify,
-		"compliments":           complimentHandler,
-		"creepy-dms":            creepyDMHandler,
-		"help":                  botInfo,
-		"what-are-the-odds":     whatAreTheOdds,
-		memeCommand:             buildAMeme,
-		delBotDMCmd:             deleteBotDMs,
-		storyTimeCmd:            storyTime,
-		createRoleSelectCommand: createRoleSelect,
+		RollCmd:               roll,
+		"loglevel":            updateLogLevel,
+		"pasta":               servePasta,
+		"reddit-roulette":     redditRoulette,
+		"uwu":                 uwuify,
+		"compliments":         complimentHandler,
+		"creepy-dms":          creepyDMHandler,
+		"help":                botInfo,
+		"what-are-the-odds":   whatAreTheOdds,
+		memeCommand:           buildAMeme,
+		delBotDMCmd:           deleteBotDMs,
+		storyTimeCmd:          storyTime,
+		roleSelectMenuCommand: handleRoleSelectMenuCommand,
 	}
 }
 

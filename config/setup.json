@@ -1,5 +1,11 @@
 {
   "enable-dg-logging": false,
   "default-log-level": "info",
-  "unregister-all-cmds-on-startup": false
+  "unregister-all-cmds-on-startup": false,
+  "pprof": {
+    "enabled": false,
+    "address": "localhost:6060",
+    "block-profile-rate": 0,
+    "mutex-profile-fraction": 0
+  }
 }
