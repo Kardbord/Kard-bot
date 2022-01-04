@@ -1071,23 +1071,17 @@ func handleRoleSelection(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		},
 	})
 
-	selectedRoleIDMap, _, err := getPossibleRoleIDs(i, i.MessageComponentData().CustomID)
+	selectMenuRoleIDs, _, err := getPossibleRoleIDs(i, i.MessageComponentData().CustomID)
 	if err != nil {
 		time.Sleep(time.Millisecond * 200) // wait a bit for the deferred response to be received
 		interactionFollowUpEphemeralError(s, i, true, err)
 		log.Error(err)
 		return
 	}
-
 	for _, roleID := range i.MessageComponentData().Values {
-		if _, ok := selectedRoleIDMap[roleID]; !ok {
-			time.Sleep(time.Millisecond * 200) // wait a bit for the deferred response to be received
-			err = fmt.Errorf("%s is not a valid role ID, there is a bug. :(", roleID)
-			interactionFollowUpEphemeralError(s, i, true, err)
-			log.Error(err)
-			return
+		if _, ok := selectMenuRoleIDs[roleID]; ok {
+			selectMenuRoleIDs[roleID] = true
 		}
-		selectedRoleIDMap[roleID] = true
 	}
 
 	metadata, err := getInteractionMetaData(i)
@@ -1097,39 +1091,37 @@ func handleRoleSelection(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		return
 	}
 
-	addedRoles := ""
-	removedRoles := ""
-	for roleID, isSelected := range selectedRoleIDMap {
-		if isSelected {
-			err = s.GuildMemberRoleAdd(metadata.GuildID, metadata.AuthorID, roleID)
-			if err == nil {
-				userHadRole := false
-				for _, r := range metadata.AuthorGuildRoles {
-					if r == roleID {
-						userHadRole = true
-						break
-					}
-				}
-				if !userHadRole {
-					addedRoles += fmt.Sprintf("<@&%s>\n", roleID)
-				}
-			}
+	var (
+		rolesToAddOrKeep = make([]string, 0, len(selectMenuRoleIDs)+len(i.MessageComponentData().Values))
+		rolesToRemove    = make([]string, 0, len(selectMenuRoleIDs))
+	)
+
+	for _, roleID := range metadata.AuthorGuildRoles {
+		if keep, ok := selectMenuRoleIDs[roleID]; ok && !keep {
+			rolesToRemove = append(rolesToRemove, roleID)
 		} else {
-			err = s.GuildMemberRoleRemove(metadata.GuildID, metadata.AuthorID, roleID)
-			if err == nil {
-				for _, r := range metadata.AuthorGuildRoles {
-					if r == roleID {
-						removedRoles += fmt.Sprintf("<@&%s>\n", roleID)
-						break
-					}
-				}
+			rolesToAddOrKeep = append(rolesToAddOrKeep, roleID)
+		}
+	}
+
+	for _, roleID := range i.MessageComponentData().Values {
+		alreadyPresent := false
+		for _, r := range rolesToAddOrKeep {
+			if r == roleID {
+				alreadyPresent = true
+				break
 			}
 		}
-		if err != nil {
-			interactionFollowUpEphemeralError(s, i, true, err)
-			log.Error(err)
-			return
+		if !alreadyPresent {
+			rolesToAddOrKeep = append(rolesToAddOrKeep, roleID)
 		}
+	}
+
+	err = s.GuildMemberEdit(metadata.GuildID, metadata.AuthorID, rolesToAddOrKeep)
+	if err != nil {
+		interactionFollowUpEphemeralError(s, i, true, err)
+		log.Error(err)
+		return
 	}
 
 	embedColor, err := fastHappyColorInt64()
@@ -1139,11 +1131,11 @@ func handleRoleSelection(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	}
 
 	embed := dg_helpers.NewEmbed().SetTitle("Your Roles Have Been Updated 🎭").SetColor(int(embedColor))
-	if addedRoles != "" {
-		embed.AddField("Added Roles ✅", addedRoles)
+	if len(i.MessageComponentData().Values) != 0 {
+		embed.AddField("Current Roles ✅", "<@&"+strings.Join(i.MessageComponentData().Values, ">\n<@&")+">")
 	}
-	if removedRoles != "" {
-		embed.AddField("Removed Roles ❌", removedRoles)
+	if len(rolesToRemove) != 0 {
+		embed.AddField("Removed Roles ❌", "<@&"+strings.Join(rolesToRemove, ">\n<@&")+">")
 	}
 	_, err = s.InteractionResponseEdit(s.State.User.ID, i.Interaction, &discordgo.WebhookEdit{
 		Embeds: []*discordgo.MessageEmbed{embed.Truncate().MessageEmbed},
