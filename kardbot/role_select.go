@@ -258,6 +258,18 @@ func strMatchesRoleSelectMenuID(str string) bool {
 }
 
 func handleRoleSelectMenuCommand(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	wg := bot().updateLastActive()
+	defer wg.Wait()
+
+	if isAdmin, err := isInteractionIssuerAdmin(i); err != nil {
+		interactionRespondEphemeralError(s, i, true, err)
+		log.Error(err)
+		return
+	} else if !isAdmin {
+		interactionRespondEphemeralError(s, i, false, fmt.Errorf("you must run this command from a server you administer"))
+		return
+	}
+
 	switch i.ApplicationCommandData().Options[0].Name {
 	case roleSelectMenuSubCmdCreate:
 		handleRoleSelectMenuCreate(s, i)
@@ -452,17 +464,6 @@ func validateRoleSelectEmbedURLs(e *dg_helpers.Embed) error {
 func handleRoleSelectMenuUpdate(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	if s == nil || i == nil {
 		log.Errorf("nil Session pointer (%v) and/or InteractionCreate pointer (%v)", s, i)
-		return
-	}
-	wg := bot().updateLastActive()
-	defer wg.Wait()
-
-	if isAdmin, err := isInteractionIssuerAdmin(i); err != nil {
-		interactionRespondEphemeralError(s, i, true, err)
-		log.Error(err)
-		return
-	} else if !isAdmin {
-		interactionRespondEphemeralError(s, i, false, fmt.Errorf("you must run this command from a server you administer"))
 		return
 	}
 
@@ -906,17 +907,6 @@ func isMessageARoleSelectMenu(s *discordgo.Session, m *discordgo.Message) error 
 func handleRoleSelectMenuCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	if s == nil || i == nil {
 		log.Errorf("nil Session pointer (%v) and/or InteractionCreate pointer (%v)", s, i)
-		return
-	}
-	wg := bot().updateLastActive()
-	defer wg.Wait()
-
-	if isAdmin, err := isInteractionIssuerAdmin(i); err != nil {
-		interactionRespondEphemeralError(s, i, true, err)
-		log.Error(err)
-		return
-	} else if !isAdmin {
-		interactionRespondEphemeralError(s, i, false, fmt.Errorf("you must be a server administrator to run this command"))
 		return
 	}
 
