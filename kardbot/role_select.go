@@ -1096,6 +1096,7 @@ func handleRoleSelection(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	var (
 		rolesToAddOrKeep = make([]string, 0, len(selectMenuRoleIDs)+len(i.MessageComponentData().Values))
 		rolesToRemove    = make([]string, 0, len(selectMenuRoleIDs))
+		addedRoles       = make([]string, 0, len(i.MessageComponentData().Values))
 	)
 
 	for _, roleID := range metadata.AuthorGuildRoles {
@@ -1116,6 +1117,7 @@ func handleRoleSelection(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		}
 		if !alreadyPresent {
 			rolesToAddOrKeep = append(rolesToAddOrKeep, roleID)
+			addedRoles = append(addedRoles, roleID)
 		}
 	}
 
@@ -1133,8 +1135,8 @@ func handleRoleSelection(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	}
 
 	embed := dg_helpers.NewEmbed().SetTitle("Your Roles Have Been Updated 🎭").SetColor(int(embedColor))
-	if len(i.MessageComponentData().Values) != 0 {
-		embed.AddField("Current Roles ✅", "<@&"+strings.Join(i.MessageComponentData().Values, ">\n<@&")+">")
+	if len(addedRoles) != 0 {
+		embed.AddField("Added Roles ✅", "<@&"+strings.Join(addedRoles, ">\n<@&")+">")
 	}
 	if len(rolesToRemove) != 0 {
 		embed.AddField("Removed Roles ❌", "<@&"+strings.Join(rolesToRemove, ">\n<@&")+">")
