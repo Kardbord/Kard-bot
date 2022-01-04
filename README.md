@@ -43,7 +43,8 @@ A discord bot destined for greatness.
 - [x] Creepy DMs sent to users who opt in
 - [x] Provide "odds" that a user specified event will occur
 - [x] Build memes from provided templates and user provided text
-- [x] Generate a story from a user's prompt 
+- [x] Generate a story from a user's prompt
+- [x] Allow server admins to generate and edit a role selection menu  
 - [ ] Inform users when Kard-bot is updated
 - [ ] Mock certain questions or phrases
 - [ ] "Quack" any time a user types an expletive
