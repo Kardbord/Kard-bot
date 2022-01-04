@@ -1002,19 +1002,22 @@ func handleRoleSelectMenuCreate(s *discordgo.Session, i *discordgo.InteractionCr
 
 // Retrieves the selection options from a roleSelectMenu. If a buttonID is provided,
 // only options from that SelectMenu will be included in the returned result.
-func getPossibleRoleIDs(i *discordgo.InteractionCreate, buttonID string) (map[string]bool, error) {
+// First returned value is a map of role IDs to bool, where the value will always be false.
+// Second returned value is a list of unique role IDs built from the first returned value.
+// Last returned value is an error or nil.
+func getPossibleRoleIDs(i *discordgo.InteractionCreate, buttonID string) (map[string]bool, []string, error) {
 	if i == nil {
-		return nil, fmt.Errorf("nil interaction")
+		return nil, nil, fmt.Errorf("nil interaction")
 	}
 
-	var possibleRoleIDs map[string]bool = nil
+	var possibleRoleIDsMap map[string]bool = nil
 	for _, ar := range i.Message.Components {
 		if ar == nil || ar.Type() != discordgo.ActionsRowComponent {
 			continue
 		}
 		actionRow, ok := ar.(*discordgo.ActionsRow)
 		if !ok {
-			return nil, fmt.Errorf("bad cast to *discordgo.ActionsRow, type is %T", ar)
+			return nil, nil, fmt.Errorf("bad cast to *discordgo.ActionsRow, type is %T", ar)
 		}
 		for _, sm := range actionRow.Components {
 			if sm == nil || sm.Type() != discordgo.SelectMenuComponent {
@@ -1023,27 +1026,34 @@ func getPossibleRoleIDs(i *discordgo.InteractionCreate, buttonID string) (map[st
 
 			selectMenu, ok := sm.(*discordgo.SelectMenu)
 			if !ok {
-				return nil, fmt.Errorf("bad cast to *discordgo.SelectMenu, type is %T", sm)
+				return nil, nil, fmt.Errorf("bad cast to *discordgo.SelectMenu, type is %T", sm)
 			}
 
 			if selectMenu.CustomID == buttonID || buttonID == "" {
-				if possibleRoleIDs == nil {
-					possibleRoleIDs = make(map[string]bool, len(selectMenu.Options))
+				if possibleRoleIDsMap == nil {
+					possibleRoleIDsMap = make(map[string]bool, len(selectMenu.Options))
 				}
 				for _, opt := range selectMenu.Options {
-					possibleRoleIDs[opt.Value] = false
+					possibleRoleIDsMap[opt.Value] = false
 				}
 				break
 			}
 		}
-		if len(possibleRoleIDs) > 0 && buttonID != "" {
+		if len(possibleRoleIDsMap) > 0 && buttonID != "" {
 			break
 		}
 	}
-	if len(possibleRoleIDs) == 0 {
-		return nil, fmt.Errorf("no possible role IDs found, is the select menu empty?")
+	if len(possibleRoleIDsMap) == 0 {
+		return nil, nil, fmt.Errorf("no possible role IDs found, is the select menu empty?")
 	}
-	return possibleRoleIDs, nil
+
+	possibleRoleIDs := make([]string, len(possibleRoleIDsMap))
+	idx := 0
+	for k := range possibleRoleIDsMap {
+		possibleRoleIDs[idx] = k
+		idx++
+	}
+	return possibleRoleIDsMap, possibleRoleIDs, nil
 }
 
 func handleRoleSelection(s *discordgo.Session, i *discordgo.InteractionCreate) {
@@ -1061,7 +1071,7 @@ func handleRoleSelection(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		},
 	})
 
-	selectedRoleIDMap, err := getPossibleRoleIDs(i, i.MessageComponentData().CustomID)
+	selectedRoleIDMap, _, err := getPossibleRoleIDs(i, i.MessageComponentData().CustomID)
 	if err != nil {
 		time.Sleep(time.Millisecond * 200) // wait a bit for the deferred response to be received
 		interactionFollowUpEphemeralError(s, i, true, err)
@@ -1161,7 +1171,7 @@ func handleRoleSelectReset(s *discordgo.Session, i *discordgo.InteractionCreate)
 		},
 	})
 
-	possibleRoleIDs, err := getPossibleRoleIDs(i, "")
+	menuRoleIDMap, _, err := getPossibleRoleIDs(i, "")
 	if err != nil {
 		time.Sleep(time.Millisecond * 200)
 		interactionFollowUpEphemeralError(s, i, true, err)
@@ -1176,20 +1186,21 @@ func handleRoleSelectReset(s *discordgo.Session, i *discordgo.InteractionCreate)
 		return
 	}
 
-	removedRoles := ""
-	for roleID := range possibleRoleIDs {
-		err = s.GuildMemberRoleRemove(metadata.GuildID, metadata.AuthorID, roleID)
-		if err != nil {
-			interactionFollowUpEphemeralError(s, i, true, err)
-			log.Error(err)
-			return
+	rolesToRemove := make([]string, 0, len(menuRoleIDMap))
+	rolesToKeep := make([]string, 0, len(menuRoleIDMap))
+	for _, roleID := range metadata.AuthorGuildRoles {
+		if _, ok := menuRoleIDMap[roleID]; ok {
+			rolesToRemove = append(rolesToRemove, roleID)
+		} else {
+			rolesToKeep = append(rolesToKeep, roleID)
 		}
-		for _, r := range metadata.AuthorGuildRoles {
-			if r == roleID {
-				removedRoles += fmt.Sprintf("<@&%s>\n", roleID)
-				break
-			}
-		}
+	}
+
+	err = s.GuildMemberEdit(metadata.GuildID, metadata.AuthorID, rolesToKeep)
+	if err != nil {
+		interactionFollowUpEphemeralError(s, i, true, err)
+		log.Error(err)
+		return
 	}
 
 	embedColor, err := fastHappyColorInt64()
@@ -1199,8 +1210,8 @@ func handleRoleSelectReset(s *discordgo.Session, i *discordgo.InteractionCreate)
 	}
 
 	embed := dg_helpers.NewEmbed().SetTitle("Your Roles Have Been Updated 🎭").SetColor(int(embedColor))
-	if removedRoles != "" {
-		embed.AddField("Removed Roles ❌", removedRoles)
+	if len(rolesToRemove) != 0 {
+		embed.AddField("Removed Roles ❌", "<@&"+strings.Join(rolesToRemove, ">\n<@&")+">")
 	} else {
 		embed.AddField("Removed Roles ❌", "No roles to remove")
 	}
