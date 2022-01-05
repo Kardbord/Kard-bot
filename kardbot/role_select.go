@@ -10,6 +10,7 @@ import (
 	"github.com/TannerKvarfordt/Kard-bot/kardbot/dg_helpers"
 	"github.com/bwmarrin/discordgo"
 	"github.com/forPelevin/gomoji"
+	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -70,14 +71,14 @@ const (
 	roleSelectMenuSubCmdUpdateOptCount // This MUST be the last constant defined in this block
 )
 
-// This block should ONLY contain IDs for components that are guaranteed to be present
-// at least once in a role select menu.
 const (
 	roleSelectMenuComponentIDPrefix    = "role-select-menu"
 	roleSelectResetButtonID            = "role-select-reset"
-	roleSelectMenuMsgMinComponentCount = iota // This MUST be the last constant defined in this block
+	roleSelectResetButtonLabel         = "Reset your role selection"
+	roleSelectMenuMsgMinComponentCount = 1 // Only the reset button is required
 )
-const roleSelectResetButtonLabel = "Reset your role selection"
+
+var roleSelectMenuIDRegex = regexp.MustCompile(fmt.Sprintf(`\b%s(?i)[0-9a-f]{8}\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-\b[0-9a-f]{12}\b`, roleSelectMenuComponentIDPrefix))
 
 func roleSelectMenuSubCmdCreateOpts() []*discordgo.ApplicationCommandOption {
 	opts := make([]*discordgo.ApplicationCommandOption, roleSelectMenuSubCmdCreateOptCount)
@@ -243,20 +244,6 @@ func roleSelectCmdOpts() []*discordgo.ApplicationCommandOption {
 	}
 }
 
-var roleSelectMenuIDRegex = func() *regexp.Regexp { return nil }
-
-func init() {
-	r := regexp.MustCompile(fmt.Sprintf(`%s\d*`, roleSelectMenuComponentIDPrefix))
-	if r == nil {
-		log.Fatal("failed to compile roleSelectMenuComponentIDPrefix regex")
-	}
-	roleSelectMenuIDRegex = func() *regexp.Regexp { return r }
-}
-
-func strMatchesRoleSelectMenuID(str string) bool {
-	return roleSelectMenuIDRegex().MatchString(str)
-}
-
 func handleRoleSelectMenuCommand(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	wg := bot().updateLastActive()
 	defer wg.Wait()
@@ -326,10 +313,6 @@ func parseRoles(rolesOpt string) ([]string, error) {
 		return nil, fmt.Errorf("you may only specify up to %d roles", maxDiscordSelectMenuOpts*maxRoleSelectMenus)
 	}
 
-	if len(rolesAndCtx)%maxDiscordSelectMenuOpts == 1 {
-		return nil, fmt.Errorf("discord requires at least two options per select menu, so you must specify a number of roles, `x`, where `x modulo %d` does not equal `1`", maxDiscordActionRows)
-	}
-
 	if len(rolesAndCtx) == 0 {
 		return nil, fmt.Errorf("you must specify at least one role")
 	}
@@ -357,8 +340,12 @@ func buildRoleSelectMenus(s *discordgo.Session, metadata interactionMetaData, ro
 
 	sMenus := make([]discordgo.SelectMenu, int(math.Ceil(float64(len(rolesAndCtx))/float64(maxDiscordSelectMenuOpts))))
 	for i := range sMenus {
+		uid, err := uuid.NewUUID()
+		if err != nil {
+			return nil, err
+		}
 		sMenus[i] = discordgo.SelectMenu{
-			CustomID:    roleSelectMenuComponentIDPrefix + fmt.Sprint(i),
+			CustomID:    roleSelectMenuComponentIDPrefix + uid.String(),
 			Placeholder: "Select any roles you would like to be added to. 🎭",
 		}
 	}
@@ -583,9 +570,8 @@ func handleRoleSelectMenuUpdateAdd(s *discordgo.Session, i *discordgo.Interactio
 		if !newOptAdded {
 			_, err = s.InteractionResponseEdit(s.State.User.ID, i.Interaction, &discordgo.WebhookEdit{
 				Content: fmt.Sprintf(
-					"Congratulations, you've bumped into a Discord API limitation! 🎉 Either you are at the max number of menus (%d), or your existing menus are full and we can't add a new one because discord requires at least %d options per menu. Sorry for the inconvenience! 😔",
+					"You've reached the max number of buttons (%d) a Discord message can hold. You'll have to remove a menu option first or add a new role-select-menu.",
 					maxDiscordActionRows,
-					minDiscordSelectMenuOpts,
 				),
 			})
 			if err != nil {
@@ -674,7 +660,8 @@ func handleRoleSelectMenuUpdateDel(s *discordgo.Session, i *discordgo.Interactio
 	}
 
 	removed := false
-	for _, ar := range msgEdit.Components {
+	arIdxToDel := -1
+	for arIdx, ar := range msgEdit.Components {
 		actionsRow, ok := ar.(*discordgo.ActionsRow)
 		if !ok {
 			err = fmt.Errorf("bad cast to actions row, this should never happen")
@@ -699,25 +686,34 @@ func handleRoleSelectMenuUpdateDel(s *discordgo.Session, i *discordgo.Interactio
 					selectMenu.Options = selectMenu.Options[:len(selectMenu.Options)-1]
 					selectMenu.MaxValues = len(selectMenu.Options)
 					removed = true
+					if len(selectMenu.Options) == 0 {
+						arIdxToDel = arIdx
+					}
 					break
 				}
 			}
 			if removed {
-				if len(selectMenu.Options) < minDiscordSelectMenuOpts {
-					_, err := s.InteractionResponseEdit(s.State.User.ID, i.Interaction, &discordgo.WebhookEdit{
-						Content: fmt.Sprintf("Cannot remove %s. Discord requires at least %d options per select menu.", roleToDel.Mention(), minDiscordSelectMenuOpts),
-					})
-					if err != nil {
-						interactionFollowUpEphemeralError(s, i, true, err)
-						log.Error(err)
-					}
-					return
-				}
 				break
 			}
 		}
 		if removed {
 			break
+		}
+	}
+
+	if arIdxToDel >= len(msgEdit.Components) {
+		err := fmt.Errorf("there is a bug in this code, arIdxToDel should never be out of range")
+		interactionFollowUpEphemeralError(s, i, true, err)
+		log.Error(err)
+		return
+	}
+	if arIdxToDel > -1 {
+		// Less efficient than copying the last element to the deleted index removing the last
+		// element, but preserves order of the list.
+		if arIdxToDel == len(msgEdit.Components)-1 {
+			msgEdit.Components = msgEdit.Components[:arIdxToDel]
+		} else {
+			msgEdit.Components = append(msgEdit.Components[:arIdxToDel], msgEdit.Components[arIdxToDel+1:]...)
 		}
 	}
 
@@ -774,6 +770,12 @@ func addRoleSelectMenuOption(s *discordgo.Session, roleToAdd *discordgo.Role, ro
 		return msgToEdit.Components, false, fmt.Errorf("message is not a role select menu, this should never happen. err: %v", err)
 	}
 
+	emoji, sanitizedCtx, err := detectAndScrubDiscordEmojis(roleCtx)
+	if err != nil {
+		return msgToEdit.Components, false, err
+	}
+
+	// See if there's room in an existing select menu
 	for _, ar := range msgToEdit.Components {
 		actionsRow, ok := ar.(*discordgo.ActionsRow)
 		if !ok {
@@ -788,10 +790,6 @@ func addRoleSelectMenuOption(s *discordgo.Session, roleToAdd *discordgo.Role, ro
 				return msgToEdit.Components, false, fmt.Errorf("bad cast to SelectMenu, this should never happen")
 			}
 			if len(selectMenu.Options) != maxDiscordSelectMenuOpts {
-				emoji, sanitizedCtx, err := detectAndScrubDiscordEmojis(roleCtx)
-				if err != nil {
-					return msgToEdit.Components, false, err
-				}
 				selectMenu.Options = append(selectMenu.Options, discordgo.SelectMenuOption{
 					Label: roleToAdd.Name,
 					Value: roleToAdd.ID,
@@ -803,6 +801,37 @@ func addRoleSelectMenuOption(s *discordgo.Session, roleToAdd *discordgo.Role, ro
 				return msgToEdit.Components, true, nil
 			}
 		}
+	}
+
+	// See if there's room to add a new select menu
+	if len(msgToEdit.Components) < maxDiscordActionRows {
+		// Insert the new actions row one before the end. The last component should always be
+		// the reset button
+		uid, err := uuid.NewUUID()
+		if err != nil {
+			return msgToEdit.Components, false, err
+		}
+		msgToEdit.Components = append(msgToEdit.Components[:len(msgToEdit.Components)-1], discordgo.ActionsRow{
+			Components: []discordgo.MessageComponent{
+				discordgo.SelectMenu{
+					CustomID:    roleSelectMenuComponentIDPrefix + uid.String(),
+					Placeholder: "Select any roles you would like to be added to. 🎭",
+					MaxValues:   1,
+					MinValues:   0,
+					Options: []discordgo.SelectMenuOption{
+						{
+							Label: roleToAdd.Name,
+							Value: roleToAdd.ID,
+							// Description is whatever is left over after scrubbing Discord emojis and role mentions
+							Description: roleRegex().ReplaceAllString(sanitizedCtx, ""),
+							Emoji:       emoji,
+						},
+					},
+				},
+			},
+		}, msgToEdit.Components[len(msgToEdit.Components)-1])
+
+		return msgToEdit.Components, true, nil
 	}
 
 	return msgToEdit.Components, false, nil
@@ -896,7 +925,7 @@ func isMessageARoleSelectMenu(s *discordgo.Session, m *discordgo.Message) error 
 			if !ok {
 				return fmt.Errorf("encountered unexpected component type, expected a SelectMenu")
 			}
-			if !strMatchesRoleSelectMenuID(selectMenu.CustomID) {
+			if !roleSelectMenuIDRegex.MatchString(selectMenu.CustomID) {
 				return fmt.Errorf("encountered select menu ID that does not belong to a role select menu")
 			}
 		}
@@ -1035,7 +1064,7 @@ func getPossibleRoleIDs(i *discordgo.InteractionCreate, buttonID string) (map[st
 			break
 		}
 	}
-	if len(possibleRoleIDsMap) == 0 {
+	if len(possibleRoleIDsMap) == 0 && buttonID != "" {
 		return nil, nil, fmt.Errorf("no possible role IDs found, is the select menu empty?")
 	}
 

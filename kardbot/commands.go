@@ -15,7 +15,6 @@ const (
 	maxDiscordOptionChoices  = 25
 	maxDiscordSelectMenuOpts = 25
 	maxDiscordActionRows     = 5
-	minDiscordSelectMenuOpts = 2 // discord requires at least this many options per SelectMenu
 )
 
 func getCommands() []*discordgo.ApplicationCommand {

@@ -256,7 +256,7 @@ func (kbot *kardbot) prepInteractionHandlers() {
 			}
 		case discordgo.InteractionMessageComponent:
 			command = i.MessageComponentData().CustomID
-			if strMatchesRoleSelectMenuID(command) {
+			if roleSelectMenuIDRegex.MatchString(command) {
 				command = roleSelectMenuComponentIDPrefix
 			}
 			if h, ok := getComponentImpls()[command]; ok {
