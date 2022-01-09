@@ -328,6 +328,11 @@ func getCommands() []*discordgo.ApplicationCommand {
 			Options:     roleSelectCmdOpts(),
 		},
 		{
+			Name:        embedCmd,
+			Description: "Build a custom embed",
+			Options:     embedCmdOpts(),
+		},
+		{
 			Name:        "help",
 			Description: "Get helpful information about the bot.",
 		},
@@ -355,6 +360,7 @@ func getCommandImpls() map[string]onInteractionHandler {
 		delBotDMCmd:           deleteBotDMs,
 		storyTimeCmd:          storyTime,
 		roleSelectMenuCommand: handleRoleSelectMenuCommand,
+		embedCmd:              handleEmbedCmd,
 	}
 }
 
