@@ -29,6 +29,9 @@ const (
 	embedSubCmdAddField      = "add-field"
 	embedSubCmdOptFieldTitle = "title"
 	embedSubCmdOptFieldValue = "content"
+
+	embedSubCmdDelField    = "delete-field"
+	embedSubCmdOptFieldIdx = "field-index"
 )
 
 const authorIDFieldTitle = "Embed Author"
@@ -62,6 +65,25 @@ func embedCmdOpts() []*discordgo.ApplicationCommandOption {
 					Type:        discordgo.ApplicationCommandOptionString,
 					Name:        embedSubCmdOptFieldValue,
 					Description: "Content of the field to be added",
+					Required:    true,
+				},
+			},
+		},
+		{
+			Type:        discordgo.ApplicationCommandOptionSubCommand,
+			Name:        embedSubCmdDelField,
+			Description: "Delete an embed field by (zero-based) index",
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Type:        discordgo.ApplicationCommandOptionString,
+					Name:        embedSubCmdUpdateOptMsgID,
+					Description: "Message ID containing the embed to update (enable developer options, right click, copy ID)",
+					Required:    true,
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionInteger,
+					Name:        embedSubCmdOptFieldIdx,
+					Description: "Zero-based (first field is the 0th field) index of the field to remove",
 					Required:    true,
 				},
 			},
@@ -176,6 +198,8 @@ func handleEmbedCmd(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		resp, reportableErr, err = handleEmbedSubCmdUpdate(s, i)
 	case embedSubCmdAddField:
 		resp, reportableErr, err = handleEmbedSubCmdAddField(s, i)
+	case embedSubCmdDelField:
+		resp, reportableErr, err = handleEmbedSubCmdDelField(s, i)
 	default:
 		interactionRespondEphemeralError(s, i, true, fmt.Errorf("unknown subcommand"))
 	}
@@ -383,6 +407,63 @@ func handleEmbedSubCmdAddField(s *discordgo.Session, i *discordgo.InteractionCre
 	}
 
 	e.AddField(title, value)
+
+	_, err = s.ChannelMessageEditComplex(&discordgo.MessageEdit{
+		Content:    &msgToUpdate.Content,
+		Components: msgToUpdate.Components,
+		Embeds:     []*discordgo.MessageEmbed{e.Truncate().MessageEmbed},
+		AllowedMentions: &discordgo.MessageAllowedMentions{
+			Parse: []discordgo.AllowedMentionType{
+				discordgo.AllowedMentionTypeEveryone,
+				discordgo.AllowedMentionTypeUsers,
+				discordgo.AllowedMentionTypeRoles,
+			},
+		},
+		ID:      msgToUpdate.ID,
+		Channel: metadata.ChannelID,
+	})
+
+	if err != nil {
+		return nil, true, err
+	}
+
+	return &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Flags:   InteractionResponseFlagEphemeral,
+			Content: "The embed was successfully updated!",
+		},
+	}, false, nil
+}
+
+func handleEmbedSubCmdDelField(s *discordgo.Session, i *discordgo.InteractionCreate) (*discordgo.InteractionResponse, bool, error) {
+	e := dg_helpers.NewEmbed()
+
+	metadata, err := getInteractionMetaData(i)
+	if err != nil {
+		return nil, true, err
+	}
+
+	msgToUpdate, reportableErr, err := getUpdateableEmbed(metadata.ChannelID, i.ApplicationCommandData().Options[0].Options[0].StringValue(), metadata.AuthorMention, s)
+	if err != nil {
+		return nil, reportableErr, err
+	}
+
+	e.MessageEmbed = msgToUpdate.Embeds[0]
+
+	idxToDel := i.ApplicationCommandData().Options[0].Options[1].IntValue()
+
+	if idxToDel == 0 {
+		return nil, false, fmt.Errorf(`cannot remove the "%s" field`, authorIDFieldTitle)
+	}
+	if idxToDel < 0 {
+		return nil, false, fmt.Errorf("invalid field index (%d), must be a non-negative integer", idxToDel)
+	}
+	if idxToDel > int64(len(e.Fields)-1) {
+		return nil, false, fmt.Errorf("invalid field index (%d), must not be greater than %d for this message", idxToDel, len(e.Fields)-1)
+	}
+
+	e.Fields = append(e.Fields[:idxToDel], e.Fields[idxToDel+1:]...)
 
 	_, err = s.ChannelMessageEditComplex(&discordgo.MessageEdit{
 		Content:    &msgToUpdate.Content,
