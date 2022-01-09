@@ -13,7 +13,8 @@ import (
 const (
 	embedCmd = "embed"
 
-	embedSubCmdCreate = "create"
+	embedSubCmdCreate           = "create"
+	embedSubCmdCreateOptPreview = "preview"
 
 	embedSubCmdUpdate         = "update"
 	embedSubCmdUpdateOptMsgID = "message-id"
@@ -42,7 +43,11 @@ func embedCmdOpts() []*discordgo.ApplicationCommandOption {
 			Type:        discordgo.ApplicationCommandOptionSubCommand,
 			Name:        embedSubCmdCreate,
 			Description: "Create a new embed",
-			Options:     embedCmdSubCmdOpts(),
+			Options: append(embedCmdSubCmdOpts(), &discordgo.ApplicationCommandOption{
+				Type:        discordgo.ApplicationCommandOptionBoolean,
+				Name:        embedSubCmdCreateOptPreview,
+				Description: "If true, the bot will respone ephemerally",
+			}),
 		},
 		{
 			Type:        discordgo.ApplicationCommandOptionSubCommand,
@@ -224,8 +229,13 @@ func handleEmbedCmd(s *discordgo.Session, i *discordgo.InteractionCreate) {
 
 func handleEmbedSubCmdCreate(s *discordgo.Session, i *discordgo.InteractionCreate) (*discordgo.InteractionResponse, bool, error) {
 	e := dg_helpers.NewEmbed()
+	flags := uint64(0)
 	for _, opt := range i.ApplicationCommandData().Options[0].Options {
 		switch opt.Name {
+		case embedSubCmdCreateOptPreview:
+			if opt.BoolValue() {
+				flags = InteractionResponseFlagEphemeral
+			}
 		case embedSubCmdOptURL:
 			e.SetURL(opt.StringValue())
 			if !isReachableURL(opt.StringValue()) {
@@ -273,6 +283,7 @@ func handleEmbedSubCmdCreate(s *discordgo.Session, i *discordgo.InteractionCreat
 	return &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
+			Flags:  flags,
 			Embeds: embeds,
 			AllowedMentions: &discordgo.MessageAllowedMentions{
 				Parse: []discordgo.AllowedMentionType{
