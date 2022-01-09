@@ -25,7 +25,10 @@ const (
 	embedSubCmdOptFooter       = "footer"
 	embedSubCmdOptImageURL     = "image-url"
 	embedSubCmdOptThumbnailURL = "thumbnail-url"
-	// TODO: support fields
+
+	embedSubCmdAddField      = "add-field"
+	embedSubCmdOptFieldTitle = "title"
+	embedSubCmdOptFieldValue = "content"
 )
 
 const authorIDFieldTitle = "Embed Author"
@@ -40,6 +43,31 @@ func embedCmdOpts() []*discordgo.ApplicationCommandOption {
 		},
 		{
 			Type:        discordgo.ApplicationCommandOptionSubCommand,
+			Name:        embedSubCmdAddField,
+			Description: "Add a field to an updateable embed",
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Type:        discordgo.ApplicationCommandOptionString,
+					Name:        embedSubCmdUpdateOptMsgID,
+					Description: "Message ID containing the embed to update (enable developer options, right click, copy ID)",
+					Required:    true,
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionString,
+					Name:        embedSubCmdOptFieldTitle,
+					Description: "Title of the field to be added",
+					Required:    true,
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionString,
+					Name:        embedSubCmdOptFieldValue,
+					Description: "Content of the field to be added",
+					Required:    true,
+				},
+			},
+		},
+		{
+			Type:        discordgo.ApplicationCommandOptionSubCommand,
 			Name:        embedSubCmdUpdate,
 			Description: "Update an existing embed",
 			Options: append([]*discordgo.ApplicationCommandOption{{
@@ -47,8 +75,7 @@ func embedCmdOpts() []*discordgo.ApplicationCommandOption {
 				Name:        embedSubCmdUpdateOptMsgID,
 				Description: "Message ID containing the embed to update (enable developer options, right click, copy ID)",
 				Required:    true,
-			},
-			}, embedCmdSubCmdOpts()...),
+			}}, embedCmdSubCmdOpts()...),
 		},
 	}
 }
@@ -147,6 +174,8 @@ func handleEmbedCmd(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		resp, reportableErr, err = handleEmbedSubCmdCreate(s, i)
 	case embedSubCmdUpdate:
 		resp, reportableErr, err = handleEmbedSubCmdUpdate(s, i)
+	case embedSubCmdAddField:
+		resp, reportableErr, err = handleEmbedSubCmdAddField(s, i)
 	default:
 		interactionRespondEphemeralError(s, i, true, fmt.Errorf("unknown subcommand"))
 	}
@@ -285,6 +314,75 @@ func handleEmbedSubCmdUpdate(s *discordgo.Session, i *discordgo.InteractionCreat
 	if e.IsEmpty() {
 		return nil, false, fmt.Errorf("cannot create an empty embed")
 	}
+
+	_, err = s.ChannelMessageEditComplex(&discordgo.MessageEdit{
+		Content:    &msgToUpdate.Content,
+		Components: msgToUpdate.Components,
+		Embeds:     []*discordgo.MessageEmbed{e.Truncate().MessageEmbed},
+		AllowedMentions: &discordgo.MessageAllowedMentions{
+			Parse: []discordgo.AllowedMentionType{
+				discordgo.AllowedMentionTypeEveryone,
+				discordgo.AllowedMentionTypeUsers,
+				discordgo.AllowedMentionTypeRoles,
+			},
+		},
+		ID:      msgToUpdate.ID,
+		Channel: metadata.ChannelID,
+	})
+
+	if err != nil {
+		return nil, true, err
+	}
+
+	return &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Flags:   InteractionResponseFlagEphemeral,
+			Content: "The embed was successfully updated!",
+		},
+	}, false, nil
+}
+
+func handleEmbedSubCmdAddField(s *discordgo.Session, i *discordgo.InteractionCreate) (*discordgo.InteractionResponse, bool, error) {
+	e := dg_helpers.NewEmbed()
+
+	metadata, err := getInteractionMetaData(i)
+	if err != nil {
+		return nil, true, err
+	}
+
+	msgToUpdate, reportableErr, err := getUpdateableEmbed(metadata.ChannelID, i.ApplicationCommandData().Options[0].Options[0].StringValue(), metadata.AuthorMention, s)
+	if err != nil {
+		return nil, reportableErr, err
+	}
+
+	e.MessageEmbed = msgToUpdate.Embeds[0]
+
+	var (
+		title string = ""
+		value string = ""
+	)
+	for _, opt := range i.ApplicationCommandData().Options[0].Options {
+		switch opt.Name {
+		case embedSubCmdUpdateOptMsgID:
+			continue
+		case embedSubCmdOptFieldTitle:
+			title = opt.StringValue()
+		case embedSubCmdOptFieldValue:
+			value = opt.StringValue()
+		default:
+			log.Warn("Unknown option: ", opt.Name)
+		}
+	}
+
+	if title == "" {
+		return nil, false, fmt.Errorf("you must provide a title for the field")
+	}
+	if value == "" {
+		return nil, false, fmt.Errorf("you must provide content for the field")
+	}
+
+	e.AddField(title, value)
 
 	_, err = s.ChannelMessageEditComplex(&discordgo.MessageEdit{
 		Content:    &msgToUpdate.Content,
