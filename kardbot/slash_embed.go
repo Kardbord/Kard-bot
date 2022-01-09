@@ -535,7 +535,7 @@ func getUpdateableEmbed(channelID, messageID, authorMention string, s *discordgo
 	}
 
 	if !strings.Contains(authorIDField, authorMention) {
-		return nil, false, fmt.Errorf("%syou do not appear to be the author if the embed you wish to edit", notUpdateableMsg)
+		return nil, false, fmt.Errorf("%syou do not appear to be the author of the embed you wish to edit", notUpdateableMsg)
 	}
 
 	return msgToUpdate, false, nil
