@@ -2,6 +2,8 @@ package kardbot
 
 import (
 	"fmt"
+	"regexp"
+	"strings"
 
 	"github.com/TannerKvarfordt/Kard-bot/kardbot/dg_helpers"
 	"github.com/bwmarrin/discordgo"
@@ -26,6 +28,8 @@ const (
 	// TODO: support fields
 )
 
+const authorIDFieldTitle = "Embed Author"
+
 func embedCmdOpts() []*discordgo.ApplicationCommandOption {
 	return []*discordgo.ApplicationCommandOption{
 		{
@@ -43,7 +47,8 @@ func embedCmdOpts() []*discordgo.ApplicationCommandOption {
 				Name:        embedSubCmdUpdateOptMsgID,
 				Description: "Message ID containing the embed to update (enable developer options, right click, copy ID)",
 				Required:    true,
-			}}, embedCmdSubCmdOpts()...),
+			},
+			}, embedCmdSubCmdOpts()...),
 		},
 	}
 }
@@ -133,20 +138,21 @@ func handleEmbedCmd(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	}
 
 	var (
-		err  error                          = nil
-		resp *discordgo.InteractionResponse = nil
+		err           error                          = nil
+		reportableErr                                = false
+		resp          *discordgo.InteractionResponse = nil
 	)
 	switch i.ApplicationCommandData().Options[0].Name {
 	case embedSubCmdCreate:
-		resp, err = handleEmbedSubCmdCreate(s, i)
+		resp, reportableErr, err = handleEmbedSubCmdCreate(s, i)
 	case embedSubCmdUpdate:
-		resp, err = handleEmbedSubCmdUpdate(s, i)
+		resp, reportableErr, err = handleEmbedSubCmdUpdate(s, i)
 	default:
 		interactionRespondEphemeralError(s, i, true, fmt.Errorf("unknown subcommand"))
 	}
 
 	if err != nil {
-		interactionRespondEphemeralError(s, i, false, err)
+		interactionRespondEphemeralError(s, i, reportableErr, err)
 		return
 	}
 	if resp == nil {
@@ -163,63 +169,58 @@ func handleEmbedCmd(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	}
 }
 
-func handleEmbedSubCmdCreate(s *discordgo.Session, i *discordgo.InteractionCreate) (*discordgo.InteractionResponse, error) {
+func handleEmbedSubCmdCreate(s *discordgo.Session, i *discordgo.InteractionCreate) (*discordgo.InteractionResponse, bool, error) {
 	e := dg_helpers.NewEmbed()
-	embedEmpty := true
 	for _, opt := range i.ApplicationCommandData().Options[0].Options {
 		switch opt.Name {
 		case embedSubCmdOptURL:
 			e.SetURL(opt.StringValue())
 			if !isReachableURL(opt.StringValue()) {
-				return nil, fmt.Errorf("invalid URL: %s", opt.StringValue())
+				return nil, false, fmt.Errorf("invalid URL: %s", opt.StringValue())
 			}
 			// Doesn't count as a non-empty embed on its own
 		case embedSubCmdOptTitle:
 			e.SetTitle(opt.StringValue())
-			embedEmpty = false
 		case embedSubCmdOptDesc:
 			e.SetDescription(opt.StringValue())
-			embedEmpty = false
 		case embedSubCmdOptColor:
 			e.SetColor(int(opt.IntValue()))
 			// Doesn't count as a non-empty embed on its own
 		case embedSubCmdOptFooter:
 			e.SetFooter(opt.StringValue())
-			embedEmpty = false
 		case embedSubCmdOptImageURL:
 			e.SetImage(opt.StringValue())
 			if !isReachableURL(opt.StringValue()) {
-				return nil, fmt.Errorf("invalid URL: %s", opt.StringValue())
+				return nil, false, fmt.Errorf("invalid URL: %s", opt.StringValue())
 			}
-			embedEmpty = false
 		case embedSubCmdOptThumbnailURL:
 			e.SetThumbnail(opt.StringValue())
 			if !isReachableURL(opt.StringValue()) {
-				return nil, fmt.Errorf("invalid URL: %s", opt.StringValue())
+				return nil, false, fmt.Errorf("invalid URL: %s", opt.StringValue())
 			}
-			embedEmpty = false
 		default:
 			log.Warn("Unknown option: ", opt.Name)
 		}
 	}
 
-	var (
-		embeds  []*discordgo.MessageEmbed = nil
-		content string                    = "Cannot create an empty embed"
-		flags   uint64                    = InteractionResponseFlagEphemeral
-	)
-	if !embedEmpty {
-		flags = 0
-		content = ""
-		embeds = []*discordgo.MessageEmbed{e.Truncate().SetType(discordgo.EmbedTypeRich).MessageEmbed}
+	mdata, err := getInteractionMetaData(i)
+	if err != nil {
+		return nil, true, err
+	}
+	e.Fields = append([]*discordgo.MessageEmbedField{{
+		Name:  authorIDFieldTitle,
+		Value: mdata.AuthorMention,
+	}}, e.Fields...)
+
+	if e.IsEmpty() {
+		return nil, false, fmt.Errorf("cannot create an empty embed")
 	}
 
+	embeds := []*discordgo.MessageEmbed{e.Truncate().SetType(discordgo.EmbedTypeRich).MessageEmbed}
 	return &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
-			Content: content,
-			Flags:   flags,
-			Embeds:  embeds,
+			Embeds: embeds,
 			AllowedMentions: &discordgo.MessageAllowedMentions{
 				Parse: []discordgo.AllowedMentionType{
 					discordgo.AllowedMentionTypeEveryone,
@@ -228,9 +229,135 @@ func handleEmbedSubCmdCreate(s *discordgo.Session, i *discordgo.InteractionCreat
 				},
 			},
 		},
-	}, nil
+	}, false, nil
 }
 
-func handleEmbedSubCmdUpdate(s *discordgo.Session, i *discordgo.InteractionCreate) (*discordgo.InteractionResponse, error) {
-	return nil, fmt.Errorf("unimplemented")
+func handleEmbedSubCmdUpdate(s *discordgo.Session, i *discordgo.InteractionCreate) (*discordgo.InteractionResponse, bool, error) {
+	e := dg_helpers.NewEmbed()
+
+	metadata, err := getInteractionMetaData(i)
+	if err != nil {
+		return nil, true, err
+	}
+
+	msgToUpdate, reportableErr, err := getUpdateableEmbed(metadata.ChannelID, i.ApplicationCommandData().Options[0].Options[0].StringValue(), metadata.AuthorMention, s)
+	if err != nil {
+		return nil, reportableErr, err
+	}
+
+	// The above call to getUpdateableEmbed verifies that there is exactly one embed
+	e.MessageEmbed = msgToUpdate.Embeds[0]
+
+	for _, opt := range i.ApplicationCommandData().Options[0].Options {
+		switch opt.Name {
+		case embedSubCmdUpdateOptMsgID:
+			continue
+		case embedSubCmdOptURL:
+			e.SetURL(opt.StringValue())
+			if !isReachableURL(opt.StringValue()) {
+				return nil, false, fmt.Errorf("invalid URL: %s", opt.StringValue())
+			}
+			// Doesn't count as a non-empty embed on its own
+		case embedSubCmdOptTitle:
+			e.SetTitle(opt.StringValue())
+		case embedSubCmdOptDesc:
+			e.SetDescription(opt.StringValue())
+		case embedSubCmdOptColor:
+			e.SetColor(int(opt.IntValue()))
+			// Doesn't count as a non-empty embed on its own
+		case embedSubCmdOptFooter:
+			e.SetFooter(opt.StringValue())
+		case embedSubCmdOptImageURL:
+			e.SetImage(opt.StringValue())
+			if !isReachableURL(opt.StringValue()) {
+				return nil, false, fmt.Errorf("invalid URL: %s", opt.StringValue())
+			}
+		case embedSubCmdOptThumbnailURL:
+			e.SetThumbnail(opt.StringValue())
+			if !isReachableURL(opt.StringValue()) {
+				return nil, false, fmt.Errorf("invalid URL: %s", opt.StringValue())
+			}
+		default:
+			log.Warn("Unknown option: ", opt.Name)
+		}
+	}
+
+	if e.IsEmpty() {
+		return nil, false, fmt.Errorf("cannot create an empty embed")
+	}
+
+	_, err = s.ChannelMessageEditComplex(&discordgo.MessageEdit{
+		Content:    &msgToUpdate.Content,
+		Components: msgToUpdate.Components,
+		Embeds:     []*discordgo.MessageEmbed{e.Truncate().MessageEmbed},
+		AllowedMentions: &discordgo.MessageAllowedMentions{
+			Parse: []discordgo.AllowedMentionType{
+				discordgo.AllowedMentionTypeEveryone,
+				discordgo.AllowedMentionTypeUsers,
+				discordgo.AllowedMentionTypeRoles,
+			},
+		},
+		ID:      msgToUpdate.ID,
+		Channel: metadata.ChannelID,
+	})
+
+	if err != nil {
+		return nil, true, err
+	}
+
+	return &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Flags:   InteractionResponseFlagEphemeral,
+			Content: "The embed was successfully updated!",
+		},
+	}, false, nil
+}
+
+var embedAuthorMentionRegex = regexp.MustCompile(`^<@\d+>$`)
+
+// Checks that the provided MessageID refers to a message that was authored by the bot,
+// contains a single embed, and that the embed was created by the specified authorID
+func getUpdateableEmbed(channelID, messageID, authorMention string, s *discordgo.Session) (*discordgo.Message, bool, error) {
+	msgToUpdate, err := s.ChannelMessage(channelID, messageID)
+	if err != nil {
+		return nil, true, err
+	}
+
+	const notUpdateableMsg = "Message does not appear to be an updateable embed: "
+	if s.State.User.ID != msgToUpdate.Author.ID {
+		return nil, false, fmt.Errorf("%snot authored by %s", notUpdateableMsg, s.State.User.Mention())
+	}
+
+	if len(msgToUpdate.Embeds) != 1 {
+		return nil, false, fmt.Errorf("%sexpected only 1 embed, got %d", notUpdateableMsg, len(msgToUpdate.Embeds))
+	}
+
+	// First field should always be the author of the embed
+	if len(msgToUpdate.Embeds[0].Fields) < 1 {
+		return nil, false, fmt.Errorf("%sexpected at least one field", notUpdateableMsg)
+	}
+
+	if msgToUpdate.Embeds[0].Fields[0].Name != authorIDFieldTitle {
+		return nil, false, fmt.Errorf("%scould not determine embed author, embed has unexpected format", notUpdateableMsg)
+	}
+
+	var authorIDField string = ""
+	{
+		authorFieldIDs := embedAuthorMentionRegex.FindAllString(msgToUpdate.Embeds[0].Fields[0].Value, -1)
+		switch len(authorFieldIDs) {
+		case 0:
+			break
+		case 1:
+			authorIDField = authorFieldIDs[0]
+		default:
+			authorIDField = authorFieldIDs[len(authorFieldIDs)-1]
+		}
+	}
+
+	if !strings.Contains(authorIDField, authorMention) {
+		return nil, false, fmt.Errorf("%syou do not appear to be the author if the embed you wish to edit", notUpdateableMsg)
+	}
+
+	return msgToUpdate, false, nil
 }

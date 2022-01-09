@@ -272,3 +272,16 @@ func (e *Embed) SetTimestamp() *Embed {
 	e.Timestamp = time.Now().Format(time.RFC3339)
 	return e
 }
+
+func (e *Embed) IsEmpty() bool {
+	return e.Title == "" && e.Description == "" && (e.Footer == nil || e.Footer.Text == "") && (e.Image == nil || e.Image.URL == "") && (e.Thumbnail == nil || e.Thumbnail.URL == "") && (e.Provider == nil || e.Provider.Name == "") && (e.Author == nil || e.Author.Name == "") && len(e.Fields) == 0
+}
+
+func (e *Embed) AppendToFooter(str string) *Embed {
+	if e.Footer == nil {
+		e.SetFooter(str)
+	} else {
+		e.SetFooter(e.Footer.Text + str)
+	}
+	return e
+}
