@@ -1,0 +1,4 @@
+{
+  "model": "roberta-base",
+  "model-mask": "<mask>"
+}

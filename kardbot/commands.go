@@ -299,6 +299,18 @@ func getCommands() []*discordgo.ApplicationCommand {
 			},
 		},
 		{
+			Name:        madlibCmd,
+			Description: "The bot will fill in any blanks indicated with " + madlibBlank,
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Type:        discordgo.ApplicationCommandOptionString,
+					Name:        "prompt",
+					Description: fmt.Sprintf("An input prompt containing blanks. Example: 'The %s jumps over the %s.'", madlibBlank, madlibBlank),
+					Required:    true,
+				},
+			},
+		},
+		{
 			Name:        storyTimeCmd,
 			Description: "The bot will tell you a short story (but not a good or sensical one) based on a given prompt.",
 			Options: []*discordgo.ApplicationCommandOption{
@@ -361,6 +373,7 @@ func getCommandImpls() map[string]onInteractionHandler {
 		storyTimeCmd:          storyTime,
 		roleSelectMenuCommand: handleRoleSelectMenuCommand,
 		embedCmd:              handleEmbedCmd,
+		madlibCmd:             handleMadLibCmd,
 	}
 }
 

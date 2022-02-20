@@ -46,6 +46,7 @@ A discord bot destined for greatness.
 - [x] Generate a story from a user's prompt
 - [x] Allow server admins to generate and edit a role selection menu  
 - [x] Allow users to create embeds
+- [x] Madlibs
 - [ ] Inform users when Kard-bot is updated
 - [ ] Mock certain questions or phrases
 - [ ] "Quack" any time a user types an expletive
