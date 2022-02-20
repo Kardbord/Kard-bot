@@ -1,20 +1,45 @@
 package kardbot
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
+	"github.com/TannerKvarfordt/Kard-bot/kardbot/config"
 	"github.com/TannerKvarfordt/hfapigo"
 	"github.com/bwmarrin/discordgo"
 	log "github.com/sirupsen/logrus"
 )
 
 const (
-	madlibCmd            = "madlib"
-	madlibBlank          = "<>"
-	madlibModel          = "roberta-base" // https://huggingface.co/bert-base-multilingual-cased
-	madlibModelMaskToken = "<mask>"
+	madlibCmd        = "madlib"
+	madlibBlank      = "<>"
+	madlibConfigFile = "config/madlib.json"
 )
+
+type madlibConfig struct {
+	Model     string `json:"model,omitempty"`
+	ModelMask string `json:"model-mask,omitempty"`
+}
+
+var madlibCfg = madlibConfig{
+	Model:     "roberta-base", // https://huggingface.co/roberta-base
+	ModelMask: "<mask>",
+}
+
+func init() {
+	jsonCfg, err := config.NewJsonConfig(madlibConfigFile)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = json.Unmarshal(jsonCfg.Raw, &madlibCfg)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Infof("Madlib using %s with mask=%s", madlibCfg.Model, madlibCfg.ModelMask)
+}
 
 func handleMadLibCmd(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	wg := bot().updateLastActive()
@@ -49,8 +74,8 @@ func handleMadLibCmd(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		return
 	}
 
-	input := strings.ReplaceAll(i.ApplicationCommandData().Options[0].StringValue(), madlibBlank, madlibModelMaskToken)
-	resp, err := hfapigo.SendFillMaskRequest(madlibModel, &hfapigo.FillMaskRequest{
+	input := strings.ReplaceAll(i.ApplicationCommandData().Options[0].StringValue(), madlibBlank, madlibCfg.ModelMask)
+	resp, err := hfapigo.SendFillMaskRequest(madlibCfg.Model, &hfapigo.FillMaskRequest{
 		Inputs:  []string{input},
 		Options: *hfapigo.NewOptions().SetWaitForModel(true),
 	})
@@ -75,7 +100,7 @@ func handleMadLibCmd(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			interactionFollowUpEphemeralError(s, i, true, err)
 			return
 		}
-		output = strings.Replace(output, madlibModelMaskToken, strings.TrimSpace(mask.Masks[0].TokenStr), 1)
+		output = strings.Replace(output, madlibCfg.ModelMask, strings.TrimSpace(mask.Masks[0].TokenStr), 1)
 	}
 
 	_, err = s.InteractionResponseEdit(s.State.User.ID, i.Interaction, &discordgo.WebhookEdit{
