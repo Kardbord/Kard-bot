@@ -75,6 +75,9 @@ dockers:
       - "--label=org.opencontainers.image.version={{.Version}}"
       - "--platform=linux/arm64"
     extra_files:
+      - config
+      - assets
+      - .env_example
       - Robo_cat.png
       - README.md
       - LICENSE
@@ -94,6 +97,9 @@ dockers:
       - "--label=org.opencontainers.image.version={{.Version}}"
       - "--platform=linux/amd64"
     extra_files:
+      - config
+      - assets
+      - .env_example
       - Robo_cat.png
       - README.md
       - LICENSE
@@ -113,6 +119,9 @@ dockers:
       - "--label=org.opencontainers.image.version={{.Version}}"
       - "--platform=linux/arm/v7"
     extra_files:
+      - config
+      - assets
+      - .env_example
       - Robo_cat.png
       - README.md
       - LICENSE
@@ -132,6 +141,9 @@ dockers:
       - "--label=org.opencontainers.image.version={{.Version}}"
       - "--platform=linux/arm/v6"
     extra_files:
+      - config
+      - assets
+      - .env_example
       - Robo_cat.png
       - README.md
       - LICENSE
