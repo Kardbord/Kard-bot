@@ -64,6 +64,8 @@ dockers:
       - "tkvarfordt/kardbot:{{ .Tag }}-arm64"
       - "ghcr.io/tannerkvarfordt/kard-bot:{{ .Tag }}-arm64"
       - "ghcr.io/tannerkvarfordt/kard-bot:latest-arm64"
+    goos: linux
+    goarch: arm64
     use: buildx
     dockerfile: Dockerfile
     build_flag_templates:
@@ -86,6 +88,8 @@ dockers:
       - "tkvarfordt/kardbot:{{ .Tag }}-amd64"
       - "ghcr.io/tannerkvarfordt/kard-bot:{{ .Tag }}-amd64"
       - "ghcr.io/tannerkvarfordt/kard-bot:latest-amd64"
+    goos: linux
+    goarch: amd64
     use: buildx
     dockerfile: Dockerfile
     build_flag_templates:
@@ -108,6 +112,9 @@ dockers:
       - "tkvarfordt/kardbot:{{ .Tag }}-armv7"
       - "ghcr.io/tannerkvarfordt/kard-bot:{{ .Tag }}-armv7"
       - "ghcr.io/tannerkvarfordt/kard-bot:latest-armv7"
+    goos: linux
+    goarch: arm
+    goarm: "7"
     use: buildx
     dockerfile: Dockerfile
     build_flag_templates:
@@ -130,6 +137,9 @@ dockers:
       - "tkvarfordt/kardbot:{{ .Tag }}-armv6"
       - "ghcr.io/tannerkvarfordt/kard-bot:{{ .Tag }}-armv6"
       - "ghcr.io/tannerkvarfordt/kard-bot:latest-armv6"
+    goos: linux
+    goarch: arm
+    goarm: "6"
     use: buildx
     dockerfile: Dockerfile
     build_flag_templates:
