@@ -56,6 +56,7 @@ archives:
       - config/*
       - assets/*
       - .env
+      - Robo_cat.png
 
 dockers:
   - image_templates:
@@ -177,7 +178,7 @@ release:
   mode: keep-existing
   name_template: "{{ .Tag }}"
   extra_files:
-    - name_template: "kardbot-{{ .Tag }}.tar.gz"
+    - glob: "./kardbot-*.tar.gz"
   header: |
     **Full Changelog**: https://github.com/TannerKvarfordt/Kard-bot/compare/{{ .PreviousTag }}...{{ .Tag }}
   footer: |
