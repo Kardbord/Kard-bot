@@ -3,3 +3,5 @@
 Kard-bot
 *.tgz
 *.tar.gz
+dist/
+*.bak
