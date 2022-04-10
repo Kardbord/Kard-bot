@@ -811,13 +811,14 @@ func addRoleSelectMenuOption(s *discordgo.Session, roleToAdd *discordgo.Role, ro
 		if err != nil {
 			return msgToEdit.Components, false, err
 		}
+		minSelections := 0
 		msgToEdit.Components = append(msgToEdit.Components[:len(msgToEdit.Components)-1], discordgo.ActionsRow{
 			Components: []discordgo.MessageComponent{
 				discordgo.SelectMenu{
 					CustomID:    roleSelectMenuComponentIDPrefix + uid.String(),
 					Placeholder: "Select any roles you would like to be added to. 🎭",
 					MaxValues:   1,
-					MinValues:   0,
+					MinValues:   &minSelections,
 					Options: []discordgo.SelectMenuOption{
 						{
 							Label: roleToAdd.Name,
@@ -993,9 +994,10 @@ func handleRoleSelectMenuCreate(s *discordgo.Session, i *discordgo.InteractionCr
 			},
 		},
 	}
+	minSelections := 0
 	for _, m := range sMenus {
 		m.MaxValues = len(m.Options)
-		m.MinValues = 0
+		m.MinValues = &minSelections
 		iEdit.Components = append(iEdit.Components, discordgo.ActionsRow{
 			Components: []discordgo.MessageComponent{m},
 		})

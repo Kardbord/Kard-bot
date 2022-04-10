@@ -1,0 +1,189 @@
+project_name: Kard-bot
+
+before:
+  hooks:
+    # Creates a tarball to include with the release which includes only
+    # the files necessary to run Kard-bot in a docker container.
+    # Outputs a file named kardbot-{{ .Tag }}.tar.gz
+    # to be included in the extra_files section of release.
+    - ./package.sh
+    - cp .env_example .env
+
+builds:
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - darwin
+      - dragonfly
+      - freebsd
+      - illumos
+      - js
+      - linux
+      - netbsd
+      - openbsd
+      - plan9
+      - solaris
+      - windows
+    goarch:
+      - amd64
+      - 386
+      - arm
+      - arm64
+      - ppc64le
+      - ppc64
+      - mips64le
+      - mips64
+      - mipsle
+      - mips
+      - s390x
+      - wasm
+    goarm:
+      - 5
+      - 6
+      - 7
+    binary: "{{ .ProjectName }}"
+    mod_timestamp: "{{ .CommitTimestamp }}"
+
+archives:
+  - replacements:
+      386: i386
+      amd64: x86_64
+    wrap_in_directory: true
+    format_overrides:
+      - goos: windows
+        format: zip
+    files:
+      - config/*
+      - assets/*
+      - .env
+
+dockers:
+  - image_templates:
+      - "tkvarfordt/kardbot:latest-arm64"
+      - "tkvarfordt/kardbot:{{ .Tag }}-arm64"
+      - "ghcr.io/tannerkvarfordt/kardbot:{{ .Tag }}-arm64"
+      - "ghcr.io/tannerkvarfordt/kardbot:latest-arm64"
+    use: buildx
+    dockerfile: Dockerfile
+    build_flag_templates:
+      - "--label=org.opencontainers.image.source=https://github.com/TannerKvarfordt/Kard-bot"
+      - "--label=org.opencontainers.image.licenses=AGPL-3.0"
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.title={{.ProjectName}}"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
+      - "--platform=linux/arm64"
+    extra_files:
+      - Robo_cat.png
+      - README.md
+      - LICENSE
+  - image_templates:
+      - "tkvarfordt/kardbot:latest-amd64"
+      - "tkvarfordt/kardbot:{{ .Tag }}-amd64"
+      - "ghcr.io/tannerkvarfordt/kardbot:{{ .Tag }}-amd64"
+      - "ghcr.io/tannerkvarfordt/kardbot:latest-amd64"
+    use: buildx
+    dockerfile: Dockerfile
+    build_flag_templates:
+      - "--label=org.opencontainers.image.source=https://github.com/TannerKvarfordt/Kard-bot"
+      - "--label=org.opencontainers.image.licenses=AGPL-3.0"
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.title={{.ProjectName}}"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
+      - "--platform=linux/amd64"
+    extra_files:
+      - Robo_cat.png
+      - README.md
+      - LICENSE
+  - image_templates:
+      - "tkvarfordt/kardbot:latest-armv7"
+      - "tkvarfordt/kardbot:{{ .Tag }}-armv7"
+      - "ghcr.io/tannerkvarfordt/kardbot:{{ .Tag }}-armv7"
+      - "ghcr.io/tannerkvarfordt/kardbot:latest-armv7"
+    use: buildx
+    dockerfile: Dockerfile
+    build_flag_templates:
+      - "--label=org.opencontainers.image.source=https://github.com/TannerKvarfordt/Kard-bot"
+      - "--label=org.opencontainers.image.licenses=AGPL-3.0"
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.title={{.ProjectName}}"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
+      - "--platform=linux/arm/v7"
+    extra_files:
+      - Robo_cat.png
+      - README.md
+      - LICENSE
+  - image_templates:
+      - "tkvarfordt/kardbot:latest-armv6"
+      - "tkvarfordt/kardbot:{{ .Tag }}-armv6"
+      - "ghcr.io/tannerkvarfordt/kardbot:{{ .Tag }}-armv6"
+      - "ghcr.io/tannerkvarfordt/kardbot:latest-armv6"
+    use: buildx
+    dockerfile: Dockerfile
+    build_flag_templates:
+      - "--label=org.opencontainers.image.source=https://github.com/TannerKvarfordt/Kard-bot"
+      - "--label=org.opencontainers.image.licenses=AGPL-3.0"
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.title={{.ProjectName}}"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
+      - "--platform=linux/arm/v6"
+    extra_files:
+      - Robo_cat.png
+      - README.md
+      - LICENSE
+
+docker_manifests:
+  - name_template: "tkvarfordt/kardbot:latest"
+    image_templates:
+      - "tkvarfordt/kardbot:latest-arm64"
+      - "tkvarfordt/kardbot:latest-amd64"
+      - "tkvarfordt/kardbot:latest-armv7"
+      - "tkvarfordt/kardbot:latest-armv6"
+  - name_template: "tkvarfordt/kardbot:{{ .Tag }}"
+    image_templates:
+      - "tkvarfordt/kardbot:{{ .Tag }}-arm64"
+      - "tkvarfordt/kardbot:{{ .Tag }}-amd64"
+      - "tkvarfordt/kardbot:{{ .Tag }}-armv7"
+      - "tkvarfordt/kardbot:{{ .Tag }}-armv6"
+  - name_template: "ghcr.io/tannerkvarfordt/kardbot:latest"
+    image_templates:
+      - "ghcr.io/tannerkvarfordt/kardbot:latest-arm64"
+      - "ghcr.io/tannerkvarfordt/kardbot:latest-amd64"
+      - "ghcr.io/tannerkvarfordt/kardbot:latest-armv7"
+      - "ghcr.io/tannerkvarfordt/kardbot:latest-armv6"
+  - name_template: "ghcr.io/tannerkvarfordt/kardbot:{{ .Tag }}"
+    image_templates:
+      - "ghcr.io/tannerkvarfordt/kardbot:{{ .Tag }}-arm64"
+      - "ghcr.io/tannerkvarfordt/kardbot:{{ .Tag }}-amd64"
+      - "ghcr.io/tannerkvarfordt/kardbot:{{ .Tag }}-armv7"
+      - "ghcr.io/tannerkvarfordt/kardbot:{{ .Tag }}-armv6"
+
+checksum:
+  name_template: "{{ .ProjectName }}_{{ .Version }}_checksums.txt"
+  algorithm: sha256
+
+snapshot:
+  name_template: "{{ incpatch .Version }}-next"
+
+changelog:
+  sort: asc
+
+release:
+  draft: true
+  prerelease: auto
+  mode: keep-existing
+  name_template: "{{ .Tag }}"
+  extra_files:
+    - name_template: "kardbot-{{ .Tag }}.tar.gz"
+  header: |
+    **Full Changelog**: https://github.com/TannerKvarfordt/Kard-bot/compare/{{ .PreviousTag }}...{{ .Tag }}
+  footer: |
+    ## Quick Start
+    To get started with hosting your own Kard-bot instance,
+    download the precompiled binary for your architecture below. If
+    you plan on using Docker to host Kard-bot, download
+    kardbot-{{ .Tag }}.tar.gz. Then, follow the instructions included
+    in the accompanying README.md.
