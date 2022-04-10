@@ -61,8 +61,8 @@ dockers:
   - image_templates:
       - "tkvarfordt/kardbot:latest-arm64"
       - "tkvarfordt/kardbot:{{ .Tag }}-arm64"
-      - "ghcr.io/tannerkvarfordt/kardbot:{{ .Tag }}-arm64"
-      - "ghcr.io/tannerkvarfordt/kardbot:latest-arm64"
+      - "ghcr.io/tannerkvarfordt/kard-bot:{{ .Tag }}-arm64"
+      - "ghcr.io/tannerkvarfordt/kard-bot:latest-arm64"
     use: buildx
     dockerfile: Dockerfile
     build_flag_templates:
@@ -80,8 +80,8 @@ dockers:
   - image_templates:
       - "tkvarfordt/kardbot:latest-amd64"
       - "tkvarfordt/kardbot:{{ .Tag }}-amd64"
-      - "ghcr.io/tannerkvarfordt/kardbot:{{ .Tag }}-amd64"
-      - "ghcr.io/tannerkvarfordt/kardbot:latest-amd64"
+      - "ghcr.io/tannerkvarfordt/kard-bot:{{ .Tag }}-amd64"
+      - "ghcr.io/tannerkvarfordt/kard-bot:latest-amd64"
     use: buildx
     dockerfile: Dockerfile
     build_flag_templates:
@@ -99,8 +99,8 @@ dockers:
   - image_templates:
       - "tkvarfordt/kardbot:latest-armv7"
       - "tkvarfordt/kardbot:{{ .Tag }}-armv7"
-      - "ghcr.io/tannerkvarfordt/kardbot:{{ .Tag }}-armv7"
-      - "ghcr.io/tannerkvarfordt/kardbot:latest-armv7"
+      - "ghcr.io/tannerkvarfordt/kard-bot:{{ .Tag }}-armv7"
+      - "ghcr.io/tannerkvarfordt/kard-bot:latest-armv7"
     use: buildx
     dockerfile: Dockerfile
     build_flag_templates:
@@ -118,8 +118,8 @@ dockers:
   - image_templates:
       - "tkvarfordt/kardbot:latest-armv6"
       - "tkvarfordt/kardbot:{{ .Tag }}-armv6"
-      - "ghcr.io/tannerkvarfordt/kardbot:{{ .Tag }}-armv6"
-      - "ghcr.io/tannerkvarfordt/kardbot:latest-armv6"
+      - "ghcr.io/tannerkvarfordt/kard-bot:{{ .Tag }}-armv6"
+      - "ghcr.io/tannerkvarfordt/kard-bot:latest-armv6"
     use: buildx
     dockerfile: Dockerfile
     build_flag_templates:
@@ -148,18 +148,18 @@ docker_manifests:
       - "tkvarfordt/kardbot:{{ .Tag }}-amd64"
       - "tkvarfordt/kardbot:{{ .Tag }}-armv7"
       - "tkvarfordt/kardbot:{{ .Tag }}-armv6"
-  - name_template: "ghcr.io/tannerkvarfordt/kardbot:latest"
+  - name_template: "ghcr.io/tannerkvarfordt/kard-bot:latest"
     image_templates:
-      - "ghcr.io/tannerkvarfordt/kardbot:latest-arm64"
-      - "ghcr.io/tannerkvarfordt/kardbot:latest-amd64"
-      - "ghcr.io/tannerkvarfordt/kardbot:latest-armv7"
-      - "ghcr.io/tannerkvarfordt/kardbot:latest-armv6"
-  - name_template: "ghcr.io/tannerkvarfordt/kardbot:{{ .Tag }}"
+      - "ghcr.io/tannerkvarfordt/kard-bot:latest-arm64"
+      - "ghcr.io/tannerkvarfordt/kard-bot:latest-amd64"
+      - "ghcr.io/tannerkvarfordt/kard-bot:latest-armv7"
+      - "ghcr.io/tannerkvarfordt/kard-bot:latest-armv6"
+  - name_template: "ghcr.io/tannerkvarfordt/kard-bot:{{ .Tag }}"
     image_templates:
-      - "ghcr.io/tannerkvarfordt/kardbot:{{ .Tag }}-arm64"
-      - "ghcr.io/tannerkvarfordt/kardbot:{{ .Tag }}-amd64"
-      - "ghcr.io/tannerkvarfordt/kardbot:{{ .Tag }}-armv7"
-      - "ghcr.io/tannerkvarfordt/kardbot:{{ .Tag }}-armv6"
+      - "ghcr.io/tannerkvarfordt/kard-bot:{{ .Tag }}-arm64"
+      - "ghcr.io/tannerkvarfordt/kard-bot:{{ .Tag }}-amd64"
+      - "ghcr.io/tannerkvarfordt/kard-bot:{{ .Tag }}-armv7"
+      - "ghcr.io/tannerkvarfordt/kard-bot:{{ .Tag }}-armv6"
 
 checksum:
   name_template: "{{ .ProjectName }}_{{ .Version }}_checksums.txt"

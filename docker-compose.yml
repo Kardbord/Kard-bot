@@ -4,9 +4,9 @@ services:
     image: tkvarfordt/kardbot:latest
     container_name: kardbot-latest
     volumes:
-      - ./config:/app/config
-      - ./assets/pasta:/app/assets/pasta
-      - ./assets/wednesday:/app/assets/wednesday
+      - ./config:/config
+      - ./assets/pasta:/assets/pasta
+      - ./assets/wednesday:/assets/wednesday
     environment:
       - KARDBOT_TOKEN=${KARDBOT_TOKEN}
       - KARDBOT_OWNER_ID=${KARDBOT_OWNER_ID}
