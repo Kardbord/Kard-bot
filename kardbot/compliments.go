@@ -341,7 +341,7 @@ func getCompliment(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		log.Infof("Told %s that '%s'", metadata.AuthorUsername, compliment)
 
 		time.Sleep(time.Millisecond * 250) // give a bit for the initial response to be received
-		_, err = s.InteractionResponseEdit(s.State.User.ID, i.Interaction, &discordgo.WebhookEdit{
+		_, err = s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
 			Content: "Sent you a compliment! 💛",
 		})
 		if err != nil {
