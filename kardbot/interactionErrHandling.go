@@ -175,13 +175,13 @@ func interactionFollowUpEphemeralError(s *discordgo.Session, i *discordgo.Intera
 		errResp = errors.New(genericErrorString)
 	}
 
-	err := s.InteractionResponseDelete(s.State.User.ID, i.Interaction)
+	err := s.InteractionResponseDelete(i.Interaction)
 	if err != nil {
 		log.Warn(err)
 	}
 
 	if !notifyOwner {
-		_, err = s.FollowupMessageCreate(s.State.User.ID, i.Interaction, false, &discordgo.WebhookParams{
+		_, err = s.FollowupMessageCreate(i.Interaction, false, &discordgo.WebhookParams{
 			Content: fmt.Sprint(errResp),
 			Flags:   InteractionResponseFlagEphemeral,
 		})
@@ -192,7 +192,7 @@ func interactionFollowUpEphemeralError(s *discordgo.Session, i *discordgo.Intera
 	}
 
 	errUUID := uuid.New()
-	_, err = s.FollowupMessageCreate(s.State.User.ID, i.Interaction, false, &discordgo.WebhookParams{
+	_, err = s.FollowupMessageCreate(i.Interaction, false, &discordgo.WebhookParams{
 		Content:    "Something went wrong while processing your command. 😔",
 		Flags:      InteractionResponseFlagEphemeral,
 		Components: errReportMsgComponents(errUUID),

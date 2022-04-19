@@ -303,7 +303,7 @@ func buildAMeme(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		SetColor(int(hexColor)).
 		SetImage(resp.Data.URL)
 
-	_, err = s.InteractionResponseEdit(s.State.User.ID, i.Interaction, &discordgo.WebhookEdit{
+	_, err = s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
 		Embeds: []*discordgo.MessageEmbed{embed.MessageEmbed},
 	})
 	if err != nil {

@@ -69,7 +69,7 @@ func deleteBotDMs(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		}
 
 		time.Sleep(time.Millisecond * 100)
-		s.InteractionResponseEdit(s.State.User.ID, i.Interaction, &discordgo.WebhookEdit{
+		s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
 			Content: fmt.Sprintf("looks like you tried to use `/%s` outside of our DMs. Run it from there instead! :)", delBotDMCmd),
 		})
 		return
@@ -119,7 +119,7 @@ func deleteBotDMs(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		}
 	}
 
-	_, err = s.InteractionResponseEdit(s.State.User.ID, i.Interaction, &discordgo.WebhookEdit{
+	_, err = s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
 		Content: fmt.Sprintf("Deleted last %d bot DMs", MinOf(msgsToDelete, msgLimit)),
 	})
 	if err != nil {

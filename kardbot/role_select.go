@@ -568,7 +568,7 @@ func handleRoleSelectMenuUpdateAdd(s *discordgo.Session, i *discordgo.Interactio
 			return
 		}
 		if !newOptAdded {
-			_, err = s.InteractionResponseEdit(s.State.User.ID, i.Interaction, &discordgo.WebhookEdit{
+			_, err = s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
 				Content: fmt.Sprintf(
 					"You've reached the max number of buttons (%d) a Discord message can hold. You'll have to remove a menu option first or add a new role-select-menu.",
 					maxDiscordActionRows,
@@ -590,7 +590,7 @@ func handleRoleSelectMenuUpdateAdd(s *discordgo.Session, i *discordgo.Interactio
 		return
 	}
 
-	_, err = s.InteractionResponseEdit(s.State.User.ID, i.Interaction, &discordgo.WebhookEdit{
+	_, err = s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
 		Content: content,
 		AllowedMentions: &discordgo.MessageAllowedMentions{
 			Parse: []discordgo.AllowedMentionType{discordgo.AllowedMentionTypeRoles},
@@ -632,7 +632,7 @@ func handleRoleSelectMenuUpdateDel(s *discordgo.Session, i *discordgo.Interactio
 		interactionFollowUpEphemeralError(s, i, false, fmt.Errorf("provided message ID does not appear to contain a role select menu:\n\t%v", err))
 		return
 	} else if !ok {
-		_, err := s.InteractionResponseEdit(s.State.User.ID, i.Interaction, &discordgo.WebhookEdit{
+		_, err := s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
 			Content: fmt.Sprintf("%s is not present in the menu, nothing to do.", roleToDel.Mention()),
 		})
 		if err != nil {
@@ -724,7 +724,7 @@ func handleRoleSelectMenuUpdateDel(s *discordgo.Session, i *discordgo.Interactio
 		return
 	}
 
-	_, err = s.InteractionResponseEdit(s.State.User.ID, i.Interaction, &discordgo.WebhookEdit{
+	_, err = s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
 		Content: fmt.Sprintf("%s was removed from the menu", roleToDel.Mention()),
 	})
 	if err != nil {
@@ -1015,7 +1015,7 @@ func handleRoleSelectMenuCreate(s *discordgo.Session, i *discordgo.InteractionCr
 		},
 	})
 
-	_, err = s.InteractionResponseEdit(s.State.User.ID, i.Interaction, iEdit)
+	_, err = s.InteractionResponseEdit(i.Interaction, iEdit)
 	if err != nil {
 		interactionFollowUpEphemeralError(s, i, true, err)
 		log.Error(err)
@@ -1162,7 +1162,7 @@ func handleRoleSelection(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	if len(rolesToRemove) != 0 {
 		embed.AddField("Removed Roles ❌", "<@&"+strings.Join(rolesToRemove, ">\n<@&")+">")
 	}
-	_, err = s.InteractionResponseEdit(s.State.User.ID, i.Interaction, &discordgo.WebhookEdit{
+	_, err = s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
 		Embeds: []*discordgo.MessageEmbed{embed.Truncate().MessageEmbed},
 		AllowedMentions: &discordgo.MessageAllowedMentions{
 			Parse: []discordgo.AllowedMentionType{discordgo.AllowedMentionTypeRoles},
@@ -1233,7 +1233,7 @@ func handleRoleSelectReset(s *discordgo.Session, i *discordgo.InteractionCreate)
 		embed.AddField("Removed Roles ❌", "No roles to remove")
 	}
 
-	s.InteractionResponseEdit(s.State.User.ID, i.Interaction, &discordgo.WebhookEdit{
+	s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
 		Embeds: []*discordgo.MessageEmbed{embed.Truncate().MessageEmbed},
 		AllowedMentions: &discordgo.MessageAllowedMentions{
 			Parse: []discordgo.AllowedMentionType{discordgo.AllowedMentionTypeRoles},

@@ -96,7 +96,7 @@ func redditRoulette(s *discordgo.Session, i *discordgo.InteractionCreate) {
 				interactionFollowUpEphemeralError(s, i, true, err)
 				return
 			}
-			_, err = s.InteractionResponseEdit(s.State.User.ID, i.Interaction, &discordgo.WebhookEdit{
+			_, err = s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
 				Content: fmt.Sprintf("%s tried to use `/reddit-roulette nsfw` in a SFW channel, that was naughty! :(", metadata.AuthorUsername),
 			})
 			if err != nil {
@@ -136,7 +136,7 @@ func redditRoulette(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		return
 	}
 
-	_, err = s.InteractionResponseEdit(s.State.User.ID, i.Interaction, &discordgo.WebhookEdit{
+	_, err = s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
 		Embeds: []*discordgo.MessageEmbed{embed},
 	})
 	if err != nil {

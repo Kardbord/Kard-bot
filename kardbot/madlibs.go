@@ -103,7 +103,7 @@ func handleMadLibCmd(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		output = strings.Replace(output, madlibCfg.ModelMask, strings.TrimSpace(mask.Masks[0].TokenStr), 1)
 	}
 
-	_, err = s.InteractionResponseEdit(s.State.User.ID, i.Interaction, &discordgo.WebhookEdit{
+	_, err = s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
 		Content: output,
 	})
 	if err != nil {
