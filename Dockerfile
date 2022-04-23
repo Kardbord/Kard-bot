@@ -1,7 +1,6 @@
 # syntax=docker/dockerfile:1
 
 FROM alpine:latest
-RUN sh -c 'apk add --no-cache tzdata'
 
 WORKDIR /
 COPY Kard-bot /
