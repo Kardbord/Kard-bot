@@ -66,7 +66,7 @@ dockers:
       - "ghcr.io/tannerkvarfordt/kard-bot:latest-arm64"
     goos: linux
     goarch: arm64
-    use: buildx
+    use: docker
     dockerfile: Dockerfile
     build_flag_templates:
       - "--label=org.opencontainers.image.source=https://github.com/TannerKvarfordt/Kard-bot"
@@ -90,7 +90,7 @@ dockers:
       - "ghcr.io/tannerkvarfordt/kard-bot:latest-amd64"
     goos: linux
     goarch: amd64
-    use: buildx
+    use: docker
     dockerfile: Dockerfile
     build_flag_templates:
       - "--label=org.opencontainers.image.source=https://github.com/TannerKvarfordt/Kard-bot"
@@ -115,7 +115,7 @@ dockers:
     goos: linux
     goarch: arm
     goarm: "7"
-    use: buildx
+    use: docker
     dockerfile: Dockerfile
     build_flag_templates:
       - "--label=org.opencontainers.image.source=https://github.com/TannerKvarfordt/Kard-bot"
@@ -140,7 +140,7 @@ dockers:
     goos: linux
     goarch: arm
     goarm: "6"
-    use: buildx
+    use: docker
     dockerfile: Dockerfile
     build_flag_templates:
       - "--label=org.opencontainers.image.source=https://github.com/TannerKvarfordt/Kard-bot"

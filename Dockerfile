@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-FROM golang:1.18-alpine
+FROM alpine:latest
 RUN sh -c 'apk add --no-cache tzdata'
 
 WORKDIR /
