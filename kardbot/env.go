@@ -88,6 +88,8 @@ func init() {
 	getHuggingFaceToken = func() string { return hfToken }
 	hfapigo.SetAPIKey(getHuggingFaceToken())
 
+	// TODO: Fix this properly. This has potential to cause race conditions.
+	// 			 See https://github.com/TannerKvarfordt/Kard-bot/issues/57.
 	tz, tzFound := os.LookupEnv(TimezoneEnv)
 	if !tzFound || tz == "" {
 		log.Warnf("%s not found in environment", TimezoneEnv)
