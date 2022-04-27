@@ -478,7 +478,7 @@ func (kbot *kardbot) updateLastActive() *sync.WaitGroup {
 			log.Error(err)
 		} else {
 			kbot.status.Store(string(discordgo.StatusOnline))
-			log.Infof("Set bot status to %s", kbot.status.Load())
+			log.Tracef("Set bot status to %s", kbot.status.Load())
 		}
 
 		err = kbot.Session.UpdateListeningStatus("you")
