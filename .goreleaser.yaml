@@ -206,8 +206,4 @@ release:
     **Full Changelog**: https://github.com/TannerKvarfordt/Kard-bot/compare/{{ .PreviousTag }}...{{ .Tag }}
   footer: |
     ## Quick Start
-    To get started with hosting your own Kard-bot instance,
-    download the precompiled binary for your architecture below. If
-    you plan on using Docker to host Kard-bot, download
-    kardbot-{{ .Tag }}.tar.gz. Then, follow the instructions included
-    in the accompanying README.md.
+    To get started with hosting your own Kard-bot instance, download the precompiled binary for your architecture below. If you plan on using Docker to host Kard-bot, download kardbot-{{ .Tag }}.tar.gz. Then, follow the instructions included in the accompanying README.md.
