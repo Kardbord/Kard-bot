@@ -345,6 +345,11 @@ func getCommands() []*discordgo.ApplicationCommand {
 			Options:     embedCmdOpts(),
 		},
 		{
+			Name:        timeCmd,
+			Description: "Time related commands",
+			Options:     timeCmdOpts(),
+		},
+		{
 			Name:        "help",
 			Description: "Get helpful information about the bot.",
 		},
@@ -374,6 +379,7 @@ func getCommandImpls() map[string]onInteractionHandler {
 		roleSelectMenuCommand: handleRoleSelectMenuCommand,
 		embedCmd:              handleEmbedCmd,
 		madlibCmd:             handleMadLibCmd,
+		timeCmd:               handleTimeCmd,
 	}
 }
 

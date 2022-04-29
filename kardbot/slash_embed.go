@@ -207,6 +207,7 @@ func handleEmbedCmd(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		resp, reportableErr, err = handleEmbedSubCmdDelField(s, i)
 	default:
 		interactionRespondEphemeralError(s, i, true, fmt.Errorf("unknown subcommand"))
+		return
 	}
 
 	if err != nil {
