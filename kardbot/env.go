@@ -2,6 +2,8 @@ package kardbot
 
 import (
 	"os"
+	"time"
+	_ "time/tzdata"
 
 	log "github.com/sirupsen/logrus"
 
@@ -18,6 +20,7 @@ const (
 	ImgflipUserEnv      = "IMGFLIP_API_USERNAME"
 	ImgflipPassEnv      = "IMGFLIP_API_PASSWORD"
 	HuggingFaceTokenEnv = "HUGGING_FACE_TOKEN"
+	TimezoneEnv         = "TZ"
 )
 
 var (
@@ -27,6 +30,7 @@ var (
 	getImgflipUser      = func() string { return "" }
 	getImgflipPass      = func() string { return "" }
 	getHuggingFaceToken = func() string { return "" }
+	getTimezone         = func() string { return "" }
 )
 
 // Retrieves the bot's auth token from the environment
@@ -83,4 +87,20 @@ func init() {
 	}
 	getHuggingFaceToken = func() string { return hfToken }
 	hfapigo.SetAPIKey(getHuggingFaceToken())
+
+	// TODO: Fix this properly. This has potential to cause race conditions.
+	// 			 See https://github.com/TannerKvarfordt/Kard-bot/issues/57.
+	tz, tzFound := os.LookupEnv(TimezoneEnv)
+	if !tzFound || tz == "" {
+		log.Warnf("%s not found in environment", TimezoneEnv)
+	} else {
+		loc, err := time.LoadLocation(tz)
+		if err != nil {
+			log.Error(err)
+		} else {
+			time.Local = loc
+		}
+	}
+	getTimezone = func() string { return time.Local.String() }
+	log.Infof("Using timezone: %s", getTimezone())
 }
