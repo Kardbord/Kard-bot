@@ -214,11 +214,25 @@ func handleTZSubCmdHelp(s *discordgo.Session, i *discordgo.InteractionCreate) (*
 
 	c, _ := fastHappyColorInt64()
 	e := dg_helpers.NewEmbed()
-	e.SetTitle("Time Zones").
+	e.SetTitle("Timezones").
 		SetURL("https://en.wikipedia.org/wiki/List_of_tz_database_time_zones").
 		SetColor(int(c)).
-		SetDescription("This bot supports timezones as governed and maintained by the [Internet Assigned Numbers Authority (IANA)](https://www.iana.org/time-zones). A convenient list can be found on [Wikipedia](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones).")
-		// TODO: Add common timezones by continent
+		SetDescription("This bot supports [Internet Assigned Numbers Authority (IANA)](https://www.iana.org/time-zones) governed timezones. "+
+			"A convenient list of valid timezones can be found on [Wikipedia](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones#List). "+
+			"See the _TZ database name_ or _Time zone abbreviation_ column. Note that inputs are case-sensitive.\n"+
+			"\n*Valid Timezone Input Examples*\n"+
+			"- America/Boise\n"+
+			"- Asia/Hong_Kong\n"+
+			"- Europe/Berlin\n"+
+			"- EET\n"+
+			"- MST\n"+
+			"- MDT\n"+
+			"\nSubcommands and their usage are documented below.\n").
+		AddField(tzSubCmdHelp, "Prints this help message. Response is optionally ephemeral.").
+		AddField(tzSubCmdInfo, "Provides general information about a given timezone. "+
+			"Requires an [IANA timezone database name or abbreviation](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones#List) as input. "+
+			"Optionally takes a date format in which the provided timezone should be displayed. "+
+			"Response is optionally ephemeral.")
 
 	return &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
