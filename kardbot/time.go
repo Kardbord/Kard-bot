@@ -26,6 +26,79 @@ const (
 	tzSubCmdInfoFmtOptDflt = "Monday, 2006-01-02 3:04PM MST"
 )
 
+func tzFormatOpts() []*discordgo.ApplicationCommandOptionChoice {
+	return []*discordgo.ApplicationCommandOptionChoice{
+		{
+			Name:  "Default",
+			Value: tzSubCmdInfoFmtOptDflt,
+		},
+		{
+			Name:  "Layout",
+			Value: time.Layout,
+		},
+		{
+			Name:  "ANSIC",
+			Value: time.ANSIC,
+		},
+		{
+			Name:  "UnixDate",
+			Value: time.UnixDate,
+		},
+		{
+			Name:  "RubyDate",
+			Value: time.RubyDate,
+		},
+		{
+			Name:  "RFC822",
+			Value: time.RFC822,
+		},
+		{
+			Name:  "RFC822Z",
+			Value: time.RFC822Z,
+		},
+		{
+			Name:  "RFC850",
+			Value: time.RFC850,
+		},
+		{
+			Name:  "RFC1123",
+			Value: time.RFC1123,
+		},
+		{
+			Name:  "RFC1123Z",
+			Value: time.RFC1123Z,
+		},
+		{
+			Name:  "RFC3339",
+			Value: time.RFC3339,
+		},
+		{
+			Name:  "RFC3339Nano",
+			Value: time.RFC3339Nano,
+		},
+		{
+			Name:  "Kitchen",
+			Value: time.Kitchen,
+		},
+		{
+			Name:  "Stamp",
+			Value: time.Stamp,
+		},
+		{
+			Name:  "StampMilli",
+			Value: time.StampMilli,
+		},
+		{
+			Name:  "StampMicro",
+			Value: time.StampMicro,
+		},
+		{
+			Name:  "StampNano",
+			Value: time.StampNano,
+		},
+	}
+}
+
 func timeCmdOpts() []*discordgo.ApplicationCommandOption {
 	return []*discordgo.ApplicationCommandOption{
 		{
@@ -41,7 +114,7 @@ func timeCmdOpts() []*discordgo.ApplicationCommandOption {
 						{
 							Type:        discordgo.ApplicationCommandOptionBoolean,
 							Name:        timeCmdOptEphemeral,
-							Description: "Should the bot's response be ephemeral?",
+							Description: "Should the bot's response be ephemeral? Defaults to true.",
 						},
 					},
 				},
@@ -60,81 +133,12 @@ func timeCmdOpts() []*discordgo.ApplicationCommandOption {
 							Type:        discordgo.ApplicationCommandOptionString,
 							Name:        tzSubCmdInfoFmtOpt,
 							Description: "The format in which the date should be displayed.",
-							Choices: []*discordgo.ApplicationCommandOptionChoice{
-								{
-									Name:  "Default",
-									Value: tzSubCmdInfoFmtOptDflt,
-								},
-								{
-									Name:  "Layout",
-									Value: time.Layout,
-								},
-								{
-									Name:  "ANSIC",
-									Value: time.ANSIC,
-								},
-								{
-									Name:  "UnixDate",
-									Value: time.UnixDate,
-								},
-								{
-									Name:  "RubyDate",
-									Value: time.RubyDate,
-								},
-								{
-									Name:  "RFC822",
-									Value: time.RFC822,
-								},
-								{
-									Name:  "RFC822Z",
-									Value: time.RFC822Z,
-								},
-								{
-									Name:  "RFC850",
-									Value: time.RFC850,
-								},
-								{
-									Name:  "RFC1123",
-									Value: time.RFC1123,
-								},
-								{
-									Name:  "RFC1123Z",
-									Value: time.RFC1123Z,
-								},
-								{
-									Name:  "RFC3339",
-									Value: time.RFC3339,
-								},
-								{
-									Name:  "RFC3339Nano",
-									Value: time.RFC3339Nano,
-								},
-								{
-									Name:  "Kitchen",
-									Value: time.Kitchen,
-								},
-								{
-									Name:  "Stamp",
-									Value: time.Stamp,
-								},
-								{
-									Name:  "StampMilli",
-									Value: time.StampMilli,
-								},
-								{
-									Name:  "StampMicro",
-									Value: time.StampMicro,
-								},
-								{
-									Name:  "StampNano",
-									Value: time.StampNano,
-								},
-							},
+							Choices:     tzFormatOpts(),
 						},
 						{
 							Type:        discordgo.ApplicationCommandOptionBoolean,
 							Name:        timeCmdOptEphemeral,
-							Description: "Should the bot's response be ephemeral?",
+							Description: "Should the bot's response be ephemeral? Defaults to true.",
 						},
 					},
 				},
@@ -187,7 +191,7 @@ func handleTZSubCmd(s *discordgo.Session, i *discordgo.InteractionCreate) (*disc
 	subCmdName := i.ApplicationCommandData().Options[0].Options[0].Name
 	switch subCmdName {
 	case tzSubCmdHelp:
-		return handleTZSubCmdList(s, i)
+		return handleTZSubCmdHelp(s, i)
 	case tzSubCmdInfo:
 		return handleTZSubCmdInfo(s, i)
 	default:
@@ -195,13 +199,13 @@ func handleTZSubCmd(s *discordgo.Session, i *discordgo.InteractionCreate) (*disc
 	}
 }
 
-func handleTZSubCmdList(s *discordgo.Session, i *discordgo.InteractionCreate) (*discordgo.InteractionResponse, bool, error) {
-	flags := uint64(0)
+func handleTZSubCmdHelp(s *discordgo.Session, i *discordgo.InteractionCreate) (*discordgo.InteractionResponse, bool, error) {
+	flags := InteractionResponseFlagEphemeral
 	for _, opt := range i.ApplicationCommandData().Options[0].Options[0].Options {
 		switch opt.Name {
 		case timeCmdOptEphemeral:
-			if opt.BoolValue() {
-				flags = InteractionResponseFlagEphemeral
+			if !opt.BoolValue() {
+				flags = 0
 			}
 		default:
 			log.Warn("Unknown option: ", opt.Name)
@@ -226,14 +230,14 @@ func handleTZSubCmdList(s *discordgo.Session, i *discordgo.InteractionCreate) (*
 }
 
 func handleTZSubCmdInfo(s *discordgo.Session, i *discordgo.InteractionCreate) (*discordgo.InteractionResponse, bool, error) {
-	flags := uint64(0)
+	flags := InteractionResponseFlagEphemeral
 	tz := ""
 	format := tzSubCmdInfoFmtOptDflt
 	for _, opt := range i.ApplicationCommandData().Options[0].Options[0].Options {
 		switch opt.Name {
 		case timeCmdOptEphemeral:
-			if opt.BoolValue() {
-				flags = InteractionResponseFlagEphemeral
+			if !opt.BoolValue() {
+				flags = 0
 			}
 		case tzSubCmdInfoTZOpt:
 			tz = opt.StringValue()
