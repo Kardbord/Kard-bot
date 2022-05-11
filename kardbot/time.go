@@ -1,10 +1,15 @@
 package kardbot
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"time"
 
+	"github.com/TannerKvarfordt/Kard-bot/kardbot/config"
 	"github.com/TannerKvarfordt/Kard-bot/kardbot/dg_helpers"
 	"github.com/bwmarrin/discordgo"
 	log "github.com/sirupsen/logrus"
@@ -16,21 +21,29 @@ const (
 )
 
 const (
-	timeSubCmdGroupTZ = "timezones"
+	timeSubCmdGroupTZ = "zone"
 
+	// Opts common to all timeSubCmdGroup
+	tzSubCmdFmtOpt  = "format"
+	tzSubCmdFmtDflt = "Monday, 2006-01-02 3:04PM MST"
+
+	// Sub command
 	tzSubCmdHelp = "help"
 
-	tzSubCmdInfo           = "info"
-	tzSubCmdInfoTZOpt      = "timezone"
-	tzSubCmdInfoFmtOpt     = "format"
-	tzSubCmdInfoFmtOptDflt = "Monday, 2006-01-02 3:04PM MST"
+	// Sub command
+	tzSubCmdInfo      = "info"
+	tzSubCmdInfoTZOpt = "timezone"
+
+	//Sub command
+	tzSubCmdServerClock      = "server-clock"
+	tzSubCmdServerClockTZOpt = "timezones"
 )
 
 func tzFormatOpts() []*discordgo.ApplicationCommandOptionChoice {
 	return []*discordgo.ApplicationCommandOptionChoice{
 		{
 			Name:  "Default",
-			Value: tzSubCmdInfoFmtOptDflt,
+			Value: tzSubCmdFmtDflt,
 		},
 		{
 			Name:  "Layout",
@@ -131,7 +144,7 @@ func timeCmdOpts() []*discordgo.ApplicationCommandOption {
 						},
 						{
 							Type:        discordgo.ApplicationCommandOptionString,
-							Name:        tzSubCmdInfoFmtOpt,
+							Name:        tzSubCmdFmtOpt,
 							Description: "The format in which the date should be displayed.",
 							Choices:     tzFormatOpts(),
 						},
@@ -139,6 +152,25 @@ func timeCmdOpts() []*discordgo.ApplicationCommandOption {
 							Type:        discordgo.ApplicationCommandOptionBoolean,
 							Name:        timeCmdOptEphemeral,
 							Description: "Should the bot's response be ephemeral? Defaults to true.",
+						},
+					},
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        tzSubCmdServerClock,
+					Description: "As an admin, create a custom clock for your server.",
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionString,
+							Name:        tzSubCmdServerClockTZOpt,
+							Description: "Space-separated list of IANA timezones to use in creating the server clock.",
+							Required:    true,
+						},
+						{
+							Type:        discordgo.ApplicationCommandOptionString,
+							Name:        tzSubCmdFmtOpt,
+							Description: "The format in which the date should be displayed.",
+							Choices:     tzFormatOpts(),
 						},
 					},
 				},
@@ -154,6 +186,8 @@ func handleTimeCmd(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		log.Error(err)
 		return
 	}
+	wg := bot().updateLastActive()
+	defer wg.Wait()
 
 	var (
 		err           error                          = nil
@@ -194,6 +228,8 @@ func handleTZSubCmd(s *discordgo.Session, i *discordgo.InteractionCreate) (*disc
 		return handleTZSubCmdHelp(s, i)
 	case tzSubCmdInfo:
 		return handleTZSubCmdInfo(s, i)
+	case tzSubCmdServerClock:
+		return handleTZSubCmdServerClock(s, i)
 	default:
 		return nil, true, fmt.Errorf("unknown %s sub command: %s", timeSubCmdGroupTZ, subCmdName)
 	}
@@ -246,7 +282,7 @@ func handleTZSubCmdHelp(s *discordgo.Session, i *discordgo.InteractionCreate) (*
 func handleTZSubCmdInfo(s *discordgo.Session, i *discordgo.InteractionCreate) (*discordgo.InteractionResponse, bool, error) {
 	flags := InteractionResponseFlagEphemeral
 	tz := ""
-	format := tzSubCmdInfoFmtOptDflt
+	format := tzSubCmdFmtDflt
 	for _, opt := range i.ApplicationCommandData().Options[0].Options[0].Options {
 		switch opt.Name {
 		case timeCmdOptEphemeral:
@@ -255,7 +291,7 @@ func handleTZSubCmdInfo(s *discordgo.Session, i *discordgo.InteractionCreate) (*
 			}
 		case tzSubCmdInfoTZOpt:
 			tz = opt.StringValue()
-		case tzSubCmdInfoFmtOpt:
+		case tzSubCmdFmtOpt:
 			format = opt.StringValue()
 		default:
 			log.Warn("Unknown option: ", opt.Name)
@@ -308,4 +344,167 @@ func handleTZSubCmdInfo(s *discordgo.Session, i *discordgo.InteractionCreate) (*
 			Embeds: []*discordgo.MessageEmbed{e.Truncate().SetType(discordgo.EmbedTypeRich).MessageEmbed},
 		},
 	}, false, nil
+}
+
+type serverClock struct {
+	// Guild owning the server clock.
+	// Required.
+	GuildID string `json:"guild-id"`
+
+	// Name of the guild owning the server clock.
+	GuildName string `json:"guild-name"`
+
+	// Dedicated Channel for the server clock.
+	// Required.
+	ChannelID string `json:"channel-id"`
+
+	// Message to update with the server clock time.
+	// Optional. Will be added if it does not exist.
+	MessageID string `json:"message-id"`
+
+	// Timezones to be included in the server clock
+	Timezones []string `json:"timezones"`
+
+	// Name of the clock
+	Name string `json:"clock-name"`
+
+	// The format in which to display timezones
+	Format string `json:"format"`
+
+	// Abbreviation of the clock
+	Abbrev string `json:"clock-abbreviation"`
+
+	// Number of consecutive times the clock has failed to update.
+	// If it exceeds bot().ServerClockErrorThreshold, the bot will
+	// no longer attempt to update this clock.
+	ErrCount uint32 `json:"error-count"`
+}
+
+const serverClockConfigFilepath = "config/server-clocks.json"
+
+var serverClockConfigFilepathMutex sync.RWMutex
+
+var (
+	// Map of Guild IDs to serverClock objects
+	serverClocksMap      map[string]serverClock
+	serverClocksMapMutex sync.RWMutex
+)
+
+func init() {
+	serverClockConfigFilepathMutex.RLock()
+	defer serverClockConfigFilepathMutex.RUnlock()
+	serverClocksMapMutex.Lock()
+	defer serverClocksMapMutex.Unlock()
+
+	jsonCfg, err := config.NewJsonConfig(serverClockConfigFilepath)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = json.Unmarshal(jsonCfg.Raw, &serverClocksMap)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func writeServerClocksToDisk() error {
+	serverClockConfigFilepathMutex.Lock()
+	defer serverClockConfigFilepathMutex.Unlock()
+	serverClocksMapMutex.RLock()
+	defer serverClocksMapMutex.RUnlock()
+
+	fileBytes, err := json.MarshalIndent(serverClocksMap, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	return ioutil.WriteFile(serverClockConfigFilepath, fileBytes, 0664)
+}
+
+func handleTZSubCmdServerClock(s *discordgo.Session, i *discordgo.InteractionCreate) (*discordgo.InteractionResponse, bool, error) {
+	//	unparsedTZs := ""
+	//	format := tzSubCmdFmtDflt
+	//	for _, opt := range i.ApplicationCommandData().Options[0].Options[0].Options {
+	//		switch opt.Name {
+	//		case tzSubCmdServerClockTZOpt:
+	//			unparsedTZs = opt.StringValue()
+	//		case tzSubCmdFmtOpt:
+	//			format = opt.StringValue()
+	//		default:
+	//			log.Warn("Unknown option: ", opt.Name)
+	//		}
+	//	}
+	//
+	return nil, true, fmt.Errorf("unimplemented")
+}
+
+func (clock *serverClock) update() {
+	currTime := time.Now().UTC()
+	customTime := "UNIMPLEMENTED" // TODO: calculate current custom time
+
+	var err error = nil
+	if _, err = bot().Session.ChannelEdit(clock.ChannelID, customTime); err != nil {
+		log.Error(err)
+		atomic.AddUint32(&clock.ErrCount, 1)
+		return
+	}
+
+	color, _ := fastHappyColorInt64()
+	e := dg_helpers.NewEmbed().
+		SetTitle("Server Clock").
+		SetColor(int(color)).
+		SetDescription("The top-most timezone in the list below is this server's custom clock. It is an averaged time calculated from the timezones below it, which were selected by a server administrator.").
+		AddField(clock.Name, customTime).
+		SetFooter("This bot supports [IANA](https://www.iana.org/time-zones) [Timezones](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones)")
+
+	for _, tz := range clock.Timezones {
+		loc, err := time.LoadLocation(tz)
+		if err != nil {
+			log.Error(err)
+			continue
+		}
+		e.AddField(loc.String(), currTime.Format(clock.Format))
+	}
+
+	if clock.MessageID != "" {
+		_, err = bot().Session.ChannelMessageEditComplex(&discordgo.MessageEdit{
+			Embeds:  []*discordgo.MessageEmbed{e.Truncate().MessageEmbed},
+			ID:      clock.MessageID,
+			Channel: clock.ChannelID,
+		})
+	} else {
+		var m *discordgo.Message = nil
+		m, err = bot().Session.ChannelMessageSendComplex(clock.ChannelID, &discordgo.MessageSend{
+			Embeds: []*discordgo.MessageEmbed{e.Truncate().MessageEmbed},
+		})
+		if err == nil {
+			clock.MessageID = m.ID
+		}
+	}
+
+	if err != nil {
+		log.Error(err)
+		atomic.AddUint32(&clock.ErrCount, 1)
+		return
+	}
+	atomic.StoreUint32(&clock.ErrCount, 0)
+}
+
+func updateServerClocks() {
+	serverClocksMapMutex.RLock()
+	defer serverClocksMapMutex.RUnlock()
+
+	wg := &sync.WaitGroup{}
+	for _, clock := range serverClocksMap {
+		wg.Add(1)
+		go func(c *serverClock) {
+			if atomic.LoadUint32(&c.ErrCount) < bot().ServerClockFailureThreshold {
+				c.update()
+			} else {
+				log.Infof("Won't update defunct server clock for %s, it has failed to update %d times previously.", c.GuildName, c.ErrCount)
+			}
+			wg.Done()
+		}(&clock)
+	}
+	wg.Wait()
 }

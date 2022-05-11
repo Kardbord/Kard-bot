@@ -36,6 +36,10 @@ type kardbot struct {
 	EnableDGLogging            bool `json:"enable-dg-logging"`
 	UnregisterAllCmdsOnStartup bool `json:"unregister-all-cmds-on-startup"`
 
+	// Number of times a server clock can fail to update before
+	// it is abandoned by the bot.
+	ServerClockFailureThreshold uint32 `json:"server-clock-failure-threshold"`
+
 	// Enable trace regions for profiling
 	TraceEnabled bool
 
@@ -112,6 +116,10 @@ func Stop() {
 	}
 
 	if err := writeComplimentSubscribersToDisk(); err != nil {
+		log.Error(err)
+	}
+
+	if err := writeServerClocksToDisk(); err != nil {
 		log.Error(err)
 	}
 

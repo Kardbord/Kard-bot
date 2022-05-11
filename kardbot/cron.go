@@ -40,6 +40,9 @@ func init() {
 	// https://crontab.guru/#0_0_*_*_*
 	scheduler().Cron("0 0 * * *").Do(sendCreepyDMs)
 
+	// https://crontab.guru/#*_*_*_*_*
+	scheduler().Cron("* * * * *").Do(updateServerClocks)
+
 	// ^The above only initializes the scheduler, it does not start it.
 }
 
