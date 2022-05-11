@@ -107,11 +107,11 @@ func handleInterrupt() {
 
 // Stop and clean up.
 func Stop() {
-	if err := writeCreepyDmSubscribersToConfig(); err != nil {
+	if err := writeCreepyDmSubscribersToDisk(); err != nil {
 		log.Error(err)
 	}
 
-	if err := writeComplimentSubscribersToConfig(); err != nil {
+	if err := writeComplimentSubscribersToDisk(); err != nil {
 		log.Error(err)
 	}
 
