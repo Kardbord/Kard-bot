@@ -9,6 +9,7 @@ import (
 
 	"github.com/TannerKvarfordt/Kard-bot/kardbot/dg_helpers"
 	"github.com/TannerKvarfordt/imgflipgo"
+	"github.com/TannerKvarfordt/ubiquity/mathematics"
 	"github.com/bwmarrin/discordgo"
 	log "github.com/sirupsen/logrus"
 )
@@ -144,7 +145,7 @@ func buildMemeCommands() []*discordgo.ApplicationCommand {
 				Name:        templateOpt,
 				Description: "Select a meme template",
 				Required:    true,
-				Choices:     make([]*discordgo.ApplicationCommandOptionChoice, MinOf(maxDiscordOptionChoices, len(memeTemplates())-tCount)),
+				Choices:     make([]*discordgo.ApplicationCommandOptionChoice, mathematics.Min(maxDiscordOptionChoices, len(memeTemplates())-tCount)),
 			}
 		}
 

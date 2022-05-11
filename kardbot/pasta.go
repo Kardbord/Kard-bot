@@ -9,6 +9,7 @@ import (
 	"os"
 
 	"github.com/TannerKvarfordt/Kard-bot/kardbot/config"
+	"github.com/TannerKvarfordt/ubiquity/str"
 	"github.com/bwmarrin/discordgo"
 	owoify_go "github.com/deadshot465/owoify-go"
 	log "github.com/sirupsen/logrus"
@@ -156,7 +157,7 @@ func servePasta(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	if uwulvl != "" {
 		content = owoify_go.Owoify(content, uwulvl)
 		if len(content) > int(MaxDiscordMsgLen) {
-			content = firstN(content, int(MaxDiscordMsgLen)-3) + "..."
+			content = str.FirstN(content, MaxDiscordMsgLen-3) + "..."
 		}
 	}
 

@@ -3,6 +3,7 @@ package kardbot
 import (
 	"github.com/bwmarrin/discordgo"
 
+	"github.com/TannerKvarfordt/ubiquity/str"
 	owoify_go "github.com/deadshot465/owoify-go"
 	log "github.com/sirupsen/logrus"
 )
@@ -74,7 +75,7 @@ func uwuify(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	content = owoify_go.Owoify(content, uwulvl)
 
 	if len(content) > int(MaxDiscordMsgLen) {
-		content = firstN(content, int(MaxDiscordMsgLen)-3) + "..."
+		content = str.FirstN(content, MaxDiscordMsgLen-3) + "..."
 	}
 
 	tts := false

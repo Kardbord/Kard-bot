@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/TannerKvarfordt/Kard-bot/kardbot/dg_helpers"
+	"github.com/TannerKvarfordt/ubiquity/networking"
 	"github.com/bwmarrin/discordgo"
 	"github.com/forPelevin/gomoji"
 	"github.com/google/uuid"
@@ -439,10 +440,10 @@ func buildRoleSelectMenuEmbed(opts []*discordgo.ApplicationCommandInteractionDat
 }
 
 func validateRoleSelectEmbedURLs(e *dg_helpers.Embed) error {
-	if e.URL != "" && !isReachableURL(e.URL) {
+	if e.URL != "" && !networking.IsReachableURL(e.URL) {
 		return fmt.Errorf("unreachable URL provided: %s", e.URL)
 	}
-	if e.Thumbnail != nil && e.Thumbnail.URL != "" && !isReachableURL(e.Thumbnail.URL) {
+	if e.Thumbnail != nil && e.Thumbnail.URL != "" && !networking.IsReachableURL(e.Thumbnail.URL) {
 		return fmt.Errorf("unreachable thumbnail URL provided: %s", e.Thumbnail.URL)
 	}
 	return nil
