@@ -1,0 +1,20 @@
+name: "Dive CI"
+
+on:
+  release:
+    types: [published]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  dive:
+    runs-on: ubuntu-latest
+    name: Analyze image efficiency
+    steps:
+      - name: Dive
+        uses: yuichielectric/dive-action@0.0.4
+        with:
+          image: "tkvarfordt/kardbot:latest"
+          config-file: ${{ github.workspace }}/.dive-ci.yml
+          github-token: ${{ secrets.GITHUB_TOKEN }}
