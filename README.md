@@ -9,7 +9,7 @@
 [![CodeQL](https://github.com/TannerKvarfordt/Kard-bot/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/TannerKvarfordt/Kard-bot/actions/workflows/codeql-analysis.yml)
 [![Docker Image](https://github.com/TannerKvarfordt/Kard-bot/actions/workflows/release.yml/badge.svg)](https://github.com/TannerKvarfordt/Kard-bot/actions/workflows/release.yml)
 [![Image Efficiency](https://github.com/TannerKvarfordt/Kard-bot/actions/workflows/image-dive.yml/badge.svg)](https://github.com/TannerKvarfordt/Kard-bot/actions/workflows/image-dive.yml)
-[![Go Report Card](https://goreportcard.com/badge/github.com/TannerKvarfordt/Kard-bot)](https://goreportcard.com/report/github.com/TannerKvarfordt/Kard-bot)
+[![Go Report Card](https://github.com/TannerKvarfordt/Kard-bot/actions/workflows/report_card.yml/badge.svg)](https://github.com/TannerKvarfordt/Kard-bot/actions/workflows/report_card.yml)
 
 A discord bot destined for greatness.
 
