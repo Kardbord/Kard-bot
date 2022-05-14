@@ -11,6 +11,7 @@ import (
 
 	"github.com/TannerKvarfordt/Kard-bot/kardbot/config"
 	"github.com/TannerKvarfordt/Kard-bot/kardbot/dg_helpers"
+	"github.com/TannerKvarfordt/ubiquity/sliceutils"
 	"github.com/bwmarrin/discordgo"
 	log "github.com/sirupsen/logrus"
 )
@@ -35,8 +36,9 @@ const (
 	tzSubCmdInfoTZOpt = "timezone"
 
 	//Sub command
-	tzSubCmdServerClock      = "server-clock"
-	tzSubCmdServerClockTZOpt = "timezones"
+	tzSubCmdServerClock              = "server-clock"
+	tzSubCmdServerClockTZOpt         = "timezones"
+	tzSubCmdServerClockCustomNameOpt = "clock-name"
 )
 
 func tzFormatOpts() []*discordgo.ApplicationCommandOptionChoice {
@@ -164,6 +166,12 @@ func timeCmdOpts() []*discordgo.ApplicationCommandOption {
 							Type:        discordgo.ApplicationCommandOptionString,
 							Name:        tzSubCmdServerClockTZOpt,
 							Description: "Space-separated list of IANA timezones to use in creating the server clock.",
+							Required:    true,
+						},
+						{
+							Type:        discordgo.ApplicationCommandOptionString,
+							Name:        tzSubCmdServerClockCustomNameOpt,
+							Description: "A custom name to identify your server clock timezone.",
 							Required:    true,
 						},
 						{
@@ -371,9 +379,6 @@ type serverClock struct {
 	// The format in which to display timezones
 	Format string `json:"format"`
 
-	// Abbreviation of the clock
-	Abbrev string `json:"clock-abbreviation"`
-
 	// Number of consecutive times the clock has failed to update.
 	// If it exceeds bot().ServerClockErrorThreshold, the bot will
 	// no longer attempt to update this clock.
@@ -414,6 +419,10 @@ func writeServerClocksToDisk() error {
 	defer serverClockConfigFilepathMutex.Unlock()
 	serverClocksMapMutex.RLock()
 	defer serverClocksMapMutex.RUnlock()
+	for _, clock := range serverClocksMap {
+		clock.mutex.RLock()
+		defer clock.mutex.RUnlock()
+	}
 
 	fileBytes, err := json.MarshalIndent(serverClocksMap, "", "  ")
 	if err != nil {
@@ -424,42 +433,140 @@ func writeServerClocksToDisk() error {
 }
 
 func handleTZSubCmdServerClock(s *discordgo.Session, i *discordgo.InteractionCreate) (*discordgo.InteractionResponse, bool, error) {
-	//	unparsedTZs := ""
-	//	format := tzSubCmdFmtDflt
-	//	for _, opt := range i.ApplicationCommandData().Options[0].Options[0].Options {
-	//		switch opt.Name {
-	//		case tzSubCmdServerClockTZOpt:
-	//			unparsedTZs = opt.StringValue()
-	//		case tzSubCmdFmtOpt:
-	//			format = opt.StringValue()
-	//		default:
-	//			log.Warn("Unknown option: ", opt.Name)
-	//		}
-	//	}
-	//
-	return nil, true, fmt.Errorf("unimplemented")
+	// TODO: write clocks to disk
+
+	if isAdmin, err := interactionIssuerIsAdmin(i); err != nil {
+		return nil, true, err
+	} else if !isAdmin {
+		return &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Flags:   InteractionResponseFlagEphemeral,
+				Content: "You must run this command from a server you administer.",
+			},
+		}, false, nil
+	}
+
+	mdata, err := getInteractionMetaData(i)
+	if err != nil {
+		log.Error(err)
+		return nil, true, err
+	}
+
+	serverClocksMapMutex.RLock()
+	if clock, ok := serverClocksMap[mdata.GuildID]; ok {
+		clock.mutex.RLock()
+		chID := clock.ChannelID
+		clock.mutex.RUnlock()
+		if _, err := s.Channel(chID); err == nil {
+			serverClocksMapMutex.RUnlock()
+			return &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Flags:   InteractionResponseFlagEphemeral,
+					Content: fmt.Sprintf("This server already has a clock. To replace it, delete the <#%s> channel and re-issue this command.", clock.ChannelID),
+				},
+			}, false, nil
+		}
+	}
+	serverClocksMapMutex.RUnlock()
+
+	tzs, clockname, format := []string{}, "", tzSubCmdFmtDflt
+	for _, opt := range i.ApplicationCommandData().Options[0].Options[0].Options {
+		switch opt.Name {
+		case tzSubCmdServerClockTZOpt:
+			tzs = sliceutils.RemoveDuplicates(strings.Split(opt.StringValue(), " ")...)
+		case tzSubCmdFmtOpt:
+			format = opt.StringValue()
+		case tzSubCmdServerClockCustomNameOpt:
+			clockname = opt.StringValue()
+		default:
+			log.Warn("Unknown option: ", opt.Name)
+		}
+	}
+
+	invalidTZs := make([]string, 0, len(tzs))
+	for _, tz := range tzs {
+		if _, err := time.LoadLocation(tz); err != nil {
+			invalidTZs = append(invalidTZs, tz)
+		}
+	}
+	if len(invalidTZs) > 0 {
+		return &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Flags:   InteractionResponseFlagEphemeral,
+				Content: fmt.Sprintf("The following time zones are not valid: `%v`", invalidTZs),
+			},
+		}, false, nil
+	}
+
+	g, err := s.Guild(mdata.GuildID)
+	if err != nil {
+		log.Error(err)
+		return nil, true, err
+	}
+
+	tzChan, err := s.GuildChannelCreateComplex(g.ID, discordgo.GuildChannelCreateData{
+		Name:                 clockname,
+		Type:                 discordgo.ChannelTypeGuildText,
+		Topic:                fmt.Sprintf("Server clock provided by %s.", s.State.User.Mention()),
+		PermissionOverwrites: []*discordgo.PermissionOverwrite{},
+	})
+	if err != nil {
+		log.Error(err)
+		return nil, true, err
+	}
+
+	newClock := &serverClock{
+		GuildID:   mdata.GuildID,
+		GuildName: g.Name,
+		ChannelID: tzChan.ID,
+		Timezones: tzs,
+		Name:      clockname,
+		Format:    format,
+	}
+	serverClocksMapMutex.Lock()
+	serverClocksMap[mdata.GuildID] = newClock
+	serverClocksMapMutex.Unlock()
+	newClock.update()
+
+	if err := writeServerClocksToDisk(); err != nil {
+		return &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Flags:   InteractionResponseFlagEphemeral,
+				Content: fmt.Sprintf("There was an error persisting your server clock. Please delete the %s channel if it was created, and reissue the command.", tzChan.Name),
+			},
+		}, false, nil
+	}
+
+	return &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Flags:   InteractionResponseFlagEphemeral,
+			Content: fmt.Sprintf("Your server clock has been created! Check it out at %s.", tzChan.Name),
+		},
+	}, false, nil
 }
 
 func (clock *serverClock) update() {
 	clock.mutex.RLock()
 	defer clock.mutex.RUnlock()
 	currTime := time.Now().UTC()
-	customTime := "UNIMPLEMENTED" // TODO: calculate current custom time
+	customTime := "00:00AM" // TODO: calculate current custom time
 
 	var err error = nil
-	if _, err = bot().Session.ChannelEdit(clock.ChannelID, customTime); err != nil {
+	if _, err = bot().Session.ChannelEdit(clock.ChannelID, fmt.Sprintf("%s %s", customTime, clock.Name)); err != nil {
 		log.Error(err)
 		atomic.AddUint32(&clock.ErrCount, 1)
 		return
 	}
 
-	color, _ := fastHappyColorInt64()
 	e := dg_helpers.NewEmbed().
 		SetTitle("Server Clock").
-		SetColor(int(color)).
-		SetDescription("The top-most timezone in the list below is this server's custom clock. It is an averaged time calculated from the timezones below it, which were selected by a server administrator.").
-		AddField(clock.Name, customTime).
-		SetFooter("This bot supports [IANA](https://www.iana.org/time-zones) [Timezones](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones)")
+		SetDescription("The top-most timezone in the list below is this server's custom clock. It is an averaged time calculated from the timezones below it, which were selected by a server administrator. This bot supports [IANA](https://www.iana.org/time-zones) [Timezones](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones).").
+		AddField(clock.Name, customTime)
 
 	for _, tz := range clock.Timezones {
 		loc, err := time.LoadLocation(tz)
@@ -467,7 +574,7 @@ func (clock *serverClock) update() {
 			log.Error(err)
 			continue
 		}
-		e.AddField(loc.String(), currTime.Format(clock.Format))
+		e.AddField(loc.String(), currTime.In(loc).Format(clock.Format))
 	}
 
 	if clock.MessageID != "" {
