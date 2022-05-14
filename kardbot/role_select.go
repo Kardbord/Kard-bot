@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/TannerKvarfordt/Kard-bot/kardbot/dg_helpers"
-	"github.com/TannerKvarfordt/ubiquity/networking"
+	"github.com/TannerKvarfordt/ubiquity/httputils"
 	"github.com/bwmarrin/discordgo"
 	"github.com/forPelevin/gomoji"
 	"github.com/google/uuid"
@@ -249,7 +249,7 @@ func handleRoleSelectMenuCommand(s *discordgo.Session, i *discordgo.InteractionC
 	wg := bot().updateLastActive()
 	defer wg.Wait()
 
-	if isAdmin, err := isInteractionIssuerAdmin(i); err != nil {
+	if isAdmin, err := interactionIssuerIsAdmin(i); err != nil {
 		interactionRespondEphemeralError(s, i, true, err)
 		log.Error(err)
 		return
@@ -440,10 +440,10 @@ func buildRoleSelectMenuEmbed(opts []*discordgo.ApplicationCommandInteractionDat
 }
 
 func validateRoleSelectEmbedURLs(e *dg_helpers.Embed) error {
-	if e.URL != "" && !networking.IsReachableURL(e.URL) {
+	if e.URL != "" && !httputils.IsReachableURL(e.URL) {
 		return fmt.Errorf("unreachable URL provided: %s", e.URL)
 	}
-	if e.Thumbnail != nil && e.Thumbnail.URL != "" && !networking.IsReachableURL(e.Thumbnail.URL) {
+	if e.Thumbnail != nil && e.Thumbnail.URL != "" && !httputils.IsReachableURL(e.Thumbnail.URL) {
 		return fmt.Errorf("unreachable thumbnail URL provided: %s", e.Thumbnail.URL)
 	}
 	return nil

@@ -123,7 +123,7 @@ func channelIsNSFW(s *discordgo.Session, i *discordgo.InteractionCreate) (bool, 
 	return ch.NSFW, nil
 }
 
-func isInteractionIssuerAdmin(i *discordgo.InteractionCreate) (bool, error) {
+func interactionIssuerIsAdmin(i *discordgo.InteractionCreate) (bool, error) {
 	if i == nil {
 		return false, errors.New("nil interaction")
 	}

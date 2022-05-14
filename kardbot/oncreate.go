@@ -7,7 +7,7 @@ import (
 	"regexp"
 
 	"github.com/TannerKvarfordt/Kard-bot/kardbot/config"
-	"github.com/TannerKvarfordt/ubiquity/regex"
+	"github.com/TannerKvarfordt/ubiquity/regexutils"
 	"github.com/bwmarrin/discordgo"
 
 	log "github.com/sirupsen/logrus"
@@ -74,7 +74,7 @@ func greeting(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
-	greetingGroup := regex.BuildAltGroup(greetings...)
+	greetingGroup := regexutils.BuildAltGroup(greetings...)
 
 	matched, err := regexp.MatchString(
 		fmt.Sprintf("^(?i)%s %s[!.\\s]*$", greetingGroup, buildBotNameRegexp(s.State.User.Username, s.State.User.ID)),
@@ -107,7 +107,7 @@ func farewell(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
-	farewellGroup := regex.BuildAltGroup(farewells...)
+	farewellGroup := regexutils.BuildAltGroup(farewells...)
 
 	matched, err := regexp.MatchString(
 		fmt.Sprintf("^(?i)%s %s[!.\\s]*$", farewellGroup, buildBotNameRegexp(s.State.User.Username, s.State.User.ID)),

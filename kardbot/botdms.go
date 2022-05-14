@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/TannerKvarfordt/ubiquity/mathematics"
+	"github.com/TannerKvarfordt/ubiquity/mathutils"
 	"github.com/bwmarrin/discordgo"
 	log "github.com/sirupsen/logrus"
 )
@@ -82,7 +82,7 @@ func deleteBotDMs(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		return
 	}
 
-	msgs, err := s.ChannelMessages(ch.ID, mathematics.Min(msgsToDelete, msgLimit), ch.LastMessageID, "", "")
+	msgs, err := s.ChannelMessages(ch.ID, mathutils.Min(msgsToDelete, msgLimit), ch.LastMessageID, "", "")
 	if err != nil {
 		log.Error(err)
 		interactionFollowUpEphemeralError(s, i, true, err)
@@ -121,7 +121,7 @@ func deleteBotDMs(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	}
 
 	_, err = s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
-		Content: fmt.Sprintf("Deleted last %d bot DMs", mathematics.Min(msgsToDelete, msgLimit)),
+		Content: fmt.Sprintf("Deleted last %d bot DMs", mathutils.Min(msgsToDelete, msgLimit)),
 	})
 	if err != nil {
 		log.Error(err)

@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/TannerKvarfordt/Kard-bot/kardbot/dg_helpers"
-	"github.com/TannerKvarfordt/ubiquity/networking"
+	"github.com/TannerKvarfordt/ubiquity/httputils"
 	"github.com/bwmarrin/discordgo"
 	log "github.com/sirupsen/logrus"
 )
@@ -240,7 +240,7 @@ func handleEmbedSubCmdCreate(s *discordgo.Session, i *discordgo.InteractionCreat
 			}
 		case embedSubCmdOptURL:
 			e.SetURL(opt.StringValue())
-			if !networking.IsReachableURL(opt.StringValue()) {
+			if !httputils.IsReachableURL(opt.StringValue()) {
 				return nil, false, fmt.Errorf("invalid URL: %s", opt.StringValue())
 			}
 			// Doesn't count as a non-empty embed on its own
@@ -255,12 +255,12 @@ func handleEmbedSubCmdCreate(s *discordgo.Session, i *discordgo.InteractionCreat
 			e.SetFooter(opt.StringValue())
 		case embedSubCmdOptImageURL:
 			e.SetImage(opt.StringValue())
-			if !networking.IsReachableURL(opt.StringValue()) {
+			if !httputils.IsReachableURL(opt.StringValue()) {
 				return nil, false, fmt.Errorf("invalid URL: %s", opt.StringValue())
 			}
 		case embedSubCmdOptThumbnailURL:
 			e.SetThumbnail(opt.StringValue())
-			if !networking.IsReachableURL(opt.StringValue()) {
+			if !httputils.IsReachableURL(opt.StringValue()) {
 				return nil, false, fmt.Errorf("invalid URL: %s", opt.StringValue())
 			}
 		default:
@@ -320,7 +320,7 @@ func handleEmbedSubCmdUpdate(s *discordgo.Session, i *discordgo.InteractionCreat
 			continue
 		case embedSubCmdOptURL:
 			e.SetURL(opt.StringValue())
-			if !networking.IsReachableURL(opt.StringValue()) {
+			if !httputils.IsReachableURL(opt.StringValue()) {
 				return nil, false, fmt.Errorf("invalid URL: %s", opt.StringValue())
 			}
 			// Doesn't count as a non-empty embed on its own
@@ -335,12 +335,12 @@ func handleEmbedSubCmdUpdate(s *discordgo.Session, i *discordgo.InteractionCreat
 			e.SetFooter(opt.StringValue())
 		case embedSubCmdOptImageURL:
 			e.SetImage(opt.StringValue())
-			if !networking.IsReachableURL(opt.StringValue()) {
+			if !httputils.IsReachableURL(opt.StringValue()) {
 				return nil, false, fmt.Errorf("invalid URL: %s", opt.StringValue())
 			}
 		case embedSubCmdOptThumbnailURL:
 			e.SetThumbnail(opt.StringValue())
-			if !networking.IsReachableURL(opt.StringValue()) {
+			if !httputils.IsReachableURL(opt.StringValue()) {
 				return nil, false, fmt.Errorf("invalid URL: %s", opt.StringValue())
 			}
 		default:
