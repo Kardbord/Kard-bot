@@ -378,6 +378,8 @@ type serverClock struct {
 	// If it exceeds bot().ServerClockErrorThreshold, the bot will
 	// no longer attempt to update this clock.
 	ErrCount uint32 `json:"error-count"`
+
+	mutex sync.RWMutex
 }
 
 const serverClockConfigFilepath = "config/server-clocks.json"
@@ -386,7 +388,7 @@ var serverClockConfigFilepathMutex sync.RWMutex
 
 var (
 	// Map of Guild IDs to serverClock objects
-	serverClocksMap      map[string]serverClock
+	serverClocksMap      map[string]*serverClock
 	serverClocksMapMutex sync.RWMutex
 )
 
@@ -439,6 +441,8 @@ func handleTZSubCmdServerClock(s *discordgo.Session, i *discordgo.InteractionCre
 }
 
 func (clock *serverClock) update() {
+	clock.mutex.RLock()
+	defer clock.mutex.RUnlock()
 	currTime := time.Now().UTC()
 	customTime := "UNIMPLEMENTED" // TODO: calculate current custom time
 
@@ -478,7 +482,11 @@ func (clock *serverClock) update() {
 			Embeds: []*discordgo.MessageEmbed{e.Truncate().MessageEmbed},
 		})
 		if err == nil {
+			clock.mutex.RUnlock()
+			clock.mutex.Lock()
 			clock.MessageID = m.ID
+			clock.mutex.Unlock()
+			clock.mutex.RLock()
 		}
 	}
 
@@ -500,11 +508,19 @@ func updateServerClocks() {
 		go func(c *serverClock) {
 			if atomic.LoadUint32(&c.ErrCount) < bot().ServerClockFailureThreshold {
 				c.update()
-			} else {
+			} else if atomic.LoadUint32(&c.ErrCount) == bot().ServerClockFailureThreshold {
+				c.mutex.RLock()
 				log.Infof("Won't update defunct server clock for %s, it has failed to update %d times previously.", c.GuildName, c.ErrCount)
+				bot().Session.ChannelMessageSend(c.ChannelID, fmt.Sprintf(
+					"This clock has failed to update %d consecutive times, and is now considered defunct. Ensure that Kard-bot has appropriate permissions, then delete this channel and reissue the `/%s %s %s` command.",
+					c.ErrCount, timeCmd, timeSubCmdGroupTZ, tzSubCmdServerClock,
+				))
+				c.mutex.RUnlock()
+				// Only report defunct once.
+				atomic.AddUint32(&c.ErrCount, 1)
 			}
 			wg.Done()
-		}(&clock)
+		}(clock)
 	}
 	wg.Wait()
 }
