@@ -276,7 +276,9 @@ func handleTZSubCmdHelp(s *discordgo.Session, i *discordgo.InteractionCreate) (*
 		AddField(tzSubCmdInfo, "Provides general information about a given timezone. "+
 			"Requires an [IANA timezone database name or abbreviation](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones#List) as input. "+
 			"Optionally takes a date format in which the provided timezone should be displayed. "+
-			"Response is optionally ephemeral.")
+			"Response is optionally ephemeral.").
+		AddField(tzSubCmdServerClock, "Creates a server clock channel that displays the current date and time for specified timezones. "+
+			"Also creates an averaged \"Server Time\".")
 
 	return &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
