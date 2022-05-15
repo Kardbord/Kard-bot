@@ -39,6 +39,8 @@ const (
 	tzSubCmdServerClock              = "server-clock"
 	tzSubCmdServerClockTZOpt         = "timezones"
 	tzSubCmdServerClockCustomNameOpt = "clock-name"
+	tzSubCmdServerClockPrimaryTZOpt  = "primary-timezone"
+	tzSubCmdServerClockPrimaryTZDflt = "Averaged"
 )
 
 func tzFormatOpts() []*discordgo.ApplicationCommandOptionChoice {
@@ -173,6 +175,11 @@ func timeCmdOpts() []*discordgo.ApplicationCommandOption {
 							Name:        tzSubCmdServerClockCustomNameOpt,
 							Description: "A custom name to identify your server clock timezone.",
 							Required:    true,
+						},
+						{
+							Type:        discordgo.ApplicationCommandOptionString,
+							Name:        tzSubCmdServerClockPrimaryTZOpt,
+							Description: fmt.Sprintf("The primary timezone to use in the server clock channel name. Defaults to '%s'", tzSubCmdServerClockPrimaryTZDflt),
 						},
 						{
 							Type:        discordgo.ApplicationCommandOptionString,
@@ -384,6 +391,9 @@ type serverClock struct {
 	// no longer attempt to update this clock.
 	ErrCount uint32 `json:"error-count"`
 
+	// The primary timezone for this server clock.
+	PrimaryTZ string `json:"primary-tz"`
+
 	mutex sync.RWMutex
 }
 
@@ -433,8 +443,6 @@ func writeServerClocksToDisk() error {
 }
 
 func handleTZSubCmdServerClock(s *discordgo.Session, i *discordgo.InteractionCreate) (*discordgo.InteractionResponse, bool, error) {
-	// TODO: write clocks to disk
-
 	if isAdmin, err := interactionIssuerIsAdmin(i); err != nil {
 		return nil, true, err
 	} else if !isAdmin {
@@ -471,7 +479,7 @@ func handleTZSubCmdServerClock(s *discordgo.Session, i *discordgo.InteractionCre
 	}
 	serverClocksMapMutex.RUnlock()
 
-	tzs, clockname, format := []string{}, "", tzSubCmdFmtDflt
+	tzs, clockname, format, primaryTZ := []string{}, "", tzSubCmdFmtDflt, tzSubCmdServerClockPrimaryTZDflt
 	for _, opt := range i.ApplicationCommandData().Options[0].Options[0].Options {
 		switch opt.Name {
 		case tzSubCmdServerClockTZOpt:
@@ -480,6 +488,8 @@ func handleTZSubCmdServerClock(s *discordgo.Session, i *discordgo.InteractionCre
 			format = opt.StringValue()
 		case tzSubCmdServerClockCustomNameOpt:
 			clockname = opt.StringValue()
+		case tzSubCmdServerClockPrimaryTZOpt:
+			primaryTZ = opt.StringValue()
 		default:
 			log.Warn("Unknown option: ", opt.Name)
 		}
@@ -497,6 +507,16 @@ func handleTZSubCmdServerClock(s *discordgo.Session, i *discordgo.InteractionCre
 			Data: &discordgo.InteractionResponseData{
 				Flags:   InteractionResponseFlagEphemeral,
 				Content: fmt.Sprintf("The following time zones are not valid: `%v`", invalidTZs),
+			},
+		}, false, nil
+	}
+
+	if primaryTZ != tzSubCmdServerClockPrimaryTZDflt && !sliceutils.Contains(primaryTZ, tzs...) {
+		return &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Flags:   InteractionResponseFlagEphemeral,
+				Content: fmt.Sprintf("`%s` (`%s`) must be present in `%s` (`%v`).", tzSubCmdServerClockPrimaryTZOpt, primaryTZ, tzSubCmdServerClockTZOpt, tzs),
 			},
 		}, false, nil
 	}
@@ -525,6 +545,7 @@ func handleTZSubCmdServerClock(s *discordgo.Session, i *discordgo.InteractionCre
 		Timezones: tzs,
 		Name:      clockname,
 		Format:    format,
+		PrimaryTZ: primaryTZ,
 	}
 	serverClocksMapMutex.Lock()
 	serverClocksMap[mdata.GuildID] = newClock
@@ -551,18 +572,45 @@ func handleTZSubCmdServerClock(s *discordgo.Session, i *discordgo.InteractionCre
 }
 
 func (clock *serverClock) update() {
+	log.Trace("Waiting for clock mutex.")
 	clock.mutex.RLock()
 	defer clock.mutex.RUnlock()
 	currTime := time.Now().UTC()
-	customTime := "00:00AM" // TODO: calculate current custom time
 
-	var err error = nil
-	if _, err = bot().Session.ChannelEdit(clock.ChannelID, fmt.Sprintf("%s %s", customTime, clock.Name)); err != nil {
+	log.Trace("Calculating custom time")
+	customTime := "00:00AM"
+	customOffsetMinutes := 0
+	for _, tz := range clock.Timezones {
+		loc, err := time.LoadLocation(tz)
+		if err != nil {
+			log.Error(err)
+			continue
+		}
+		_, offset := currTime.In(loc).Zone()
+		customOffsetMinutes += offset / 60
+	}
+	customOffsetMinutes = customOffsetMinutes / len(clock.Timezones)
+	customTime = currTime.UTC().Add(time.Minute * time.Duration(customOffsetMinutes)).Format(time.Kitchen)
+
+	channelTime := customTime
+	channelFmt := "%s_%s"
+	if clock.PrimaryTZ != tzSubCmdServerClockPrimaryTZDflt {
+		if loc, err := time.LoadLocation(clock.PrimaryTZ); err == nil {
+			channelTime = currTime.In(loc).Format(time.Kitchen)
+		} else {
+			log.Error(err)
+			channelTime = ""
+			channelFmt = "%s%s"
+		}
+	}
+	log.Trace("Editing channel name")
+	if _, err := bot().Session.ChannelEdit(clock.ChannelID, fmt.Sprintf(channelFmt, channelTime, clock.Name)); err != nil {
 		log.Error(err)
 		atomic.AddUint32(&clock.ErrCount, 1)
 		return
 	}
 
+	log.Trace("Building embed")
 	e := dg_helpers.NewEmbed().
 		SetTitle("Server Clock").
 		SetDescription("The top-most timezone in the list below is this server's custom clock. It is an averaged time calculated from the timezones below it, which were selected by a server administrator. This bot supports [IANA](https://www.iana.org/time-zones) [Timezones](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones).").
@@ -577,13 +625,16 @@ func (clock *serverClock) update() {
 		e.AddField(loc.String(), currTime.In(loc).Format(clock.Format))
 	}
 
+	var err error
 	if clock.MessageID != "" {
+		log.Trace("Creating new server clock message")
 		_, err = bot().Session.ChannelMessageEditComplex(&discordgo.MessageEdit{
 			Embeds:  []*discordgo.MessageEmbed{e.Truncate().MessageEmbed},
 			ID:      clock.MessageID,
 			Channel: clock.ChannelID,
 		})
 	} else {
+		log.Trace("Updating existing server clock message")
 		var m *discordgo.Message = nil
 		m, err = bot().Session.ChannelMessageSendComplex(clock.ChannelID, &discordgo.MessageSend{
 			Embeds: []*discordgo.MessageEmbed{e.Truncate().MessageEmbed},
@@ -603,13 +654,16 @@ func (clock *serverClock) update() {
 		return
 	}
 	atomic.StoreUint32(&clock.ErrCount, 0)
+	log.Trace("Done with clock update.")
 }
 
 func updateServerClocks() {
+	log.Trace("Waiting for serverClocksMap mutex")
 	serverClocksMapMutex.RLock()
 	defer serverClocksMapMutex.RUnlock()
 
 	wg := &sync.WaitGroup{}
+	log.Trace("Starting clock updates")
 	for _, clock := range serverClocksMap {
 		wg.Add(1)
 		go func(c *serverClock) {
@@ -617,7 +671,7 @@ func updateServerClocks() {
 				c.update()
 			} else if atomic.LoadUint32(&c.ErrCount) == bot().ServerClockFailureThreshold {
 				c.mutex.RLock()
-				log.Infof("Won't update defunct server clock for %s, it has failed to update %d times previously.", c.GuildName, c.ErrCount)
+				log.Warnf("Won't update defunct server clock for %s, it has failed to update %d times previously.", c.GuildName, c.ErrCount)
 				bot().Session.ChannelMessageSend(c.ChannelID, fmt.Sprintf(
 					"This clock has failed to update %d consecutive times, and is now considered defunct. Ensure that Kard-bot has appropriate permissions, then delete this channel and reissue the `/%s %s %s` command.",
 					c.ErrCount, timeCmd, timeSubCmdGroupTZ, tzSubCmdServerClock,
@@ -629,5 +683,7 @@ func updateServerClocks() {
 			wg.Done()
 		}(clock)
 	}
+	log.Trace("Waiting for clock updates to complete.")
 	wg.Wait()
+	log.Trace("Done with all clock updates for this minute.")
 }
