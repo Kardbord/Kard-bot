@@ -2,8 +2,6 @@ package kardbot
 
 import (
 	"fmt"
-	"math/rand"
-	"net/http"
 	"regexp"
 	"strconv"
 	"strings"
@@ -30,50 +28,6 @@ func buildBotNameRegexp(botName, botID string) string {
 	return botNameExp
 }
 
-// Returns a regexp alternate group of the provided
-// strings. For example, input of [a ,b] would result
-// in a return value of "(a|b)".
-func buildRegexAltGroup(alts []string) string {
-	altGroup := "("
-	for i, alt := range alts {
-		altGroup += alt
-		if i+1 < len(alts) {
-			altGroup += "|"
-		}
-	}
-	altGroup += ")"
-	log.Trace("Built alt group regex:", altGroup)
-	return altGroup
-}
-
-// Return a non-negative random number in the inclusive range [min, max].
-// If max <= min, returns the maximum uint value and an error.
-func randFromRange(min, max uint64) (uint64, error) {
-	if max <= min {
-		return ^uint64(0), fmt.Errorf("max (%d) cannot be less than or equal to min (%d)", max, min)
-	}
-	return uint64(rand.Intn(int((max-min)+1))) + min, nil
-}
-
-func RandomBoolean() bool {
-	return rand.Int31()&0x01 == 0
-}
-
-func isReachableURL(url string) bool {
-	_, err := http.Get(url)
-	return err == nil
-}
-
-func isHTTPS(url string) bool {
-	resp, err := http.Get(url)
-	if err != nil {
-		log.Warn(err)
-		return false
-	}
-	// final URL resolved
-	return strings.HasPrefix(resp.Request.URL.String(), "https://")
-}
-
 var (
 	IsNotNumericRegex = func() *regexp.Regexp { return nil }
 	IsNumericRegex    = func() *regexp.Regexp { return nil }
@@ -85,18 +39,6 @@ func init() {
 
 	r2 := regexp.MustCompile(`^\d+$`)
 	IsNumericRegex = func() *regexp.Regexp { return r2 }
-}
-
-// Taken from https://stackoverflow.com/questions/41602230
-func firstN(s string, n int) string {
-	i := 0
-	for j := range s {
-		if i == n {
-			return s[:j]
-		}
-		i++
-	}
-	return s
 }
 
 func fastHappyColorInt64() (int64, error) {
@@ -113,26 +55,6 @@ func init() {
 	}
 
 	sentenceEndPunctRegex = func() *regexp.Regexp { return r }
-}
-
-func MinOf(vars ...int) int {
-	min := vars[0]
-	for _, i := range vars {
-		if min > i {
-			min = i
-		}
-	}
-	return min
-}
-
-func MaxOf(vars ...int) int {
-	max := vars[0]
-	for _, i := range vars {
-		if max < i {
-			max = i
-		}
-	}
-	return max
 }
 
 // See https://discord.com/developers/docs/interactions/application-commands#application-command-object

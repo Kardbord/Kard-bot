@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/TannerKvarfordt/Kard-bot/kardbot/dg_helpers"
+	"github.com/TannerKvarfordt/ubiquity/httputils"
 	"github.com/bwmarrin/discordgo"
 	"github.com/vartanbeno/go-reddit/v2/reddit"
 
@@ -202,7 +203,7 @@ func embedRedditMedia(post *reddit.Post, embed *dg_helpers.Embed) {
 		log.Error("embed is nil")
 		return
 	}
-	if !isHTTPS(post.URL) {
+	if !httputils.IsHTTPS(post.URL) {
 		log.Warn("link is not https, won't embed", post.URL)
 		return
 	}

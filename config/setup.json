@@ -2,6 +2,7 @@
   "enable-dg-logging": false,
   "default-log-level": "info",
   "unregister-all-cmds-on-startup": false,
+  "server-clock-failure-threshold": 10,
   "pprof": {
     "enabled": false,
     "address": "localhost:6060",

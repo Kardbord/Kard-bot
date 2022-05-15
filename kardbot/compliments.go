@@ -145,7 +145,7 @@ func morningComplimentOptIn(s *discordgo.Session, i *discordgo.InteractionCreate
 	complimentSubsAM[metadata.AuthorID] = true
 	complimentSubsAMMutex.Unlock()
 
-	err = writeComplimentSubscribersToConfig()
+	err = writeComplimentSubscribersToDisk()
 	if err != nil {
 		log.Errorf("Error persisting user %s's subscription: %v", metadata.AuthorUsername, err)
 		err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
@@ -187,7 +187,7 @@ func morningComplimentOptOut(s *discordgo.Session, i *discordgo.InteractionCreat
 	complimentSubsAM[metadata.AuthorID] = false
 	complimentSubsAMMutex.Unlock()
 
-	err = writeComplimentSubscribersToConfig()
+	err = writeComplimentSubscribersToDisk()
 	if err != nil {
 		log.Errorf("Error persisting user %s's opt-out: %v", metadata.AuthorUsername, err)
 		err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
@@ -230,7 +230,7 @@ func eveningComplimentOptIn(s *discordgo.Session, i *discordgo.InteractionCreate
 	complimentSubsPM[metadata.AuthorID] = true
 	complimentSubsPMMutex.Unlock()
 
-	err = writeComplimentSubscribersToConfig()
+	err = writeComplimentSubscribersToDisk()
 	if err != nil {
 		log.Errorf("Error persisting user %s's subscription: %v", metadata.AuthorUsername, err)
 		err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
@@ -272,7 +272,7 @@ func eveningComplimentOptOut(s *discordgo.Session, i *discordgo.InteractionCreat
 	complimentSubsPM[metadata.AuthorID] = false
 	complimentSubsPMMutex.Unlock()
 
-	err = writeComplimentSubscribersToConfig()
+	err = writeComplimentSubscribersToDisk()
 	if err != nil {
 		log.Errorf("Error persisting user %s's opt-out: %v", metadata.AuthorUsername, err)
 		err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
@@ -420,7 +420,7 @@ func sendCompliments(subscribers map[string]bool) error {
 	return nil
 }
 
-func writeComplimentSubscribersToConfig() error {
+func writeComplimentSubscribersToDisk() error {
 	complimentSubscribersFileMutex.Lock()
 	defer complimentSubscribersFileMutex.Unlock()
 	complimentSubsAMMutex.RLock()

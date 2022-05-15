@@ -5,6 +5,7 @@ go 1.18
 require (
 	github.com/TannerKvarfordt/hfapigo v0.0.4
 	github.com/TannerKvarfordt/imgflipgo v1.0.5
+	github.com/TannerKvarfordt/ubiquity v0.1.1
 	github.com/bwmarrin/discordgo v0.25.0
 	github.com/deadshot465/owoify-go v1.0.1
 	github.com/forPelevin/gomoji v1.1.3
@@ -28,6 +29,7 @@ require (
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/robfig/cron/v3 v3.0.1 // indirect
 	golang.org/x/crypto v0.0.0-20220411220226-7b82a4e95df4 // indirect
+	golang.org/x/exp v0.0.0-20220414153411-bcd21879b8fd // indirect
 	golang.org/x/net v0.0.0-20220418201149-a630d4f3e7a2 // indirect
 	golang.org/x/oauth2 v0.0.0-20220411215720-9780585627b5 // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect

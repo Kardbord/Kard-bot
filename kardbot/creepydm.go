@@ -136,7 +136,7 @@ func creepyDMsOptIn(s *discordgo.Session, i *discordgo.InteractionCreate) error 
 	creepyDMSubs[metadata.AuthorID] = true
 	creepyDMSubsMutex.Unlock()
 
-	err = writeCreepyDmSubscribersToConfig()
+	err = writeCreepyDmSubscribersToDisk()
 	if err != nil {
 		err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
@@ -169,7 +169,7 @@ func creepyDMsOptOut(s *discordgo.Session, i *discordgo.InteractionCreate) error
 	creepyDMSubs[metadata.AuthorID] = false
 	creepyDMSubsMutex.Unlock()
 
-	err = writeCreepyDmSubscribersToConfig()
+	err = writeCreepyDmSubscribersToDisk()
 	if err != nil {
 		err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
@@ -307,7 +307,7 @@ func isSubbedToCreepyDMs(subscriberID, subscriberName string) bool {
 	return true
 }
 
-func writeCreepyDmSubscribersToConfig() error {
+func writeCreepyDmSubscribersToDisk() error {
 	creepyDmSubscribersFileMutex.Lock()
 	defer creepyDmSubscribersFileMutex.Unlock()
 	creepyDMSubsMutex.RLock()

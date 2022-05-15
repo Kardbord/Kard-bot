@@ -9,6 +9,7 @@ import (
 	"github.com/TannerKvarfordt/Kard-bot/kardbot/config"
 	"github.com/TannerKvarfordt/Kard-bot/kardbot/dg_helpers"
 	"github.com/TannerKvarfordt/hfapigo"
+	"github.com/TannerKvarfordt/ubiquity/stringutils"
 	"github.com/bwmarrin/discordgo"
 	log "github.com/sirupsen/logrus"
 )
@@ -199,7 +200,7 @@ func storyTime(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	}
 
 	_, err = s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
-		Content: firstN(textResps[0].GeneratedTexts[0], int(MaxDiscordMsgLen)),
+		Content: stringutils.FirstN(textResps[0].GeneratedTexts[0], MaxDiscordMsgLen),
 		AllowedMentions: &discordgo.MessageAllowedMentions{
 			Parse: []discordgo.AllowedMentionType{
 				discordgo.AllowedMentionTypeUsers,

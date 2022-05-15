@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"strconv"
 
+	"github.com/TannerKvarfordt/ubiquity/mathutils/random"
 	"github.com/bwmarrin/discordgo"
 	cmap "github.com/orcaman/concurrent-map"
 	log "github.com/sirupsen/logrus"
@@ -65,7 +66,7 @@ func rollCustomDice(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	total := uint64(0)
 	if printIndividualRolls {
 		for j := int64(0); j < count; j++ {
-			roll, err := randFromRange(DieStartVal, sides)
+			roll, err := random.Range(DieStartVal, sides)
 			if err != nil {
 				log.Error(err)
 				interactionRespondEphemeralError(s, i, true, err)
@@ -78,7 +79,7 @@ func rollCustomDice(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		}
 	} else {
 		// No need to track individual dice rolls if we are only printing a total
-		roll, err := randFromRange(DieStartVal*uint64(count), sides*uint64(count))
+		roll, err := random.Range(DieStartVal*uint64(count), sides*uint64(count))
 		if err != nil {
 			log.Error(err)
 			interactionRespondEphemeralError(s, i, true, err)
@@ -307,7 +308,7 @@ func handleDnDButtonPress(s *discordgo.Session, i *discordgo.InteractionCreate) 
 
 	total := uint64(0)
 	for j := uint64(0); j < cfg.DiceCount; j++ {
-		rollResult, err := randFromRange(1, uint64(faces))
+		rollResult, err := random.Range(1, uint64(faces))
 		if err != nil {
 			log.Error(err)
 			interactionRespondEphemeralError(s, i, true, err)
