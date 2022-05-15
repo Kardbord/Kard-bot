@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/TannerKvarfordt/hfapigo v0.0.4
 	github.com/TannerKvarfordt/imgflipgo v1.0.5
-	github.com/TannerKvarfordt/ubiquity v0.1.0
+	github.com/TannerKvarfordt/ubiquity v0.1.1
 	github.com/bwmarrin/discordgo v0.25.0
 	github.com/deadshot465/owoify-go v1.0.1
 	github.com/forPelevin/gomoji v1.1.3
