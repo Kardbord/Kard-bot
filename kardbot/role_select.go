@@ -249,11 +249,14 @@ func handleRoleSelectMenuCommand(s *discordgo.Session, i *discordgo.InteractionC
 	wg := bot().updateLastActive()
 	defer wg.Wait()
 
-	if isAdmin, err := interactionIssuerIsAdmin(i); err != nil {
-		interactionRespondEphemeralError(s, i, true, err)
+	mdata, err := getInteractionMetaData(i)
+	if err != nil {
 		log.Error(err)
+		interactionRespondEphemeralError(s, i, true, err)
 		return
-	} else if !isAdmin {
+	}
+
+	if !hasPermissions(mdata.AuthorPermissions, discordgo.PermissionManageRoles) {
 		interactionRespondEphemeralError(s, i, false, fmt.Errorf("you must run this command from a server you administer"))
 		return
 	}

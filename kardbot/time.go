@@ -435,22 +435,20 @@ func writeServerClocksToDisk() error {
 }
 
 func handleTZSubCmdServerClock(s *discordgo.Session, i *discordgo.InteractionCreate) (*discordgo.InteractionResponse, bool, error) {
-	if isAdmin, err := interactionIssuerIsAdmin(i); err != nil {
-		return nil, true, err
-	} else if !isAdmin {
-		return &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Flags:   InteractionResponseFlagEphemeral,
-				Content: "You must run this command from a server you administer.",
-			},
-		}, false, nil
-	}
-
 	mdata, err := getInteractionMetaData(i)
 	if err != nil {
 		log.Error(err)
 		return nil, true, err
+	}
+
+	if !hasPermissions(mdata.AuthorPermissions, discordgo.PermissionManageChannels) {
+		return &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Flags:   InteractionResponseFlagEphemeral,
+				Content: "You must run this command from a server where you have the Manage Channels permission.",
+			},
+		}, false, nil
 	}
 
 	serverClocksMapMutex.RLock()
