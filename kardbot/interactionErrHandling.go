@@ -298,7 +298,7 @@ func dmOwnerErrorReport(s *discordgo.Session, errReport errorReport, anonymous b
 	if err != nil {
 		return err
 	}
-	uc, err := bot().Session.UserChannelCreate(metadata.AuthorID)
+	uc, err := bot().Session.UserChannelCreate(getOwnerID())
 	if err != nil {
 		return err
 	}
