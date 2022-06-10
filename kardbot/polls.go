@@ -53,9 +53,7 @@ func getPollOpts() []*discordgo.ApplicationCommandOption {
 
 func handlePollCmd(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	if s == nil || i == nil {
-		err := fmt.Errorf("nil Session pointer (%v) and/or InteractionCreate pointer (%v)", s, i)
-		interactionRespondEphemeralError(s, i, true, err)
-		log.Error(err)
+		log.Error(fmt.Errorf("nil Session pointer (%v) and/or InteractionCreate pointer (%v)", s, i))
 		return
 	}
 	wg := bot().updateLastActive()
@@ -108,10 +106,12 @@ func handlePollCmd(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		SetDescription(context)
 
 	for _, opt := range pollOpts {
+		// IMPORTANT: if you change the structure of this field value,
+		// you may also need to update the implementation of handlePollSubmission.
 		e.AddField(opt.Label, "👍 0 votes, 🗠 0% of votes cast")
 	}
 
-	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+	err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			Components: []discordgo.MessageComponent{
@@ -137,4 +137,44 @@ func handlePollCmd(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			},
 		},
 	})
+	if err != nil {
+		log.Error(err)
+		interactionRespondEphemeralError(s, i, true, err)
+	}
+}
+
+func handlePollSubmission(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	if s == nil || i == nil {
+		log.Error(fmt.Errorf("nil Session pointer (%v) and/or InteractionCreate pointer (%v)", s, i))
+		return
+	}
+	wg := bot().updateLastActive()
+	defer wg.Wait()
+
+	//metadata, err := getInteractionMetaData(i)
+	//if err != nil {
+	//	log.Error(err)
+	//	interactionRespondEphemeralError(s, i, true, err)
+	//	return
+	//}
+
+	// TODO: Handle the response.
+	// TODO: Protect with each poll msgID with a mutex.
+	//       Can probably be done with a thread-safe map.
+	//       No need to write anything to disk, just check
+	//       that no other routines are updating the same
+	//       message ID.
+
+	err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Content: "Your response was submitted! 🗳️",
+			Flags:   InteractionResponseFlagEphemeral,
+		},
+	})
+	if err != nil {
+		log.Error(err)
+		interactionRespondEphemeralError(s, i, true, err)
+		return
+	}
 }

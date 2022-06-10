@@ -443,5 +443,6 @@ func getComponentImpls() map[string]onInteractionHandler {
 		dndOtherOptionsSelectID:         handleDnDOtherOptionsSelection,
 		roleSelectMenuComponentIDPrefix: handleRoleSelection,
 		roleSelectResetButtonID:         handleRoleSelectReset,
+		pollSelectMenuID:                handlePollSubmission,
 	}
 }
