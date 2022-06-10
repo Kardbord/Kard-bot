@@ -11,10 +11,11 @@ type onInteractionHandler func(*discordgo.Session, *discordgo.InteractionCreate)
 
 // The max number of command options any single command is allowed to have.
 const (
-	maxDiscordCommandOptions = 25
-	maxDiscordOptionChoices  = 25
-	maxDiscordSelectMenuOpts = 25
-	maxDiscordActionRows     = 5
+	maxDiscordCommandOptions             = 25
+	maxDiscordOptionChoices              = 25
+	maxDiscordSelectMenuOpts             = 25
+	maxDiscordActionRows                 = 5
+	maxDiscordSelectMenuPlaceholderChars = 150
 )
 
 func getCommands() []*discordgo.ApplicationCommand {
@@ -311,6 +312,11 @@ func getCommands() []*discordgo.ApplicationCommand {
 			},
 		},
 		{
+			Name:        pollCmd,
+			Description: "Create a poll",
+			Options:     getPollOpts(),
+		},
+		{
 			Name:        storyTimeCmd,
 			Description: "The bot will tell you a short story (but not a good or sensical one) based on a given prompt.",
 			Options: []*discordgo.ApplicationCommandOption{
@@ -380,6 +386,7 @@ func getCommandImpls() map[string]onInteractionHandler {
 		embedCmd:              handleEmbedCmd,
 		madlibCmd:             handleMadLibCmd,
 		timeCmd:               handleTimeCmd,
+		pollCmd:               handlePollCmd,
 	}
 }
 
