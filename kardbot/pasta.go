@@ -16,6 +16,7 @@ import (
 )
 
 const (
+	pastaCmd       = "pasta"
 	pastaOptionUwu = "uwu"
 	pastaOptionTTS = "tts"
 )

@@ -9,6 +9,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+const oddsCmd = "what-are-the-odds"
+
 func whatAreTheOdds(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	wg := bot().updateLastActive()
 	defer wg.Wait()

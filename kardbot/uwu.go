@@ -9,8 +9,9 @@ import (
 )
 
 const (
+	uwuCmd          = "uwu"
 	uwuSubCmdCustom = "custom"
-	uwuSubCmdPasta  = "pasta"
+	uwuSubCmdPasta  = pastaCmd
 
 	owoLevel = "owo"
 	uwuLevel = "uwu"

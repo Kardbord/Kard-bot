@@ -15,6 +15,7 @@ import (
 )
 
 const (
+	creepyDMCmd     = "creepy-dms"
 	creepyDMGet     = "get-creepy-dm"
 	creepyChannelDM = "to-channel"
 	creepyDMOptIn   = "opt-in"

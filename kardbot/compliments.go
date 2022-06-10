@@ -15,6 +15,7 @@ import (
 )
 
 const (
+	complimentsCmd     = "compliments"
 	complimentsOptIn   = "opt-in"
 	complimentsOptOut  = "opt-out"
 	complimentsMorning = "morning"

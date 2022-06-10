@@ -50,7 +50,7 @@ func getCommands() []*discordgo.ApplicationCommand {
 			},
 		},
 		{
-			Name:        "what-are-the-odds",
+			Name:        oddsCmd,
 			Description: "What are the odds that an event will occur? Use third-person voice for best results.",
 			Options: []*discordgo.ApplicationCommandOption{
 				{
@@ -62,7 +62,7 @@ func getCommands() []*discordgo.ApplicationCommand {
 			},
 		},
 		{
-			Name:        "loglevel",
+			Name:        logLevelCmd,
 			Description: "Update the log level of the bot. Only works for whitelisted users.",
 			Options: []*discordgo.ApplicationCommandOption{
 				{
@@ -75,7 +75,7 @@ func getCommands() []*discordgo.ApplicationCommand {
 			},
 		},
 		{
-			Name:        "pasta",
+			Name:        pastaCmd,
 			Description: "Serves you a delicious pasta!",
 			Options: []*discordgo.ApplicationCommandOption{
 				{
@@ -101,7 +101,7 @@ func getCommands() []*discordgo.ApplicationCommand {
 			},
 		},
 		{
-			Name:        "uwu",
+			Name:        uwuCmd,
 			Description: "UwU-ifies messages, because why wouldn't it?",
 			Options: []*discordgo.ApplicationCommandOption{
 				{
@@ -132,7 +132,7 @@ func getCommands() []*discordgo.ApplicationCommand {
 				},
 				{
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Name:        "pasta",
+					Name:        uwuSubCmdPasta,
 					Description: "UwU-ify a copy-pasta!",
 					Options: []*discordgo.ApplicationCommandOption{
 						{
@@ -144,7 +144,7 @@ func getCommands() []*discordgo.ApplicationCommand {
 						},
 						{
 							Type:        discordgo.ApplicationCommandOptionString,
-							Name:        "pasta",
+							Name:        uwuSubCmdPasta,
 							Description: "A pasta, but served with a healthy topping of UwU!",
 							Required:    true,
 							Choices:     pastaChoices(),
@@ -160,7 +160,7 @@ func getCommands() []*discordgo.ApplicationCommand {
 			},
 		},
 		{
-			Name:        "reddit-roulette",
+			Name:        redditRouletteCmd,
 			Description: "Retrieve a random reddit post",
 			Options: []*discordgo.ApplicationCommandOption{
 				{
@@ -205,7 +205,7 @@ func getCommands() []*discordgo.ApplicationCommand {
 			},
 		},
 		{
-			Name:        "compliments",
+			Name:        complimentsCmd,
 			Description: "Receive a daily compliment!",
 			Options: []*discordgo.ApplicationCommandOption{
 				{
@@ -258,7 +258,7 @@ func getCommands() []*discordgo.ApplicationCommand {
 			},
 		},
 		{
-			Name:        "creepy-dms",
+			Name:        creepyDMCmd,
 			Description: "What do you mean you don't want to receive creepy DMs?",
 			Options: []*discordgo.ApplicationCommandOption{
 				{
@@ -350,7 +350,7 @@ func getCommands() []*discordgo.ApplicationCommand {
 			Options:     timeCmdOpts(),
 		},
 		{
-			Name:        "help",
+			Name:        helpCmd,
 			Description: "Get helpful information about the bot.",
 		},
 	}
@@ -365,14 +365,14 @@ func getCommands() []*discordgo.ApplicationCommand {
 func getCommandImpls() map[string]onInteractionHandler {
 	return map[string]onInteractionHandler{
 		RollCmd:               roll,
-		"loglevel":            updateLogLevel,
-		"pasta":               servePasta,
-		"reddit-roulette":     redditRoulette,
-		"uwu":                 uwuify,
-		"compliments":         complimentHandler,
-		"creepy-dms":          creepyDMHandler,
-		"help":                botInfo,
-		"what-are-the-odds":   whatAreTheOdds,
+		logLevelCmd:           updateLogLevel,
+		pastaCmd:              servePasta,
+		redditRouletteCmd:     redditRoulette,
+		uwuCmd:                uwuify,
+		complimentsCmd:        complimentHandler,
+		creepyDMCmd:           creepyDMHandler,
+		helpCmd:               botInfo,
+		oddsCmd:               whatAreTheOdds,
 		memeCommand:           buildAMeme,
 		delBotDMCmd:           deleteBotDMs,
 		storyTimeCmd:          storyTime,

@@ -14,6 +14,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+const helpCmd = "help"
 const roboCatPng string = "Robo_cat.png"
 
 func botInfo(s *discordgo.Session, i *discordgo.InteractionCreate) {

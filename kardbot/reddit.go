@@ -21,6 +21,8 @@ var (
 )
 
 const (
+	redditRouletteCmd string = "reddit-roulette"
+
 	redditRouletteSubCmdSFW  string = "sfw"
 	redditRouletteSubCmdNSFW string = "nsfw"
 	redditRouletteSubCmdAny  string = "any"
