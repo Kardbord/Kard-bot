@@ -14,6 +14,7 @@ import (
 	"github.com/TannerKvarfordt/Kard-bot/kardbot/dg_helpers"
 	"github.com/TannerKvarfordt/ubiquity/mathutils"
 	"github.com/bwmarrin/discordgo"
+	"github.com/forPelevin/gomoji"
 	cmap "github.com/orcaman/concurrent-map"
 	log "github.com/sirupsen/logrus"
 )
@@ -219,7 +220,7 @@ func handlePollCmd(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			}
 			pollOpts = append(pollOpts, discordgo.SelectMenuOption{
 				Label: trimmedLabel,
-				Value: trimmedLabel,
+				Value: gomoji.RemoveEmojis(trimmedLabel),
 				Emoji: emoji,
 			})
 		}
@@ -392,14 +393,15 @@ func (p *poll) updateMessage(s *discordgo.Session) error {
 
 	totalVotesCast := 0
 	for _, field := range e.Fields {
-		results[field.Name] = 0
+		trimmedName := gomoji.RemoveEmojis(field.Name)
+		results[trimmedName] = 0
 		for _, val := range p.Votes.Items() {
 			userVotes, ok := val.([]string)
 			if !ok {
 				return fmt.Errorf("bad cast from %v to []string", val)
 			}
 			for _, vote := range userVotes {
-				if field.Name == vote {
+				if trimmedName == vote {
 					results[vote]++
 					totalVotesCast++
 				}
