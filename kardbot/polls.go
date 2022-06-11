@@ -251,7 +251,7 @@ func handlePollCmd(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		SetDescription(context)
 
 	for i := range pollOpts {
-		e.AddField(pollOpts[i].Label, "👍 0 votes, 🗠 0% of votes cast")
+		e.AddField(pollOpts[i].Label, "👍 0 votes, 📈 0% of votes cast")
 		// Now we can finish trimming our SelectMenu Labels.
 		pollOpts[i].Label = pollOpts[i].Value
 	}
@@ -438,7 +438,7 @@ func (p *poll) updateMessage(s *discordgo.Session) error {
 		}
 		e.Fields = append(e.Fields, &discordgo.MessageEmbedField{
 			Name:  result.Name,
-			Value: fmt.Sprintf("👍 %d votes, 🗠 %d%% of votes cast", result.Value, uint(percentOfVotes)),
+			Value: fmt.Sprintf("👍 %d votes, 📈 %d%% of votes cast", result.Value, uint(percentOfVotes)),
 		})
 	}
 
