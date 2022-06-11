@@ -15,9 +15,6 @@ const delBotDMCmd = "del-bot-dm"
 const msgLimit = 100
 
 func deleteBotDMs(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	wg := bot().updateLastActive()
-	defer wg.Wait()
-
 	fromSelf, err := authorIsSelf(s, i)
 	if err != nil {
 		log.Error(err)

@@ -9,10 +9,9 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func whatAreTheOdds(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	wg := bot().updateLastActive()
-	defer wg.Wait()
+const oddsCmd = "what-are-the-odds"
 
+func whatAreTheOdds(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	event := i.ApplicationCommandData().Options[0].StringValue()
 	event = sentenceEndPunctRegex().ReplaceAllString(event, "")
 

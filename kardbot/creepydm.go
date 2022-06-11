@@ -15,6 +15,7 @@ import (
 )
 
 const (
+	creepyDMCmd     = "creepy-dms"
 	creepyDMGet     = "get-creepy-dm"
 	creepyChannelDM = "to-channel"
 	creepyDMOptIn   = "opt-in"
@@ -100,9 +101,6 @@ func init() {
 }
 
 func creepyDMHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	wg := bot().updateLastActive()
-	defer wg.Wait()
-
 	if s == nil || i == nil {
 		log.Errorf("nil session or interaction; s=%v, i=%v", s, i)
 		return

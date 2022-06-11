@@ -21,6 +21,8 @@ var (
 )
 
 const (
+	redditRouletteCmd string = "reddit-roulette"
+
 	redditRouletteSubCmdSFW  string = "sfw"
 	redditRouletteSubCmdNSFW string = "nsfw"
 	redditRouletteSubCmdAny  string = "any"
@@ -38,9 +40,6 @@ func init() {
 }
 
 func redditRoulette(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	wg := bot().updateLastActive()
-	defer wg.Wait()
-
 	if isSelf, err := authorIsSelf(s, i); err != nil {
 		interactionRespondEphemeralError(s, i, true, err)
 		log.Error(err)

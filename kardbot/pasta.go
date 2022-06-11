@@ -16,6 +16,7 @@ import (
 )
 
 const (
+	pastaCmd       = "pasta"
 	pastaOptionUwu = "uwu"
 	pastaOptionTTS = "tts"
 )
@@ -110,9 +111,6 @@ func (p *pasta) makePasta() (string, error) {
 }
 
 func servePasta(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	wg := bot().updateLastActive()
-	defer wg.Wait()
-
 	if isSelf, err := authorIsSelf(s, i); err != nil {
 		log.Error(err)
 		return

@@ -123,6 +123,10 @@ func Stop() {
 		log.Error(err)
 	}
 
+	if err := purgeFinishedPolls(); err != nil {
+		log.Error(err)
+	}
+
 	if gbot == nil {
 		log.Info("Bot is not running")
 		return
@@ -278,6 +282,9 @@ func (kbot *kardbot) prepInteractionHandlers() {
 			interactionRespondEphemeralError(s, i, true, err)
 			return
 		}
+
+		wg := kbot.updateLastActive()
+		defer wg.Wait()
 
 		if kbot.TraceEnabled {
 			ctx, task := trace.NewTask(context.Background(), command)

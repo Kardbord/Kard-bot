@@ -205,9 +205,6 @@ func buildMemeCommands() []*discordgo.ApplicationCommand {
 }
 
 func buildAMeme(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	wg := bot().updateLastActive()
-	defer wg.Wait()
-
 	flags := uint64(0)
 	isPreview := i.ApplicationCommandData().Options[previewOptIdx].BoolValue()
 	if isPreview {

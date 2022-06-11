@@ -9,6 +9,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+const logLevelCmd = "loglevel"
+
 // Map logrus log levels to discordgo log levels
 func logrusToDiscordGo() map[log.Level]int {
 	return map[log.Level]int{
@@ -23,9 +25,6 @@ func logrusToDiscordGo() map[log.Level]int {
 }
 
 func updateLogLevel(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	wg := bot().updateLastActive()
-	defer wg.Wait()
-
 	if isSelf, err := authorIsSelf(s, i); err != nil {
 		log.Error(err)
 		return

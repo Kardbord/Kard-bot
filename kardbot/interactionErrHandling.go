@@ -191,8 +191,16 @@ func interactionFollowUpEphemeralError(s *discordgo.Session, i *discordgo.Intera
 		return
 	}
 
+	_, filename, line, ok := runtime.Caller(1)
+	if !ok {
+		log.Error("couldn't obtain stack data")
+	}
+	followupWithError(s, i, errResp, filename, line)
+}
+
+func followupWithError(s *discordgo.Session, i *discordgo.InteractionCreate, errResp error, filename string, line int) {
 	errUUID := uuid.New()
-	_, err = s.FollowupMessageCreate(i.Interaction, false, &discordgo.WebhookParams{
+	_, err := s.FollowupMessageCreate(i.Interaction, false, &discordgo.WebhookParams{
 		Content:    "Something went wrong while processing your command. 😔",
 		Flags:      InteractionResponseFlagEphemeral,
 		Components: errReportMsgComponents(errUUID),
@@ -200,10 +208,6 @@ func interactionFollowUpEphemeralError(s *discordgo.Session, i *discordgo.Intera
 	if err != nil {
 		log.Error(err)
 		return
-	}
-	_, filename, line, ok := runtime.Caller(1)
-	if !ok {
-		log.Error("couldn't obtain stack data")
 	}
 	errsToReport.Set(fmt.Sprint(errUUID), errorReport{
 		UUID:              errUUID,
@@ -215,9 +219,6 @@ func interactionFollowUpEphemeralError(s *discordgo.Session, i *discordgo.Intera
 }
 
 func handleErrorReportSelection(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	wg := bot().updateLastActive()
-	defer wg.Wait()
-
 	data := i.MessageComponentData()
 	if len(data.Values) == 0 {
 		log.Error("No values returned with component interaction data")
