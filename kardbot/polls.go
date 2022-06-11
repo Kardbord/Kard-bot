@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"math"
 	"runtime"
+	"sort"
 	"sync"
 	"time"
 
@@ -371,6 +372,11 @@ func (p *poll) setVotes(userID string, votes ...string) {
 
 // Tablulates poll results and updates the discord message
 func (p *poll) updateMessage(s *discordgo.Session) error {
+
+	// TODO: This function can probably be a lot cleaner.
+	//       I should know better than to try and bang out
+	//       a feature when I'm short on time, but here we are.
+
 	message, err := s.ChannelMessage(p.ChannelID, p.MessageID)
 	if err != nil {
 		return err
@@ -400,15 +406,29 @@ func (p *poll) updateMessage(s *discordgo.Session) error {
 			}
 		}
 	}
-	e.Fields = make([]*discordgo.MessageEmbedField, 0, len(results))
+
+	type resultsTuple struct {
+		Name  string
+		Value uint
+	}
+	sortedResults := make([]resultsTuple, 0, len(results))
+
 	for candidate, votes := range results {
+		sortedResults = append(sortedResults, resultsTuple{Name: candidate, Value: votes})
+	}
+	sort.Slice(sortedResults, func(i, j int) bool {
+		return sortedResults[i].Value > sortedResults[j].Value
+	})
+
+	e.Fields = make([]*discordgo.MessageEmbedField, 0, len(results))
+	for _, result := range sortedResults {
 		percentOfVotes := float64(0)
 		if totalVotesCast > 0 {
-			percentOfVotes = math.Round((float64(votes) / float64(totalVotesCast)) * 100)
+			percentOfVotes = math.Round((float64(result.Value) / float64(totalVotesCast)) * 100)
 		}
 		e.Fields = append(e.Fields, &discordgo.MessageEmbedField{
-			Name:  candidate,
-			Value: fmt.Sprintf("👍 %d votes, 🗠 %d%% of votes cast", votes, uint(percentOfVotes)),
+			Name:  result.Name,
+			Value: fmt.Sprintf("👍 %d votes, 🗠 %d%% of votes cast", result.Value, uint(percentOfVotes)),
 		})
 	}
 
