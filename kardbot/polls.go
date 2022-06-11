@@ -158,15 +158,15 @@ const (
 func getPollOpts() []*discordgo.ApplicationCommandOption {
 	opts := []*discordgo.ApplicationCommandOption{
 		{
-			Type:        discordgo.ApplicationCommandOptionInteger,
-			Name:        pollCmdOptMaxSelections,
-			Description: "The maximum number of options a user can vote for",
-			Required:    true,
-		},
-		{
 			Type:        discordgo.ApplicationCommandOptionString,
 			Name:        pollCmdOptTitle,
 			Description: fmt.Sprintf("Title of the poll, maximum %d characters.", maxDiscordSelectMenuPlaceholderChars),
+			Required:    true,
+		},
+		{
+			Type:        discordgo.ApplicationCommandOptionInteger,
+			Name:        pollCmdOptMaxSelections,
+			Description: "The maximum number of options a user can vote for",
 			Required:    true,
 		},
 		{
