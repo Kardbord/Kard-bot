@@ -7,6 +7,7 @@ import (
 	"math"
 	"runtime"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 
@@ -218,9 +219,16 @@ func handlePollCmd(s *discordgo.Session, i *discordgo.InteractionCreate) {
 				interactionRespondEphemeralError(s, i, true, err)
 				return
 			}
+			trimmedLabel = strings.TrimSpace(gomoji.RemoveEmojis(trimmedLabel))
+			if len(trimmedLabel) == 0 {
+				interactionRespondEphemeralError(s, i, false, fmt.Errorf("options must contain at least one non-whitespace, non-emoji character"))
+				return
+			}
 			pollOpts = append(pollOpts, discordgo.SelectMenuOption{
-				Label: trimmedLabel,
-				Value: gomoji.RemoveEmojis(trimmedLabel),
+				// We'll trim off any emojis in the label after we've used
+				// it to build our Embed.
+				Label: opt.StringValue(),
+				Value: trimmedLabel,
 				Emoji: emoji,
 			})
 		}
@@ -242,13 +250,12 @@ func handlePollCmd(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	e := dg_helpers.NewEmbed().
 		SetColor(int(color)).
 		SetTitle(title).
-		SetDescription(context).
-		SetTimestamp()
+		SetDescription(context)
 
-	for _, opt := range pollOpts {
-		// IMPORTANT: if you change the structure of this field value,
-		// you may also need to update the implementation of handlePollSubmission.
-		e.AddField(opt.Label, "👍 0 votes, 🗠 0% of votes cast")
+	for i := range pollOpts {
+		e.AddField(pollOpts[i].Label, "👍 0 votes, 🗠 0% of votes cast")
+		// Now we can finish trimming our SelectMenu Labels.
+		pollOpts[i].Label = pollOpts[i].Value
 	}
 
 	err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
@@ -365,6 +372,7 @@ func handlePollSubmission(s *discordgo.Session, i *discordgo.InteractionCreate) 
 		log.Error(err)
 		interactionFollowUpEphemeralError(s, i, true, err)
 	}
+	writePollsToDisk()
 }
 
 func (p *poll) setVotes(userID string, votes ...string) {
@@ -393,8 +401,13 @@ func (p *poll) updateMessage(s *discordgo.Session) error {
 
 	totalVotesCast := 0
 	for _, field := range e.Fields {
-		trimmedName := gomoji.RemoveEmojis(field.Name)
-		results[trimmedName] = 0
+		_, trimmedName, err := detectAndScrubDiscordEmojis(field.Name)
+		if err != nil {
+			return err
+		}
+		trimmedName = gomoji.RemoveEmojis(trimmedName)
+		trimmedName = strings.TrimSpace(trimmedName)
+		results[field.Name] = 0
 		for _, val := range p.Votes.Items() {
 			userVotes, ok := val.([]string)
 			if !ok {
@@ -402,7 +415,7 @@ func (p *poll) updateMessage(s *discordgo.Session) error {
 			}
 			for _, vote := range userVotes {
 				if trimmedName == vote {
-					results[vote]++
+					results[field.Name]++
 					totalVotesCast++
 				}
 			}
