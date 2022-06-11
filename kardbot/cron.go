@@ -43,6 +43,13 @@ func init() {
 	// https://crontab.guru/#*_*_*_*_*
 	scheduler().Cron("* * * * *").Do(updateServerClocks)
 
+	// https://crontab.guru/#0_*_*_*_*
+	scheduler().Cron("0 * * * *").Do(func() {
+		if err := purgeFinishedPolls(); err != nil {
+			log.Error(err)
+		}
+	})
+
 	// ^The above only initializes the scheduler, it does not start it.
 }
 

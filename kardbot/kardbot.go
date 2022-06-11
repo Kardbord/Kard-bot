@@ -123,6 +123,10 @@ func Stop() {
 		log.Error(err)
 	}
 
+	if err := purgeFinishedPolls(); err != nil {
+		log.Error(err)
+	}
+
 	if gbot == nil {
 		log.Info("Bot is not running")
 		return
