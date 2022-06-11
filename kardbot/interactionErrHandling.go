@@ -219,9 +219,6 @@ func followupWithError(s *discordgo.Session, i *discordgo.InteractionCreate, err
 }
 
 func handleErrorReportSelection(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	wg := bot().updateLastActive()
-	defer wg.Wait()
-
 	data := i.MessageComponentData()
 	if len(data.Values) == 0 {
 		log.Error("No values returned with component interaction data")

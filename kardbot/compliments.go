@@ -100,9 +100,6 @@ func init() {
 }
 
 func complimentHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	wg := bot().updateLastActive()
-	defer wg.Wait()
-
 	if s == nil || i == nil {
 		log.Errorf("nil session or interaction; s=%v, i=%v", s, i)
 		return

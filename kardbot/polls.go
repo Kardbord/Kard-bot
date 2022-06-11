@@ -196,8 +196,6 @@ func handlePollCmd(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		log.Error(fmt.Errorf("nil Session pointer (%v) and/or InteractionCreate pointer (%v)", s, i))
 		return
 	}
-	wg := bot().updateLastActive()
-	defer wg.Wait()
 
 	minSelections := 0
 	maxSelections := 1
@@ -312,9 +310,6 @@ func handlePollSubmission(s *discordgo.Session, i *discordgo.InteractionCreate) 
 		log.Error(fmt.Errorf("nil Session pointer (%v) and/or InteractionCreate pointer (%v)", s, i))
 		return
 	}
-	wg := bot().updateLastActive()
-	defer wg.Wait()
-
 	mdata, err := getInteractionMetaData(i)
 	if err != nil {
 		log.Error(err)

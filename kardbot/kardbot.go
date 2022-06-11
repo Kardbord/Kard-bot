@@ -283,6 +283,9 @@ func (kbot *kardbot) prepInteractionHandlers() {
 			return
 		}
 
+		wg := kbot.updateLastActive()
+		defer wg.Wait()
+
 		if kbot.TraceEnabled {
 			ctx, task := trace.NewTask(context.Background(), command)
 			defer task.End()

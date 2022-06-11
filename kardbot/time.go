@@ -194,8 +194,6 @@ func handleTimeCmd(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		log.Error(err)
 		return
 	}
-	wg := bot().updateLastActive()
-	defer wg.Wait()
 
 	var (
 		err           error                          = nil

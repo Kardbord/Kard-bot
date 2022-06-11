@@ -246,9 +246,6 @@ func roleSelectCmdOpts() []*discordgo.ApplicationCommandOption {
 }
 
 func handleRoleSelectMenuCommand(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	wg := bot().updateLastActive()
-	defer wg.Wait()
-
 	mdata, err := getInteractionMetaData(i)
 	if err != nil {
 		log.Error(err)
@@ -1088,8 +1085,6 @@ func handleRoleSelection(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		log.Errorf("nil Session pointer (%v) and/or InteractionCreate pointer (%v)", s, i)
 		return
 	}
-	wg := bot().updateLastActive()
-	defer wg.Wait()
 
 	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
