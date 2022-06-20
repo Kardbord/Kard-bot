@@ -112,16 +112,14 @@ func purgeFinishedPolls() error {
 			if p.Close.Before(time.Now().UTC()) {
 				polls.Remove(key)
 				if message, err := bot().Session.ChannelMessage(p.ChannelID, p.MessageID); err == nil {
-					for i := range message.Components {
-						if message.Components[i].Type() == discordgo.SelectMenuComponent {
-							if c, ok := message.Components[i].(discordgo.SelectMenu); ok {
-								c.Disabled = true
-							}
+					if len(message.Embeds) > 0 {
+						message.Embeds[0].Footer = &discordgo.MessageEmbedFooter{
+							Text: "This poll is now closed.",
 						}
 					}
 					_, err = bot().Session.ChannelMessageEditComplex(&discordgo.MessageEdit{
 						Content:    &message.Content,
-						Components: message.Components,
+						Components: []discordgo.MessageComponent{},
 						Embeds:     message.Embeds,
 						AllowedMentions: &discordgo.MessageAllowedMentions{
 							Parse: []discordgo.AllowedMentionType{

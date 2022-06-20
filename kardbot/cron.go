@@ -43,8 +43,8 @@ func init() {
 	// https://crontab.guru/#*_*_*_*_*
 	scheduler().Cron("* * * * *").Do(updateServerClocks)
 
-	// https://crontab.guru/#0_*_*_*_*
-	scheduler().Cron("0 * * * *").Do(func() {
+	// https://crontab.guru/#0_1_*_*_*
+	scheduler().Cron("0 1 * * *").Do(func() {
 		if err := purgeFinishedPolls(); err != nil {
 			log.Error(err)
 		}
