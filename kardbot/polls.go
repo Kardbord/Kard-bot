@@ -16,7 +16,7 @@ import (
 	"github.com/TannerKvarfordt/ubiquity/mathutils"
 	"github.com/bwmarrin/discordgo"
 	"github.com/forPelevin/gomoji"
-	cmap "github.com/orcaman/concurrent-map"
+	cmap "github.com/orcaman/concurrent-map/v2"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -30,7 +30,7 @@ type poll struct {
 	// Maps user IDs to votes cast.
 	// Key: Discord User ID
 	// Val: []string
-	Votes cmap.ConcurrentMap
+	Votes cmap.ConcurrentMap[[]string]
 
 	// The date the poll was opened
 	Open time.Time
@@ -45,7 +45,7 @@ func newPoll(messageID, channelID string) poll {
 	return poll{
 		MessageID: messageID,
 		ChannelID: channelID,
-		Votes:     cmap.New(),
+		Votes:     cmap.New[[]string](),
 		Open:      time.Now().UTC(),
 		Close:     time.Now().UTC().AddDate(0, 0, 7),
 	}
@@ -54,7 +54,7 @@ func newPoll(messageID, channelID string) poll {
 // Tracks existing polls.
 // Key: MessageID
 // Val: poll
-var polls cmap.ConcurrentMap = cmap.New()
+var polls cmap.ConcurrentMap[poll] = cmap.New[poll]()
 
 const pollsStorageFilepath = "config/polls.json"
 
@@ -84,7 +84,7 @@ func init() {
 		p := poll{
 			MessageID: val.MessageID,
 			ChannelID: val.ChannelID,
-			Votes:     cmap.New(),
+			Votes:     cmap.New[[]string](),
 			Open:      val.Open,
 			Close:     val.Close,
 		}
@@ -107,42 +107,36 @@ func writePollsToDisk() error {
 }
 
 func purgeFinishedPolls() error {
-	for key, val := range polls.Items() {
-		if p, ok := val.(poll); ok {
-			if p.Close.Before(time.Now().UTC()) {
-				polls.Remove(key)
-				if message, err := bot().Session.ChannelMessage(p.ChannelID, p.MessageID); err == nil {
-					for i := range message.Components {
-						if message.Components[i].Type() == discordgo.SelectMenuComponent {
-							if c, ok := message.Components[i].(discordgo.SelectMenu); ok {
-								c.Disabled = true
-							}
-						}
+	for key, p := range polls.Items() {
+		if p.Close.Before(time.Now().UTC()) {
+			polls.Remove(key)
+			if message, err := bot().Session.ChannelMessage(p.ChannelID, p.MessageID); err == nil {
+				if len(message.Embeds) > 0 {
+					message.Embeds[0].Footer = &discordgo.MessageEmbedFooter{
+						Text: "This poll is now closed.",
 					}
-					_, err = bot().Session.ChannelMessageEditComplex(&discordgo.MessageEdit{
-						Content:    &message.Content,
-						Components: message.Components,
-						Embeds:     message.Embeds,
-						AllowedMentions: &discordgo.MessageAllowedMentions{
-							Parse: []discordgo.AllowedMentionType{
-								discordgo.AllowedMentionTypeEveryone,
-								discordgo.AllowedMentionTypeRoles,
-								discordgo.AllowedMentionTypeUsers,
-							},
+				}
+				_, err = bot().Session.ChannelMessageEditComplex(&discordgo.MessageEdit{
+					Content:    &message.Content,
+					Components: []discordgo.MessageComponent{},
+					Embeds:     message.Embeds,
+					AllowedMentions: &discordgo.MessageAllowedMentions{
+						Parse: []discordgo.AllowedMentionType{
+							discordgo.AllowedMentionTypeEveryone,
+							discordgo.AllowedMentionTypeRoles,
+							discordgo.AllowedMentionTypeUsers,
 						},
-						Flags:   message.Flags,
-						ID:      message.ID,
-						Channel: message.ChannelID,
-					})
-					if err != nil {
-						log.Error(err)
-					}
-				} else {
+					},
+					Flags:   message.Flags,
+					ID:      message.ID,
+					Channel: message.ChannelID,
+				})
+				if err != nil {
 					log.Error(err)
 				}
+			} else {
+				log.Error(err)
 			}
-		} else {
-			log.Errorf("Bad cast of %v to 'poll' struct", val)
 		}
 	}
 
@@ -344,15 +338,7 @@ func handlePollSubmission(s *discordgo.Session, i *discordgo.InteractionCreate) 
 		return
 	}
 
-	pInterface, _ := polls.Get(mdata.MessageID)
-	p, ok := pInterface.(poll)
-	if !ok {
-		err = fmt.Errorf("bad cast from %v to 'poll'", pInterface)
-		log.Error(err)
-		interactionFollowUpEphemeralError(s, i, true, err)
-		return
-	}
-
+	p, _ := polls.Get(mdata.MessageID)
 	p.setVotes(mdata.AuthorID, i.MessageComponentData().Values...)
 	if err = p.updateMessage(s); err != nil {
 		log.Error(err)
@@ -403,11 +389,7 @@ func (p *poll) updateMessage(s *discordgo.Session) error {
 		trimmedName = gomoji.RemoveEmojis(trimmedName)
 		trimmedName = strings.TrimSpace(trimmedName)
 		results[field.Name] = 0
-		for _, val := range p.Votes.Items() {
-			userVotes, ok := val.([]string)
-			if !ok {
-				return fmt.Errorf("bad cast from %v to []string", val)
-			}
+		for _, userVotes := range p.Votes.Items() {
 			for _, vote := range userVotes {
 				if trimmedName == vote {
 					results[field.Name]++

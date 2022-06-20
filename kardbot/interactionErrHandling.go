@@ -9,7 +9,7 @@ import (
 	"github.com/TannerKvarfordt/Kard-bot/kardbot/dg_helpers"
 	"github.com/bwmarrin/discordgo"
 	"github.com/google/uuid"
-	cmap "github.com/orcaman/concurrent-map"
+	cmap "github.com/orcaman/concurrent-map/v2"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -52,7 +52,7 @@ type errorReport struct {
 
 var (
 	// Maps UUIDs to errorReports
-	errsToReport = cmap.New()
+	errsToReport = cmap.New[errorReport]()
 
 	errReportMsgComponents = func(errUUID uuid.UUID) []discordgo.MessageComponent {
 		ownerMention := ""
@@ -232,15 +232,9 @@ func handleErrorReportSelection(s *discordgo.Session, i *discordgo.InteractionCr
 		return
 	}
 
-	iErrReport, ok := errsToReport.Get(selection.ErrUUID.String())
+	errReport, ok := errsToReport.Get(selection.ErrUUID.String())
 	if !ok {
 		log.Errorf("No error report found with UUID=%s", selection.ErrUUID)
-		return
-	}
-
-	errReport, ok := iErrReport.(errorReport)
-	if !ok {
-		log.Error("Could not convert interface to errorReport")
 		return
 	}
 

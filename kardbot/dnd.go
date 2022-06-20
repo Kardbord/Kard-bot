@@ -7,7 +7,7 @@ import (
 
 	"github.com/TannerKvarfordt/ubiquity/mathutils/random"
 	"github.com/bwmarrin/discordgo"
-	cmap "github.com/orcaman/concurrent-map"
+	cmap "github.com/orcaman/concurrent-map/v2"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -288,16 +288,9 @@ func handleDnDButtonPress(s *discordgo.Session, i *discordgo.InteractionCreate) 
 		return
 	}
 
-	iCfg, ok := dndDiceRollMsgConfigs.Get(string(getDndDiceRollMsgKey(*metadata)))
+	cfg, ok := dndDiceRollMsgConfigs.Get(string(getDndDiceRollMsgKey(*metadata)))
 	if !ok {
-		iCfg = newDnDRollButtonConfig(metadata.MessageID, metadata.AuthorID)
-	}
-	cfg, ok := iCfg.(dndRollButtonConfig)
-	if !ok {
-		err = fmt.Errorf("bad cast to dndButtonsMsgConfig")
-		log.Error(err)
-		interactionRespondEphemeralError(s, i, true, err)
-		return
+		cfg = newDnDRollButtonConfig(metadata.MessageID, metadata.AuthorID)
 	}
 
 	faces := cfg.Faces
@@ -369,16 +362,9 @@ func handleDiceCountMenuSelection(s *discordgo.Session, i *discordgo.Interaction
 		return
 	}
 
-	iCfg, ok := dndDiceRollMsgConfigs.Get(string(getDndDiceRollMsgKey(*metadata)))
+	cfg, ok := dndDiceRollMsgConfigs.Get(string(getDndDiceRollMsgKey(*metadata)))
 	if !ok {
-		iCfg = newDnDRollButtonConfig(metadata.MessageID, metadata.AuthorID)
-	}
-	cfg, ok := iCfg.(dndRollButtonConfig)
-	if !ok {
-		err = fmt.Errorf("bad cast to dndButtonsMsgConfig")
-		log.Error(err)
-		interactionRespondEphemeralError(s, i, true, err)
-		return
+		cfg = newDnDRollButtonConfig(metadata.MessageID, metadata.AuthorID)
 	}
 
 	if len(i.MessageComponentData().Values) == 0 {
@@ -415,16 +401,9 @@ func handleDiceFacesMenuSelection(s *discordgo.Session, i *discordgo.Interaction
 		return
 	}
 
-	iCfg, ok := dndDiceRollMsgConfigs.Get(string(getDndDiceRollMsgKey(*metadata)))
+	cfg, ok := dndDiceRollMsgConfigs.Get(string(getDndDiceRollMsgKey(*metadata)))
 	if !ok {
-		iCfg = newDnDRollButtonConfig(metadata.MessageID, metadata.AuthorID)
-	}
-	cfg, ok := iCfg.(dndRollButtonConfig)
-	if !ok {
-		err = fmt.Errorf("bad cast to dndButtonsMsgConfig")
-		log.Error(err)
-		interactionRespondEphemeralError(s, i, true, err)
-		return
+		cfg = newDnDRollButtonConfig(metadata.MessageID, metadata.AuthorID)
 	}
 
 	if len(i.MessageComponentData().Values) == 0 {
@@ -462,16 +441,9 @@ func handleDnDOtherOptionsSelection(s *discordgo.Session, i *discordgo.Interacti
 		return
 	}
 
-	iCfg, ok := dndDiceRollMsgConfigs.Get(string(getDndDiceRollMsgKey(*metadata)))
+	cfg, ok := dndDiceRollMsgConfigs.Get(string(getDndDiceRollMsgKey(*metadata)))
 	if !ok {
-		iCfg = newDnDRollButtonConfig(metadata.MessageID, metadata.AuthorID)
-	}
-	cfg, ok := iCfg.(dndRollButtonConfig)
-	if !ok {
-		err = fmt.Errorf("bad cast to dndButtonsMsgConfig")
-		log.Error(err)
-		interactionRespondEphemeralError(s, i, true, err)
-		return
+		cfg = newDnDRollButtonConfig(metadata.MessageID, metadata.AuthorID)
 	}
 
 	dm := false
@@ -523,7 +495,7 @@ func newDnDRollButtonConfig(msgID, userID string) dndRollButtonConfig {
 type dndDiceRollMsgKey string
 
 // Map of dndDiceRollMsgKey to dndRollButtonConfigs
-var dndDiceRollMsgConfigs = cmap.New()
+var dndDiceRollMsgConfigs = cmap.New[dndRollButtonConfig]()
 
 func getDndDiceRollMsgKey(mdata interactionMetaData) dndDiceRollMsgKey {
 	return dndDiceRollMsgKey(mdata.MessageID + mdata.AuthorID)
