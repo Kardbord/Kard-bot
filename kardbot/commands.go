@@ -356,6 +356,11 @@ func getCommands() []*discordgo.ApplicationCommand {
 			Options:     timeCmdOpts(),
 		},
 		{
+			Name:        dalleFlowCmd,
+			Description: "Ask an AI to generate an image from a prompt. Uses Jina-AI's fantastic Dalle-Flow.",
+			Options:     dalleFlowOpts(),
+		},
+		{
 			Name:        helpCmd,
 			Description: "Get helpful information about the bot.",
 		},
@@ -387,6 +392,7 @@ func getCommandImpls() map[string]onInteractionHandler {
 		madlibCmd:             handleMadLibCmd,
 		timeCmd:               handleTimeCmd,
 		pollCmd:               handlePollCmd,
+		dalleFlowCmd:          handleDalleFlowCmd,
 	}
 }
 

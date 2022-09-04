@@ -1,0 +1,5 @@
+{
+  "dalle-flow-server": "grpcs://dalle-flow.dev.jina.ai",
+  "dalle-flow-output": "./assets/dalle-flow/output.png",
+  "dalle-flow-script": "./assets/dalle-flow/dalle-flow.py"
+}
