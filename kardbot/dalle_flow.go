@@ -100,7 +100,7 @@ func handleDalleFlowCmd(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	}
 
 	_, err = s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
-		Content: fmt.Sprintf("%s\n-%s", prompt, mdata.AuthorMention),
+		Content: fmt.Sprintf("> %s\n\nRendered using [Dalle-Flow](<https://github.com/jina-ai/Dalle-Flow>).", prompt),
 		Files: []*discordgo.File{
 			{
 				Name:        fmt.Sprintf("Dalle-Flow-Output%s", mimeType.Extension()),
