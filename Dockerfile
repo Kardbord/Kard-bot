@@ -17,7 +17,8 @@ RUN apt-get update && apt-get install -y \
 
 RUN pip3 install --upgrade pip setuptools wheel
 RUN printf '[global]\nextra-index-url=https://www.piwheels.org/simple' >/etc/pip.conf
-RUN pip3 install "docarray[common]>=0.13.5" "grpcio==1.44.0" jina
+RUN pip3 install "docarray[common]>=0.13.5" jina
+RUN pip3 install grpcio==1.44.0
 
 COPY Robo_cat.png /
 COPY README.md /
