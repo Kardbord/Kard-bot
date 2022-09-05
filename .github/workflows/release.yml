@@ -41,6 +41,6 @@ jobs:
         with:
           distribution: goreleaser
           version: latest
-          args: release --rm-dist --timeout 120m
+          args: release --rm-dist --timeout 120m --debug
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
