@@ -21,7 +21,7 @@ const (
 
 var (
 	dalleFlowServer func() string
-	dalleFlowOutput func() string
+	dalleFlowOutputDir func() string
 	dalleFlowScript func() string
 )
 
@@ -43,7 +43,7 @@ func init() {
 	}
 
 	dalleFlowServer = func() string { return cfg.Server }
-	dalleFlowOutput = func() string { return cfg.Output }
+	dalleFlowOutputDir = func() string { return cfg.Output }
 	dalleFlowScript = func() string { return cfg.Script }
 }
 
@@ -76,7 +76,14 @@ func handleDalleFlowCmd(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	}
 
 	prompt := i.ApplicationCommandData().Options[0].StringValue()
-	dalleFlowSubProc := exec.Command(dalleFlowScript(), "-p", prompt, "-s", dalleFlowServer(), "-o", dalleFlowOutput())
+	outFile, err := os.CreateTemp(dalleFlowOutputDir(), "*.png")
+	if err != nil {
+		log.Error(err)
+		interactionFollowUpEphemeralError(s, i, true, err)
+		return
+	}
+
+	dalleFlowSubProc := exec.Command(dalleFlowScript(), "-p", prompt, "-s", dalleFlowServer(), "-o", outFile.Name())
 	combinedOutput, err := dalleFlowSubProc.CombinedOutput()
 	if err != nil {
 		err = fmt.Errorf("%s: %s", err, combinedOutput)
@@ -85,14 +92,14 @@ func handleDalleFlowCmd(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		return
 	}
 
-	resultReader, err := os.Open(dalleFlowOutput())
+	_, err = outFile.Seek(0, 0)
 	if err != nil {
 		log.Error(err)
 		interactionFollowUpEphemeralError(s, i, true, err)
 		return
 	}
 
-	mimeType, err := mimetype.DetectFile(dalleFlowOutput())
+	mimeType, err := mimetype.DetectFile(outFile.Name())
 	if err != nil {
 		log.Error(err)
 		interactionFollowUpEphemeralError(s, i, true, err)
@@ -105,7 +112,7 @@ func handleDalleFlowCmd(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			{
 				Name:        fmt.Sprintf("Dalle-Flow-Output%s", mimeType.Extension()),
 				ContentType: mimeType.String(),
-				Reader:      resultReader,
+				Reader:      outFile,
 			},
 		},
 		AllowedMentions: &discordgo.MessageAllowedMentions{
@@ -117,7 +124,8 @@ func handleDalleFlowCmd(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		interactionFollowUpEphemeralError(s, i, true, err)
 	}
 
-	err = os.Remove(dalleFlowOutput())
+	outFile.Close()
+	err = os.Remove(outFile.Name())
 	if err != nil {
 		log.Error(err)
 	}
