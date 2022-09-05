@@ -1,19 +1,23 @@
 # syntax=docker/dockerfile:1
 
-FROM alpine:latest
+FROM debian:stable
 
 WORKDIR /
 
-RUN apk add --update --no-cache \
-  python3 py3-numpy g++ linux-headers \
-  python3-dev musl-dev build-base \
-  libc-dev mariadb-dev postgresql-dev \
-  freetype-dev libpng-dev libxml2-dev \
-  libxslt-dev zlib-dev gcc make py3-numpy-dev && \
-  ln -sf python3 /usr/bin/python && \
-  python3 -m ensurepip && \
-  pip3 install --no-cache --upgrade pip setuptools wheel matplotlib && \
-  pip3 install "docarray[common]>=0.13.5" jina
+RUN apt-get update && apt-get install -y \
+  libffi-dev \
+  python3 \
+  python3-dev \
+  python3-numpy \
+  python3-numpy-dev \
+  python3-matplotlib \
+  python3-pip && \
+  apt-get autoremove -y && \
+  ln -sf python3 /usr/bin/python
+
+RUN pip3 install --upgrade pip setuptools wheel
+RUN printf '[global]\nextra-index-url=https://www.piwheels.org/simple' >/etc/pip.conf
+RUN pip3 install "docarray[common]>=0.13.5" jina
 
 COPY Robo_cat.png /
 COPY README.md /
