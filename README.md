@@ -49,7 +49,7 @@ A discord bot destined for greatness.
 - [x] Madlibs
 - [x] Server Clock
 - [x] User polls
-- [x] AI text-to-image generation using [dalle-flow](https://github.com/jina-ai/dalle-flow)
+- [x] AI text-to-image generation using [DALL·E 2](https://openai.com/dall-e-2/)
 - [ ] Inform users when Kard-bot is updated
 - [ ] Mock certain questions or phrases
 - [ ] "Quack" any time a user types an expletive
