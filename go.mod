@@ -3,6 +3,7 @@ module github.com/TannerKvarfordt/Kard-bot
 go 1.18
 
 require (
+	github.com/TannerKvarfordt/gopenai v0.1.1-beta
 	github.com/TannerKvarfordt/hfapigo v0.0.4
 	github.com/TannerKvarfordt/imgflipgo v1.0.5
 	github.com/TannerKvarfordt/ubiquity v0.1.1
