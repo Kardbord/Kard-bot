@@ -86,13 +86,7 @@ func handleDalle2Cmd(s *discordgo.Session, i *discordgo.InteractionCreate) {
 				log.Error(err)
 				contentFlags = []byte("Whoops, couldn't retrieve the details of your violation.")
 			}
-			_, err = s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
-				Content: fmt.Sprintf("Sorry! Your prompt does not appear to conform to [Open AI's Usage Policies](<https://beta.openai.com/docs/usage-policies>)\n```JSON\n%s\n```", contentFlags),
-			})
-			if err != nil {
-				log.Error(err)
-				interactionFollowUpEphemeralError(s, i, true, err)
-			}
+			interactionFollowUpEphemeralError(s, i, false, fmt.Errorf("sorry! Your prompt does not appear to conform to [Open AI's Usage Policies](<https://beta.openai.com/docs/usage-policies>)\n```JSON\n%s\n```", contentFlags))
 		} else {
 			log.Error(err)
 			interactionFollowUpEphemeralError(s, i, true, err)
