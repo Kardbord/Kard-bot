@@ -133,6 +133,31 @@ dockers:
       - Robo_cat.png
       - README.md
       - LICENSE
+  - image_templates:
+      - "tkvarfordt/kardbot:latest-armv6"
+      - "tkvarfordt/kardbot:{{ .Tag }}-armv6"
+      - "ghcr.io/tannerkvarfordt/kard-bot:{{ .Tag }}-armv6"
+      - "ghcr.io/tannerkvarfordt/kard-bot:latest-armv6"
+    goos: linux
+    goarch: arm
+    goarm: "6"
+    use: buildx
+    dockerfile: Dockerfile
+    build_flag_templates:
+      - "--label=org.opencontainers.image.source=https://github.com/TannerKvarfordt/Kard-bot"
+      - "--label=org.opencontainers.image.licenses=AGPL-3.0"
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.title={{.ProjectName}}"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
+      - "--platform=linux/arm/v6"
+    extra_files:
+      - config
+      - assets
+      - .env_example
+      - Robo_cat.png
+      - README.md
+      - LICENSE
 
 docker_manifests:
   - name_template: "tkvarfordt/kardbot:latest"
@@ -140,21 +165,25 @@ docker_manifests:
       - "tkvarfordt/kardbot:latest-arm64"
       - "tkvarfordt/kardbot:latest-amd64"
       - "tkvarfordt/kardbot:latest-armv7"
+      - "tkvarfordt/kardbot:latest-armv6"
   - name_template: "tkvarfordt/kardbot:{{ .Tag }}"
     image_templates:
       - "tkvarfordt/kardbot:{{ .Tag }}-arm64"
       - "tkvarfordt/kardbot:{{ .Tag }}-amd64"
       - "tkvarfordt/kardbot:{{ .Tag }}-armv7"
+      - "tkvarfordt/kardbot:{{ .Tag }}-armv6"
   - name_template: "ghcr.io/tannerkvarfordt/kard-bot:latest"
     image_templates:
       - "ghcr.io/tannerkvarfordt/kard-bot:latest-arm64"
       - "ghcr.io/tannerkvarfordt/kard-bot:latest-amd64"
       - "ghcr.io/tannerkvarfordt/kard-bot:latest-armv7"
+      - "ghcr.io/tannerkvarfordt/kard-bot:latest-armv6"
   - name_template: "ghcr.io/tannerkvarfordt/kard-bot:{{ .Tag }}"
     image_templates:
       - "ghcr.io/tannerkvarfordt/kard-bot:{{ .Tag }}-arm64"
       - "ghcr.io/tannerkvarfordt/kard-bot:{{ .Tag }}-amd64"
       - "ghcr.io/tannerkvarfordt/kard-bot:{{ .Tag }}-armv7"
+      - "ghcr.io/tannerkvarfordt/kard-bot:{{ .Tag }}-armv6"
 
 checksum:
   name_template: "{{ .ProjectName }}_{{ .Version }}_checksums.txt"

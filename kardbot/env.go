@@ -7,6 +7,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
+	"github.com/TannerKvarfordt/gopenai/authentication"
 	"github.com/TannerKvarfordt/hfapigo"
 	"github.com/bwmarrin/discordgo"
 	"github.com/joho/godotenv"
@@ -21,6 +22,7 @@ const (
 	ImgflipPassEnv      = "IMGFLIP_API_PASSWORD"
 	HuggingFaceTokenEnv = "HUGGING_FACE_TOKEN"
 	TimezoneEnv         = "TZ"
+	OpenAITokenEnv      = "OPENAI_API_KEY"
 )
 
 var (
@@ -31,6 +33,7 @@ var (
 	getImgflipPass      = func() string { return "" }
 	getHuggingFaceToken = func() string { return "" }
 	getTimezone         = func() string { return "" }
+	getOpenAIToken      = func() string { return "" }
 )
 
 // Retrieves the bot's auth token from the environment
@@ -103,4 +106,13 @@ func init() {
 	}
 	getTimezone = func() string { return time.Local.String() }
 	log.Infof("Using timezone: %s", getTimezone())
+
+	openAIToken, openAITokenFound := os.LookupEnv(OpenAITokenEnv)
+	if !openAITokenFound {
+		log.Warnf("%s not found in environment", OpenAITokenEnv)
+	} else if hfToken == "" {
+		log.Warnf("%s is the empty string.", OpenAITokenEnv)
+	}
+	getOpenAIToken = func() string { return openAIToken }
+	authentication.SetAPIKey(getOpenAIToken())
 }
