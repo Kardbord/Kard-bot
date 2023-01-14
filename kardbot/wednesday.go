@@ -80,6 +80,7 @@ func chooseWednesdayImage() (*discordgo.MessageSend, error) {
 	if err != nil {
 		return nil, err
 	}
+	// TODO: add a chance of using dalle2 to generate the Wednesday image
 	if len(imgCandidates) < 1 {
 		return nil, fmt.Errorf("no wednesday images")
 	}
