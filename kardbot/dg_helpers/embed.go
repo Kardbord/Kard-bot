@@ -9,7 +9,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
-//Embed ...
+// Embed ...
 type Embed struct {
 	*discordgo.MessageEmbed
 }
@@ -25,12 +25,12 @@ const (
 	EmbedLimit            = 4000
 )
 
-//NewEmbed returns a new embed object
+// NewEmbed returns a new embed object
 func NewEmbed() *Embed {
 	return &Embed{&discordgo.MessageEmbed{}}
 }
 
-//SetTitle ...
+// SetTitle ...
 func (e *Embed) SetTitle(name string) *Embed {
 	e.Title = name
 	return e
@@ -61,7 +61,7 @@ func (e *Embed) SetVideo(url string, args ...int) *Embed {
 	return e
 }
 
-//SetDescription [desc]
+// SetDescription [desc]
 func (e *Embed) SetDescription(description string) *Embed {
 	if len(description) > 2048 {
 		description = description[:2048]
@@ -70,7 +70,7 @@ func (e *Embed) SetDescription(description string) *Embed {
 	return e
 }
 
-//AddField [name] [value]
+// AddField [name] [value]
 func (e *Embed) AddField(name, value string) *Embed {
 	if len(value) > 1024 {
 		value = value[:1024]
@@ -89,7 +89,7 @@ func (e *Embed) AddField(name, value string) *Embed {
 
 }
 
-//SetFooter [Text] [iconURL]
+// SetFooter [Text] [iconURL]
 func (e *Embed) SetFooter(args ...string) *Embed {
 	iconURL := ""
 	text := ""
@@ -117,7 +117,7 @@ func (e *Embed) SetFooter(args ...string) *Embed {
 	return e
 }
 
-//SetImage ...
+// SetImage ...
 func (e *Embed) SetImage(args ...string) *Embed {
 	var URL string
 	var proxyURL string
@@ -138,7 +138,7 @@ func (e *Embed) SetImage(args ...string) *Embed {
 	return e
 }
 
-//SetThumbnail ...
+// SetThumbnail ...
 func (e *Embed) SetThumbnail(args ...string) *Embed {
 	var URL string
 	var proxyURL string
@@ -159,7 +159,7 @@ func (e *Embed) SetThumbnail(args ...string) *Embed {
 	return e
 }
 
-//SetAuthor ...
+// SetAuthor ...
 func (e *Embed) SetAuthor(args ...string) *Embed {
 	var (
 		name     string
@@ -194,13 +194,13 @@ func (e *Embed) SetAuthor(args ...string) *Embed {
 	return e
 }
 
-//SetURL ...
+// SetURL ...
 func (e *Embed) SetURL(URL string) *Embed {
 	e.URL = URL
 	return e
 }
 
-//SetColor ...
+// SetColor ...
 func (e *Embed) SetColor(clr int) *Embed {
 	e.Color = clr
 	return e
