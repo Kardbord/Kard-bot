@@ -994,6 +994,7 @@ func handleRoleSelectMenuCreate(s *discordgo.Session, i *discordgo.InteractionCr
 				discordgo.AllowedMentionTypeUsers,
 			},
 		},
+		Components: &[]discordgo.MessageComponent{},
 	}
 	minSelections := 0
 	for _, m := range sMenus {
