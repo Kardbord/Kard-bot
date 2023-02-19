@@ -9,7 +9,7 @@ require (
 	github.com/TannerKvarfordt/ubiquity v0.1.1
 	github.com/bwmarrin/discordgo v0.25.0
 	github.com/deadshot465/owoify-go v1.0.1
-	github.com/forPelevin/gomoji v1.1.4
+	github.com/forPelevin/gomoji v1.1.8
 	github.com/gabriel-vasile/mimetype v1.4.0
 	github.com/go-co-op/gocron v1.14.0
 	github.com/google/uuid v1.3.0
@@ -27,7 +27,7 @@ require (
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/gorilla/schema v1.2.0 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
-	github.com/rivo/uniseg v0.2.0 // indirect
+	github.com/rivo/uniseg v0.4.3 // indirect
 	github.com/robfig/cron/v3 v3.0.1 // indirect
 	golang.org/x/crypto v0.0.0-20220525230936-793ad666bf5e // indirect
 	golang.org/x/exp v0.0.0-20220613132600-b0d781184e0d // indirect
