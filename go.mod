@@ -7,18 +7,18 @@ require (
 	github.com/TannerKvarfordt/hfapigo v0.0.4
 	github.com/TannerKvarfordt/imgflipgo v1.0.5
 	github.com/TannerKvarfordt/ubiquity v0.2.1
-	github.com/bwmarrin/discordgo v0.25.0
+	github.com/bwmarrin/discordgo v0.27.0
 	github.com/deadshot465/owoify-go v1.0.1
 	github.com/forPelevin/gomoji v1.1.8
-  github.com/go-co-op/gocron v1.18.0
 	github.com/gabriel-vasile/mimetype v1.4.1
+	github.com/go-co-op/gocron v1.18.0
 	github.com/google/uuid v1.3.0
 	github.com/joho/godotenv v1.5.1
 	github.com/lucasb-eyer/go-colorful v1.2.0
-	github.com/orcaman/concurrent-map/v2 v2.0.0
-	github.com/sirupsen/logrus v1.8.1
+	github.com/orcaman/concurrent-map/v2 v2.0.1
+	github.com/sirupsen/logrus v1.9.0
 	github.com/vartanbeno/go-reddit/v2 v2.0.1
-	go.uber.org/atomic v1.9.0
+	go.uber.org/atomic v1.10.0
 )
 
 require (
@@ -29,12 +29,12 @@ require (
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/rivo/uniseg v0.4.3 // indirect
 	github.com/robfig/cron/v3 v3.0.1 // indirect
-	golang.org/x/crypto v0.0.0-20220525230936-793ad666bf5e // indirect
-	golang.org/x/exp v0.0.0-20220613132600-b0d781184e0d // indirect
-	golang.org/x/net v0.0.0-20220624214902-1bab6f366d9e // indirect
-	golang.org/x/oauth2 v0.0.0-20220608161450-d0670ef3b1eb // indirect
-	golang.org/x/sync v0.0.0-20220601150217-0de741cfad7f // indirect
-	golang.org/x/sys v0.0.0-20220615213510-4f61da869c0c // indirect
+	golang.org/x/crypto v0.6.0 // indirect
+	golang.org/x/exp v0.0.0-20230213192124-5e25df0256eb // indirect
+	golang.org/x/net v0.7.0 // indirect
+	golang.org/x/oauth2 v0.5.0 // indirect
+	golang.org/x/sync v0.1.0 // indirect
+	golang.org/x/sys v0.5.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
-	google.golang.org/protobuf v1.28.0 // indirect
+	google.golang.org/protobuf v1.28.1 // indirect
 )
