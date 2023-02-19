@@ -242,7 +242,7 @@ func handleTZSubCmd(s *discordgo.Session, i *discordgo.InteractionCreate) (*disc
 }
 
 func handleTZSubCmdHelp(s *discordgo.Session, i *discordgo.InteractionCreate) (*discordgo.InteractionResponse, bool, error) {
-	flags := InteractionResponseFlagEphemeral
+	flags := discordgo.MessageFlagsEphemeral
 	for _, opt := range i.ApplicationCommandData().Options[0].Options[0].Options {
 		switch opt.Name {
 		case timeCmdOptEphemeral:
@@ -288,7 +288,7 @@ func handleTZSubCmdHelp(s *discordgo.Session, i *discordgo.InteractionCreate) (*
 }
 
 func handleTZSubCmdInfo(s *discordgo.Session, i *discordgo.InteractionCreate) (*discordgo.InteractionResponse, bool, error) {
-	flags := InteractionResponseFlagEphemeral
+	flags := discordgo.MessageFlagsEphemeral
 	tz := ""
 	format := tzSubCmdFmtDflt
 	for _, opt := range i.ApplicationCommandData().Options[0].Options[0].Options {
@@ -311,7 +311,7 @@ func handleTZSubCmdInfo(s *discordgo.Session, i *discordgo.InteractionCreate) (*
 		return &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
-				Flags:   InteractionResponseFlagEphemeral,
+				Flags:   discordgo.MessageFlagsEphemeral,
 				Content: fmt.Sprintf(`For privacy reasons, this bot does not track user timezones. Please specify a specific IANA timezone rather than "%s".`, tz),
 			},
 		}, false, nil
@@ -322,7 +322,7 @@ func handleTZSubCmdInfo(s *discordgo.Session, i *discordgo.InteractionCreate) (*
 		return &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
-				Flags:   InteractionResponseFlagEphemeral,
+				Flags:   discordgo.MessageFlagsEphemeral,
 				Content: fmt.Sprintf(`"%s" is not a valid [IANA Timezone](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones).`, tz),
 			},
 		}, false, nil
@@ -443,7 +443,7 @@ func handleTZSubCmdServerClock(s *discordgo.Session, i *discordgo.InteractionCre
 		return &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
-				Flags:   InteractionResponseFlagEphemeral,
+				Flags:   discordgo.MessageFlagsEphemeral,
 				Content: "You must run this command from a server where you have the Manage Channels permission.",
 			},
 		}, false, nil
@@ -459,7 +459,7 @@ func handleTZSubCmdServerClock(s *discordgo.Session, i *discordgo.InteractionCre
 			return &discordgo.InteractionResponse{
 				Type: discordgo.InteractionResponseChannelMessageWithSource,
 				Data: &discordgo.InteractionResponseData{
-					Flags:   InteractionResponseFlagEphemeral,
+					Flags:   discordgo.MessageFlagsEphemeral,
 					Content: fmt.Sprintf("This server already has a clock. To replace it, delete the <#%s> channel and re-issue this command.", clock.ChannelID),
 				},
 			}, false, nil
@@ -491,7 +491,7 @@ func handleTZSubCmdServerClock(s *discordgo.Session, i *discordgo.InteractionCre
 		return &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
-				Flags:   InteractionResponseFlagEphemeral,
+				Flags:   discordgo.MessageFlagsEphemeral,
 				Content: fmt.Sprintf("The following time zones are not valid: `%v`", invalidTZs),
 			},
 		}, false, nil
@@ -531,7 +531,7 @@ func handleTZSubCmdServerClock(s *discordgo.Session, i *discordgo.InteractionCre
 		return &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
-				Flags:   InteractionResponseFlagEphemeral,
+				Flags:   discordgo.MessageFlagsEphemeral,
 				Content: fmt.Sprintf("There was an error persisting your server clock. Please delete the %s channel if it was created, and reissue the command.", tzChan.Name),
 			},
 		}, false, nil
@@ -540,7 +540,7 @@ func handleTZSubCmdServerClock(s *discordgo.Session, i *discordgo.InteractionCre
 	return &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
-			Flags:   InteractionResponseFlagEphemeral,
+			Flags:   discordgo.MessageFlagsEphemeral,
 			Content: fmt.Sprintf("Your server clock has been created! Check it out at %s. You may want to pin the clock message in that channel, or make it read-only.", tzChan.Mention()),
 		},
 	}, false, nil

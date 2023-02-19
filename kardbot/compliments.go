@@ -150,7 +150,7 @@ func morningComplimentOptIn(s *discordgo.Session, i *discordgo.InteractionCreate
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
 				Content: fmt.Sprintf("%s, you are subscribed to receive morning compliments as long as the bot is up, but there was an error persisting your subscription. Please try to opt-in again.", metadata.AuthorUsername),
-				Flags:   InteractionResponseFlagEphemeral,
+				Flags:   discordgo.MessageFlagsEphemeral,
 			},
 		})
 		if err != nil {
@@ -192,7 +192,7 @@ func morningComplimentOptOut(s *discordgo.Session, i *discordgo.InteractionCreat
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
 				Content: fmt.Sprintf("%s, you are unsubscribed from morning compliments as long as the bot is up, but there was an error persisting your opt-out. Please try to opt-out again.", metadata.AuthorUsername),
-				Flags:   InteractionResponseFlagEphemeral,
+				Flags:   discordgo.MessageFlagsEphemeral,
 			},
 		})
 		if err != nil {
@@ -235,7 +235,7 @@ func eveningComplimentOptIn(s *discordgo.Session, i *discordgo.InteractionCreate
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
 				Content: fmt.Sprintf("%s, you are subscribed to receive evening compliments as long as the bot is up, but there was an error persisting your subscription. Please try to opt-in again.", metadata.AuthorUsername),
-				Flags:   InteractionResponseFlagEphemeral,
+				Flags:   discordgo.MessageFlagsEphemeral,
 			},
 		})
 		if err != nil {
@@ -277,7 +277,7 @@ func eveningComplimentOptOut(s *discordgo.Session, i *discordgo.InteractionCreat
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
 				Content: fmt.Sprintf("%s, you are unsubscribed from evening compliments as long as the bot is up, but there was an error persisting your opt-out. Please try to opt-out again.", metadata.AuthorUsername),
-				Flags:   InteractionResponseFlagEphemeral,
+				Flags:   discordgo.MessageFlagsEphemeral,
 			},
 		})
 		if err != nil {
@@ -319,7 +319,7 @@ func getCompliment(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
-				Flags: InteractionResponseFlagEphemeral,
+				Flags: discordgo.MessageFlagsEphemeral,
 			},
 		})
 		if err != nil {
@@ -339,8 +339,9 @@ func getCompliment(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		log.Infof("Told %s that '%s'", metadata.AuthorUsername, compliment)
 
 		time.Sleep(time.Millisecond * 250) // give a bit for the initial response to be received
+		content := "Sent you a compliment! 💛"
 		_, err = s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
-			Content: "Sent you a compliment! 💛",
+			Content: &content,
 		})
 		if err != nil {
 			log.Error(err)

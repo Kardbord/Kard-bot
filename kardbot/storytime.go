@@ -135,7 +135,7 @@ func storyTime(s *discordgo.Session, i *discordgo.InteractionCreate) {
 				Type: discordgo.InteractionResponseChannelMessageWithSource,
 				Data: &discordgo.InteractionResponseData{
 					Embeds: []*discordgo.MessageEmbed{buildStoryTimeHelpEmbed()},
-					Flags:  InteractionResponseFlagEphemeral,
+					Flags:  discordgo.MessageFlagsEphemeral,
 				},
 			})
 			if err != nil {
@@ -154,7 +154,7 @@ func storyTime(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
 				Content: fmt.Sprintf("%s is not a valid model", model),
-				Flags:   InteractionResponseFlagEphemeral,
+				Flags:   discordgo.MessageFlagsEphemeral,
 			},
 		})
 		if err2 != nil {
@@ -197,8 +197,9 @@ func storyTime(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		return
 	}
 
+	content := stringutils.FirstN(textResps[0].GeneratedTexts[0], MaxDiscordMsgLen)
 	_, err = s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
-		Content: stringutils.FirstN(textResps[0].GeneratedTexts[0], MaxDiscordMsgLen),
+		Content: &content,
 		AllowedMentions: &discordgo.MessageAllowedMentions{
 			Parse: []discordgo.AllowedMentionType{
 				discordgo.AllowedMentionTypeUsers,

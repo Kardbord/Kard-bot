@@ -231,12 +231,12 @@ func handleEmbedCmd(s *discordgo.Session, i *discordgo.InteractionCreate) {
 
 func handleEmbedSubCmdCreate(s *discordgo.Session, i *discordgo.InteractionCreate) (*discordgo.InteractionResponse, bool, error) {
 	e := dg_helpers.NewEmbed()
-	flags := uint64(0)
+	var flags discordgo.MessageFlags = 0
 	for _, opt := range i.ApplicationCommandData().Options[0].Options {
 		switch opt.Name {
 		case embedSubCmdCreateOptPreview:
 			if opt.BoolValue() {
-				flags = InteractionResponseFlagEphemeral
+				flags = discordgo.MessageFlagsEphemeral
 			}
 		case embedSubCmdOptURL:
 			e.SetURL(opt.StringValue())
@@ -374,7 +374,7 @@ func handleEmbedSubCmdUpdate(s *discordgo.Session, i *discordgo.InteractionCreat
 	return &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
-			Flags:   InteractionResponseFlagEphemeral,
+			Flags:   discordgo.MessageFlagsEphemeral,
 			Content: "The embed was successfully updated!",
 		},
 	}, false, nil
@@ -443,7 +443,7 @@ func handleEmbedSubCmdAddField(s *discordgo.Session, i *discordgo.InteractionCre
 	return &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
-			Flags:   InteractionResponseFlagEphemeral,
+			Flags:   discordgo.MessageFlagsEphemeral,
 			Content: "The embed was successfully updated!",
 		},
 	}, false, nil
@@ -500,7 +500,7 @@ func handleEmbedSubCmdDelField(s *discordgo.Session, i *discordgo.InteractionCre
 	return &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
-			Flags:   InteractionResponseFlagEphemeral,
+			Flags:   discordgo.MessageFlagsEphemeral,
 			Content: "The embed was successfully updated!",
 		},
 	}, false, nil

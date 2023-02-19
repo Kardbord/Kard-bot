@@ -119,7 +119,7 @@ func interactionRespondEphemeralError(s *discordgo.Session, i *discordgo.Interac
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
 				Content: fmt.Sprint(errResp),
-				Flags:   InteractionResponseFlagEphemeral,
+				Flags:   discordgo.MessageFlagsEphemeral,
 			},
 		})
 		if err != nil {
@@ -138,7 +138,7 @@ func interactionRespondEphemeralError(s *discordgo.Session, i *discordgo.Interac
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			Content:    "Something went wrong while processing your command. 😔",
-			Flags:      InteractionResponseFlagEphemeral,
+			Flags:      discordgo.MessageFlagsEphemeral,
 			Components: errReportMsgComponents(errUUID),
 		},
 	})
@@ -183,7 +183,7 @@ func interactionFollowUpEphemeralError(s *discordgo.Session, i *discordgo.Intera
 	if !notifyOwner {
 		_, err = s.FollowupMessageCreate(i.Interaction, false, &discordgo.WebhookParams{
 			Content: fmt.Sprint(errResp),
-			Flags:   InteractionResponseFlagEphemeral,
+			Flags:   discordgo.MessageFlagsEphemeral,
 		})
 		if err != nil {
 			log.Error(err)
@@ -202,7 +202,7 @@ func followupWithError(s *discordgo.Session, i *discordgo.InteractionCreate, err
 	errUUID := uuid.New()
 	_, err := s.FollowupMessageCreate(i.Interaction, false, &discordgo.WebhookParams{
 		Content:    "Something went wrong while processing your command. 😔",
-		Flags:      InteractionResponseFlagEphemeral,
+		Flags:      discordgo.MessageFlagsEphemeral,
 		Components: errReportMsgComponents(errUUID),
 	})
 	if err != nil {
@@ -259,7 +259,7 @@ func handleErrorReportSelection(s *discordgo.Session, i *discordgo.InteractionCr
 		Type: discordgo.InteractionResponseUpdateMessage,
 		Data: &discordgo.InteractionResponseData{
 			Content: fmt.Sprintf("%s\nThanks for submitting an error report! %s has been notified of the problem.", i.Message.Content, ownerMention),
-			Flags:   InteractionResponseFlagEphemeral,
+			Flags:   discordgo.MessageFlagsEphemeral,
 			AllowedMentions: &discordgo.MessageAllowedMentions{
 				Users: []string{getOwnerID()},
 			},

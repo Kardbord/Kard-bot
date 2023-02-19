@@ -63,7 +63,7 @@ func botInfo(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
-			Flags:  InteractionResponseFlagEphemeral,
+			Flags:  discordgo.MessageFlagsEphemeral,
 			Embeds: []*discordgo.MessageEmbed{embed.Truncate().MessageEmbed},
 			Files: []*discordgo.File{
 				{

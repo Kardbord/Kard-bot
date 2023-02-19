@@ -7,8 +7,6 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
-const InteractionResponseFlagEphemeral = uint64(1 << 6)
-
 func authorIsSelf(s *discordgo.Session, i *discordgo.InteractionCreate) (bool, error) {
 	if s == nil || i == nil {
 		return false, fmt.Errorf("interaction or session is nil")
