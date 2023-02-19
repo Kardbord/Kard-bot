@@ -101,8 +101,9 @@ func handleDalle2Cmd(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		return
 	}
 
+	errMsg := fmt.Sprintf("> %s\n\nImage generated using [DALL·E 2](<https://openai.com/dall-e-2/>).", prompt)
 	_, err = s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
-		Content: fmt.Sprintf("> %s\n\nImage generated using [DALL·E 2](<https://openai.com/dall-e-2/>).", prompt),
+		Content: &errMsg,
 		Files: []*discordgo.File{
 			{
 				Name:        "Dalle-2-Output.png",

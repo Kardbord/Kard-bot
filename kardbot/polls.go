@@ -30,7 +30,7 @@ type poll struct {
 	// Maps user IDs to votes cast.
 	// Key: Discord User ID
 	// Val: []string
-	Votes cmap.ConcurrentMap[[]string]
+	Votes cmap.ConcurrentMap[string, []string]
 
 	// The date the poll was opened
 	Open time.Time
@@ -54,7 +54,7 @@ func newPoll(messageID, channelID string) poll {
 // Tracks existing polls.
 // Key: MessageID
 // Val: poll
-var polls cmap.ConcurrentMap[poll] = cmap.New[poll]()
+var polls cmap.ConcurrentMap[string, poll] = cmap.New[poll]()
 
 const pollsStorageFilepath = "config/polls.json"
 
@@ -316,7 +316,7 @@ func handlePollSubmission(s *discordgo.Session, i *discordgo.InteractionCreate) 
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
 				Content: "Sorry, this poll is closed!",
-				Flags:   InteractionResponseFlagEphemeral,
+				Flags:   discordgo.MessageFlagsEphemeral,
 			},
 		})
 		if err != nil {
@@ -329,7 +329,7 @@ func handlePollSubmission(s *discordgo.Session, i *discordgo.InteractionCreate) 
 	err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
-			Flags: InteractionResponseFlagEphemeral,
+			Flags: discordgo.MessageFlagsEphemeral,
 		},
 	})
 	if err != nil {
@@ -346,8 +346,9 @@ func handlePollSubmission(s *discordgo.Session, i *discordgo.InteractionCreate) 
 		return
 	}
 
+	responseRecordedMsg := "Your response has been recorded! 🗳️"
 	_, err = s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
-		Content: "Your response has been recorded! 🗳️",
+		Content: &responseRecordedMsg,
 	})
 	if err != nil {
 		log.Error(err)

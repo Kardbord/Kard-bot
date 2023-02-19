@@ -36,7 +36,7 @@ func deleteBotDMs(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
-			Flags: InteractionResponseFlagEphemeral,
+			Flags: discordgo.MessageFlagsEphemeral,
 		},
 	})
 	if err != nil {
@@ -67,8 +67,9 @@ func deleteBotDMs(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		}
 
 		time.Sleep(time.Millisecond * 100)
+		errMsg := fmt.Sprintf("looks like you tried to use `/%s` outside of our DMs. Run it from there instead! :)", delBotDMCmd)
 		s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
-			Content: fmt.Sprintf("looks like you tried to use `/%s` outside of our DMs. Run it from there instead! :)", delBotDMCmd),
+			Content: &errMsg,
 		})
 		return
 	}
@@ -117,8 +118,9 @@ func deleteBotDMs(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		}
 	}
 
+	errMsg := fmt.Sprintf("Deleted last %d bot DMs", mathutils.Min(msgsToDelete, msgLimit))
 	_, err = s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
-		Content: fmt.Sprintf("Deleted last %d bot DMs", mathutils.Min(msgsToDelete, msgLimit)),
+		Content: &errMsg,
 	})
 	if err != nil {
 		log.Error(err)

@@ -311,9 +311,9 @@ func handleDnDButtonPress(s *discordgo.Session, i *discordgo.InteractionCreate) 
 		content += fmt.Sprintf("Total: %d", total)
 	}
 
-	flags := uint64(0)
+	var flags discordgo.MessageFlags = 0
 	if cfg.Ephemeral {
-		flags = InteractionResponseFlagEphemeral
+		flags = discordgo.MessageFlagsEphemeral
 	}
 
 	if cfg.DM {

@@ -205,10 +205,10 @@ func buildMemeCommands() []*discordgo.ApplicationCommand {
 }
 
 func buildAMeme(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	flags := uint64(0)
+	var flags discordgo.MessageFlags = 0
 	isPreview := i.ApplicationCommandData().Options[previewOptIdx].BoolValue()
 	if isPreview {
-		flags = InteractionResponseFlagEphemeral
+		flags = discordgo.MessageFlagsEphemeral
 	}
 	err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
@@ -302,7 +302,7 @@ func buildAMeme(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		SetImage(resp.Data.URL)
 
 	_, err = s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
-		Embeds: []*discordgo.MessageEmbed{embed.MessageEmbed},
+		Embeds: &[]*discordgo.MessageEmbed{embed.MessageEmbed},
 	})
 	if err != nil {
 		log.Error(err)

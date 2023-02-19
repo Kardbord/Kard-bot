@@ -140,7 +140,7 @@ func creepyDMsOptIn(s *discordgo.Session, i *discordgo.InteractionCreate) error 
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
 				Content: fmt.Sprintf("%s, you are subscribed to creepy DMs as long as the bot remains up, but there was an error persisting your subscription. Please try to opt-in again.", metadata.AuthorUsername),
-				Flags:   InteractionResponseFlagEphemeral,
+				Flags:   discordgo.MessageFlagsEphemeral,
 			},
 		})
 		if err != nil {
@@ -231,7 +231,7 @@ func getCreepyDM(s *discordgo.Session, i *discordgo.InteractionCreate) error {
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			Content: "Sent you a creepy DM 😈",
-			Flags:   InteractionResponseFlagEphemeral,
+			Flags:   discordgo.MessageFlagsEphemeral,
 		},
 	})
 }

@@ -56,7 +56,7 @@ func handleMadLibCmd(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
 				Content: fmt.Sprintf("No blanks provided. Provide a prompt string containing at least one of the following mask: `%s`.\nFor example: `The quick brown %s jumps over the lazy %s.`", madlibBlank, madlibBlank, madlibBlank),
-				Flags:   InteractionResponseFlagEphemeral,
+				Flags:   discordgo.MessageFlagsEphemeral,
 			},
 		})
 		return
@@ -101,7 +101,7 @@ func handleMadLibCmd(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	}
 
 	_, err = s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
-		Content: output,
+		Content: &output,
 	})
 	if err != nil {
 		log.Error(err)
