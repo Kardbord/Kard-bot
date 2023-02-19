@@ -13,7 +13,7 @@ require (
 	github.com/gabriel-vasile/mimetype v1.4.0
 	github.com/go-co-op/gocron v1.18.0
 	github.com/google/uuid v1.3.0
-	github.com/joho/godotenv v1.4.0
+	github.com/joho/godotenv v1.5.1
 	github.com/lucasb-eyer/go-colorful v1.2.0
 	github.com/orcaman/concurrent-map/v2 v2.0.0
 	github.com/sirupsen/logrus v1.8.1
