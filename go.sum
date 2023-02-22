@@ -1,8 +1,8 @@
 cloud.google.com/go v0.34.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 github.com/TannerKvarfordt/gopenai v0.1.2-beta h1:Zy4AjMmyyLlwgC49nKWiAdojvYkHf9AT5hG+LMGzdGk=
 github.com/TannerKvarfordt/gopenai v0.1.2-beta/go.mod h1:X42mdDQIih6TLzctpf8Wp/cIGpHaMiImMWZ+BQz7nT0=
-github.com/TannerKvarfordt/hfapigo v0.0.5 h1:E8OZQxpfQEHRrXjHlc5vHBUMLqL1XvtdqDyNY27rUT4=
-github.com/TannerKvarfordt/hfapigo v0.0.5/go.mod h1:s+zHgKdagSPlw8xPMokwQaS32BakBMOljQImxStboF0=
+github.com/TannerKvarfordt/hfapigo v0.0.6 h1:vDZcloASqy4jAL0EN2K2tuXrM6mKVGjVLymeYzp0vhk=
+github.com/TannerKvarfordt/hfapigo v0.0.6/go.mod h1:s+zHgKdagSPlw8xPMokwQaS32BakBMOljQImxStboF0=
 github.com/TannerKvarfordt/imgflipgo v1.0.6 h1:u7HRbGsTBE1VjrQuk2UUJTJEDf/jvbh0QVhGPF6m/zA=
 github.com/TannerKvarfordt/imgflipgo v1.0.6/go.mod h1:wLVihMPHZAVEfAzU047L6tIxdm1WZ8KvZc71DrOrseY=
 github.com/TannerKvarfordt/ubiquity v0.2.2 h1:SWbXc58MZjrdmJxk/WjdZKbfuHbWTAJ9ToxyDnhZAnQ=
@@ -48,8 +48,8 @@ github.com/orcaman/concurrent-map/v2 v2.0.1 h1:jOJ5Pg2w1oeB6PeDurIYf6k9PQ+aTITr/
 github.com/orcaman/concurrent-map/v2 v2.0.1/go.mod h1:9Eq3TG2oBe5FirmYWQfYO5iH1q0Jv47PLaNK++uCdOM=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
-github.com/rivo/uniseg v0.4.3 h1:utMvzDsuh3suAEnhH0RdHmoPbU648o6CvXxTx4SBMOw=
-github.com/rivo/uniseg v0.4.3/go.mod h1:FN3SvrM+Zdj16jyLfmOkMNblXMcoc8DfTHruCPUcx88=
+github.com/rivo/uniseg v0.4.4 h1:8TfxU8dW6PdqD27gjM8MVNuicgxIjxpm4K7x4jp8sis=
+github.com/rivo/uniseg v0.4.4/go.mod h1:FN3SvrM+Zdj16jyLfmOkMNblXMcoc8DfTHruCPUcx88=
 github.com/robfig/cron/v3 v3.0.1 h1:WdRxkvbJztn8LMz/QEvLN5sBU+xKpSqwwUO1Pjr4qDs=
 github.com/robfig/cron/v3 v3.0.1/go.mod h1:eQICP3HwyT7UooqI/z+Ov+PtYAWygg1TEWWzGIFLtro=
 github.com/sirupsen/logrus v1.9.0 h1:trlNQbNUG3OdDrDil03MCb1H2o9nJ1x4/5LYw7byDE0=
