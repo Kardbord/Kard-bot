@@ -7,7 +7,7 @@ require (
 	github.com/TannerKvarfordt/hfapigo v0.0.6
 	github.com/TannerKvarfordt/imgflipgo v1.0.6
 	github.com/TannerKvarfordt/ubiquity v0.2.2
-	github.com/bwmarrin/discordgo v0.27.0
+	github.com/bwmarrin/discordgo v0.27.1
 	github.com/deadshot465/owoify-go v1.0.1
 	github.com/forPelevin/gomoji v1.1.8
 	github.com/gabriel-vasile/mimetype v1.4.2
