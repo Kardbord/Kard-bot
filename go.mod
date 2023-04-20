@@ -11,7 +11,7 @@ require (
 	github.com/deadshot465/owoify-go v1.0.1
 	github.com/forPelevin/gomoji v1.1.8
 	github.com/gabriel-vasile/mimetype v1.4.2
-	github.com/go-co-op/gocron v1.20.1
+	github.com/go-co-op/gocron v1.22.4
 	github.com/google/uuid v1.3.0
 	github.com/joho/godotenv v1.5.1
 	github.com/lucasb-eyer/go-colorful v1.2.0
@@ -33,7 +33,6 @@ require (
 	golang.org/x/exp v0.0.0-20230213192124-5e25df0256eb // indirect
 	golang.org/x/net v0.8.0 // indirect
 	golang.org/x/oauth2 v0.5.0 // indirect
-	golang.org/x/sync v0.1.0 // indirect
 	golang.org/x/sys v0.6.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
