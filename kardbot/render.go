@@ -15,10 +15,65 @@ import (
 )
 
 const (
-	dalle2Cmd       = "dalle2"
+	renderCmd = "render"
+
+	hfSubCmd    = "hugging-face"
+	hfPromptOpt = "prompt"
+	hfModelOpt  = "model"
+
+	dalle2SubCmd    = "dalle2"
 	dalle2PromptOpt = "prompt"
 	dalle2SizeOpt   = "size"
 )
+
+func handleRenderCmd(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
+	})
+	if err != nil {
+		log.Error(err)
+		interactionRespondEphemeralError(s, i, true, err)
+		return
+	}
+
+	switch i.ApplicationCommandData().Options[0].Name {
+	case hfSubCmd:
+		handleHfSubCmd(s, i, i.ApplicationCommandData().Options[0].Options)
+	case dalle2SubCmd:
+		handleDalle2SubCmd(s, i, i.ApplicationCommandData().Options[0].Options)
+	default:
+		err = fmt.Errorf("reached unreachable case")
+		log.Error(err)
+		interactionFollowUpEphemeralError(s, i, true, err)
+	}
+}
+
+func hfOpts() []*discordgo.ApplicationCommandOption {
+	return []*discordgo.ApplicationCommandOption{
+		{
+			Type:        discordgo.ApplicationCommandOptionString,
+			Name:        hfPromptOpt,
+			Description: "A prompt to generate an image from. This can be very specific.",
+			Required:    true,
+		},
+		{
+			Type:        discordgo.ApplicationCommandOptionString,
+			Name:        hfModelOpt,
+			Description: "The model to use when generating the image.",
+			Required:    true,
+		},
+	}
+}
+
+func handleHfSubCmd(s *discordgo.Session, i *discordgo.InteractionCreate, opts []*discordgo.ApplicationCommandInteractionDataOption) {
+	resp := fmt.Sprintf("%s command is unimplemented.", renderCmd)
+	log.Infof(resp)
+	s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+		Content:    &resp,
+	})
+}
+
+const ()
 
 func dalle2Opts() []*discordgo.ApplicationCommandOption {
 	return []*discordgo.ApplicationCommandOption{
@@ -51,16 +106,7 @@ func dalle2Opts() []*discordgo.ApplicationCommandOption {
 	}
 }
 
-func handleDalle2Cmd(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
-	})
-	if err != nil {
-		log.Error(err)
-		interactionRespondEphemeralError(s, i, true, err)
-		return
-	}
-
+func handleDalle2SubCmd(s *discordgo.Session, i *discordgo.InteractionCreate, opts []*discordgo.ApplicationCommandInteractionDataOption) {
 	mdata, err := getInteractionMetaData(i)
 	if err != nil {
 		log.Error(err)
@@ -68,8 +114,8 @@ func handleDalle2Cmd(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		return
 	}
 
-	prompt := i.ApplicationCommandData().Options[0].StringValue()
-	size := i.ApplicationCommandData().Options[1].StringValue()
+	prompt := opts[0].StringValue()
+	size := opts[1].StringValue()
 	imageCount := uint64(1)
 	resp, modr, err := images.MakeModeratedCreationRequest(&images.CreationRequest{
 		Prompt:         prompt,
