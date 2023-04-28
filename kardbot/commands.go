@@ -356,9 +356,22 @@ func getCommands() []*discordgo.ApplicationCommand {
 			Options:     timeCmdOpts(),
 		},
 		{
-			Name:        dalle2Cmd,
-			Description: "Ask an AI to generate an image from a prompt. Uses Open AI's DALL·E 2.",
-			Options:     dalle2Opts(),
+			Name:        renderCmd,
+			Description: "Ask an AI to generate an image from a prompt.",
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Name:        dalle2SubCmd,
+					Description: "Ask Open AI's DALL·E 2 model to generate an image from a prompt.",
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Options:     dalle2Opts(),
+				},
+				{
+					Name:        hfSubCmd,
+					Description: "Ask a HuggingFace model to generate an image from a prompt.",
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Options:     hfOpts(),
+				},
+			},
 		},
 		{
 			Name:        helpCmd,
@@ -392,7 +405,7 @@ func getCommandImpls() map[string]onInteractionHandler {
 		madlibCmd:             handleMadLibCmd,
 		timeCmd:               handleTimeCmd,
 		pollCmd:               handlePollCmd,
-		dalle2Cmd:             handleDalle2Cmd,
+		renderCmd:             handleRenderCmd,
 	}
 }
 
