@@ -1,0 +1,22 @@
+{
+  "models": [
+    "runwayml/stable-diffusion-v1-5",
+    "prompthero/openjourney-v4",
+    "nitrosocke/mo-di-diffusion",
+    "wavymulder/Analog-Diffusion",
+    "nitrosocke/redshift-diffusion",
+    "nitrosocke/Ghibli-Diffusion",
+    "Envvi/Inkpunk-Diffusion",
+    "nitrosocke/mo-di-diffusion",
+    "ogkalu/Comic-Diffusion",
+    "nousr/robo-diffusion-2-base",
+    "Fictiverse/Stable_Diffusion_PaperCut_Model",
+    "nitrosocke/elden-ring-diffusion",
+    "dallinmackay/Van-Gogh-diffusion",
+    "Conflictx/Complex-Lineart",
+    "darkstorm2150/Protogen_x3.4_Official_Release",
+    "Aybeeceedee/knollingcase",
+    "wavymulder/portraitplus",
+    "0xJustin/Dungeons-and-Diffusion"
+  ]
+}

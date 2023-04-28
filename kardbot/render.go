@@ -6,9 +6,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"image/jpeg"
+	"image/png"
+	"mime"
+	"strings"
 
+	"github.com/TannerKvarfordt/Kard-bot/kardbot/config"
 	"github.com/TannerKvarfordt/gopenai/images"
 	"github.com/TannerKvarfordt/gopenai/moderations"
+	"github.com/TannerKvarfordt/hfapigo"
 	"github.com/bwmarrin/discordgo"
 
 	log "github.com/sirupsen/logrus"
@@ -17,9 +23,11 @@ import (
 const (
 	renderCmd = "render"
 
-	hfSubCmd    = "hugging-face"
-	hfPromptOpt = "prompt"
-	hfModelOpt  = "model"
+	hfSubCmd         = "hugging-face"
+	hfPromptOpt      = "prompt"
+	hfModelOpt       = "model"
+	hfModelOptCustom = "custom-model"
+	hfModelsFilepath = "config/hugging-face-models.json"
 
 	dalle2SubCmd    = "dalle2"
 	dalle2PromptOpt = "prompt"
@@ -48,6 +56,43 @@ func handleRenderCmd(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	}
 }
 
+var hfModels = func() []*discordgo.ApplicationCommandOptionChoice { return nil }
+
+func init() {
+	cfg := struct {
+		Models []string `json:"models"`
+	}{}
+
+	jsonCfg, err := config.NewJsonConfig(hfModelsFilepath)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = json.Unmarshal(jsonCfg.Raw, &cfg)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	modelChoices := make([]*discordgo.ApplicationCommandOptionChoice, len(cfg.Models)+1)
+	for i := range cfg.Models {
+		if strings.ToLower(cfg.Models[i]) == hfModelOptCustom {
+			log.Warnf(`Custom model name "%s" conflicts with a builtin model name. It will be ignored.`, hfModelOptCustom)
+			continue
+		}
+		modelChoices[i] = &discordgo.ApplicationCommandOptionChoice{
+			Name:  cfg.Models[i],
+			Value: cfg.Models[i],
+		}
+	}
+
+	modelChoices[len(modelChoices)-1] = &discordgo.ApplicationCommandOptionChoice{
+		Name:  hfModelOptCustom,
+		Value: hfModelOptCustom,
+	}
+
+	hfModels = func() []*discordgo.ApplicationCommandOptionChoice { return modelChoices }
+}
+
 func hfOpts() []*discordgo.ApplicationCommandOption {
 	return []*discordgo.ApplicationCommandOption{
 		{
@@ -61,19 +106,73 @@ func hfOpts() []*discordgo.ApplicationCommandOption {
 			Name:        hfModelOpt,
 			Description: "The model to use when generating the image.",
 			Required:    true,
+			Choices:     hfModels(),
+		},
+		{
+			Type:     discordgo.ApplicationCommandOptionString,
+			Name:     hfModelOptCustom,
+			Description: "Any text-to-image model from huggingface.co",
+			Required: false,
 		},
 	}
 }
 
 func handleHfSubCmd(s *discordgo.Session, i *discordgo.InteractionCreate, opts []*discordgo.ApplicationCommandInteractionDataOption) {
-	resp := fmt.Sprintf("%s command is unimplemented.", renderCmd)
-	log.Infof(resp)
-	s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
-		Content:    &resp,
-	})
-}
+	prompt := opts[0].StringValue()
+	model := opts[1].StringValue()
+	if model == hfModelOptCustom {
+		if len(opts) < 3 {
+			interactionFollowUpEphemeralError(s, i, false, fmt.Errorf(`you must specify a custom model to use when selecting the "%s" model`, hfModelOptCustom))
+			return
+		}
+		model = opts[2].StringValue()
+	}
 
-const ()
+	img, imgFmt, err := hfapigo.SendTextToImageRequest(model, &hfapigo.TextToImageRequest{
+		Inputs:  prompt,
+		Options: *hfapigo.NewOptions().SetWaitForModel(true),
+	})
+	if err != nil {
+		// TODO: detect if error is invalid model, and report to user instead of owner.
+		log.Error(err)
+		interactionFollowUpEphemeralError(s, i, true, err)
+		return
+	}
+
+	imgMimeType := mime.TypeByExtension(fmt.Sprintf(".%s", imgFmt))
+	buf := new(bytes.Buffer)
+	switch imgMimeType {
+	case "image/jpeg":
+		err = jpeg.Encode(buf, img, &jpeg.Options{
+			Quality: 100,
+		})
+	case "image/png":
+		err = png.Encode(buf, img)
+	default:
+		err = fmt.Errorf("unsupported image type (%s) returned", imgFmt)
+	}
+	if err != nil {
+		log.Error(err)
+		interactionFollowUpEphemeralError(s, i, true, err)
+		return
+	}
+
+	content := fmt.Sprintf("> %s\n\nImage generated using [%s](<https://huggingface.co/%s>).", prompt, model, model)
+	_, err = s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+		Content: &content,
+		Files: []*discordgo.File{
+			{
+				Name:        fmt.Sprintf("HuggingFaceImg.%s", imgFmt),
+				ContentType: imgMimeType,
+				Reader:      buf,
+			},
+		},
+	})
+	if err != nil {
+		log.Error(err)
+		interactionFollowUpEphemeralError(s, i, true, err)
+	}
+}
 
 func dalle2Opts() []*discordgo.ApplicationCommandOption {
 	return []*discordgo.ApplicationCommandOption{
@@ -147,9 +246,9 @@ func handleDalle2SubCmd(s *discordgo.Session, i *discordgo.InteractionCreate, op
 		return
 	}
 
-	errMsg := fmt.Sprintf("> %s\n\nImage generated using [DALL·E 2](<https://openai.com/dall-e-2/>).", prompt)
+	content := fmt.Sprintf("> %s\n\nImage generated using [DALL·E 2](<https://openai.com/dall-e-2/>).", prompt)
 	_, err = s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
-		Content: &errMsg,
+		Content: &content,
 		Files: []*discordgo.File{
 			{
 				Name:        "Dalle-2-Output.png",
