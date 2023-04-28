@@ -1,22 +1,63 @@
 {
-  "models": [
-    "runwayml/stable-diffusion-v1-5",
-    "prompthero/openjourney-v4",
-    "nitrosocke/mo-di-diffusion",
-    "wavymulder/Analog-Diffusion",
-    "nitrosocke/redshift-diffusion",
-    "nitrosocke/Ghibli-Diffusion",
-    "Envvi/Inkpunk-Diffusion",
-    "nitrosocke/mo-di-diffusion",
-    "ogkalu/Comic-Diffusion",
-    "nousr/robo-diffusion-2-base",
-    "Fictiverse/Stable_Diffusion_PaperCut_Model",
-    "nitrosocke/elden-ring-diffusion",
-    "dallinmackay/Van-Gogh-diffusion",
-    "Conflictx/Complex-Lineart",
-    "darkstorm2150/Protogen_x3.4_Official_Release",
-    "Aybeeceedee/knollingcase",
-    "wavymulder/portraitplus",
-    "0xJustin/Dungeons-and-Diffusion"
-  ]
+  "models": {
+    "runwayml/stable-diffusion-v1-5": [
+      ""
+    ],
+    "prompthero/openjourney": [
+      "mdjrny-v4 style, "
+    ],
+    "nitrosocke/mo-di-diffusion": [
+      "modern disney style, "
+    ],
+    "wavymulder/Analog-Diffusion": [
+      "analog style, "
+    ],
+    "nitrosocke/redshift-diffusion": [
+      "redshift style, "
+    ],
+    "nitrosocke/Ghibli-Diffusion": [
+      "ghibli style, "
+    ],
+    "Envvi/Inkpunk-Diffusion": [
+      "nvinkpunk, "
+    ],
+    "ogkalu/Comic-Diffusion": [
+      "charliebo artstyle, ",
+      "holliemengert artstyle, ",
+      "marioalberti artstyle, ",
+      "pepelarraz artstyle, ",
+      "andreasrocha artstyle, ",
+      "jamesdaly artstyle, "
+    ],
+    "nousr/robo-diffusion-2-base": [
+      "nousr robot, "
+    ],
+    "Fictiverse/Stable_Diffusion_PaperCut_Model": [
+      "PaperCut, "
+    ],
+    "nitrosocke/elden-ring-diffusion": [
+      "elden ring style, "
+    ],
+    "dallinmackay/Van-Gogh-diffusion": [
+      "lvngvncnt, "
+    ],
+    "Conflictx/Complex-Lineart": [
+      "ComplexLA style, "
+    ],
+    "darkstorm2150/Protogen_x3.4_Official_Release": [
+      "modelshoot style, ",
+      "analog style, ",
+      "mdjrny-v4 style, ",
+      "nousr robot, "
+    ],
+    "Aybeeceedee/knollingcase": [
+      "knollingcase, "
+    ],
+    "wavymulder/portraitplus": [
+      "portrait+ style, "
+    ],
+    "0xJustin/Dungeons-and-Diffusion": [
+      ""
+    ]
+  }
 }

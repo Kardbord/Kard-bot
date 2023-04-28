@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"image/jpeg"
 	"image/png"
+	"math/rand"
 	"mime"
 	"strings"
 
@@ -58,9 +59,13 @@ func handleRenderCmd(s *discordgo.Session, i *discordgo.InteractionCreate) {
 
 var hfModels = func() []*discordgo.ApplicationCommandOptionChoice { return nil }
 
+// A mapping of model names to keywords for that model
+var hfModelKeyWords = func() map[string][]string { return nil }
+
 func init() {
 	cfg := struct {
-		Models []string `json:"models"`
+		// A map of model names to activation words for the model
+		Models map[string][]string `json:"models"`
 	}{}
 
 	jsonCfg, err := config.NewJsonConfig(hfModelsFilepath)
@@ -73,16 +78,16 @@ func init() {
 		log.Fatal(err)
 	}
 
-	modelChoices := make([]*discordgo.ApplicationCommandOptionChoice, len(cfg.Models)+1)
-	for i := range cfg.Models {
-		if strings.ToLower(cfg.Models[i]) == hfModelOptCustom {
+	modelChoices := []*discordgo.ApplicationCommandOptionChoice{}
+	for model := range cfg.Models {
+		if strings.ToLower(model) == hfModelOptCustom {
 			log.Warnf(`Custom model name "%s" conflicts with a builtin model name. It will be ignored.`, hfModelOptCustom)
 			continue
 		}
-		modelChoices[i] = &discordgo.ApplicationCommandOptionChoice{
-			Name:  cfg.Models[i],
-			Value: cfg.Models[i],
-		}
+		modelChoices = append(modelChoices, &discordgo.ApplicationCommandOptionChoice{
+			Name:  model,
+			Value: model,
+		})
 	}
 
 	modelChoices[len(modelChoices)-1] = &discordgo.ApplicationCommandOptionChoice{
@@ -91,16 +96,11 @@ func init() {
 	}
 
 	hfModels = func() []*discordgo.ApplicationCommandOptionChoice { return modelChoices }
+	hfModelKeyWords = func() map[string][]string { return cfg.Models }
 }
 
 func hfOpts() []*discordgo.ApplicationCommandOption {
 	return []*discordgo.ApplicationCommandOption{
-		{
-			Type:        discordgo.ApplicationCommandOptionString,
-			Name:        hfPromptOpt,
-			Description: "A prompt to generate an image from. This can be very specific.",
-			Required:    true,
-		},
 		{
 			Type:        discordgo.ApplicationCommandOptionString,
 			Name:        hfModelOpt,
@@ -109,17 +109,23 @@ func hfOpts() []*discordgo.ApplicationCommandOption {
 			Choices:     hfModels(),
 		},
 		{
-			Type:     discordgo.ApplicationCommandOptionString,
-			Name:     hfModelOptCustom,
+			Type:        discordgo.ApplicationCommandOptionString,
+			Name:        hfPromptOpt,
+			Description: "A prompt to generate an image from. This can be very specific.",
+			Required:    true,
+		},
+		{
+			Type:        discordgo.ApplicationCommandOptionString,
+			Name:        hfModelOptCustom,
 			Description: "Any text-to-image model from huggingface.co",
-			Required: false,
+			Required:    false,
 		},
 	}
 }
 
 func handleHfSubCmd(s *discordgo.Session, i *discordgo.InteractionCreate, opts []*discordgo.ApplicationCommandInteractionDataOption) {
-	prompt := opts[0].StringValue()
-	model := opts[1].StringValue()
+	prompt := opts[1].StringValue()
+	model := opts[0].StringValue()
 	if model == hfModelOptCustom {
 		if len(opts) < 3 {
 			interactionFollowUpEphemeralError(s, i, false, fmt.Errorf(`you must specify a custom model to use when selecting the "%s" model`, hfModelOptCustom))
@@ -127,9 +133,13 @@ func handleHfSubCmd(s *discordgo.Session, i *discordgo.InteractionCreate, opts [
 		}
 		model = opts[2].StringValue()
 	}
+	modelKeyWords := hfModelKeyWords()[model]
+	if len(modelKeyWords) == 0 {
+		modelKeyWords = append(modelKeyWords, "")
+	}
 
 	img, imgFmt, err := hfapigo.SendTextToImageRequest(model, &hfapigo.TextToImageRequest{
-		Inputs:  prompt,
+		Inputs:  fmt.Sprintf("%s%s", modelKeyWords[rand.Intn(len(modelKeyWords))], prompt),
 		Options: *hfapigo.NewOptions().SetWaitForModel(true),
 	})
 	if err != nil {
