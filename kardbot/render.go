@@ -140,7 +140,7 @@ func handleHfSubCmd(s *discordgo.Session, i *discordgo.InteractionCreate, opts [
 
 	img, imgFmt, err := hfapigo.SendTextToImageRequest(model, &hfapigo.TextToImageRequest{
 		Inputs:  fmt.Sprintf("%s%s", modelKeyWords[rand.Intn(len(modelKeyWords))], prompt),
-		Options: *hfapigo.NewOptions().SetWaitForModel(true),
+		Options: *hfapigo.NewOptions().SetWaitForModel(true).SetUseCache(false),
 	})
 	if err != nil {
 		// TODO: detect if error is invalid model, and report to user instead of owner.
