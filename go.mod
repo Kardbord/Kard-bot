@@ -18,7 +18,7 @@ require (
 	github.com/orcaman/concurrent-map/v2 v2.0.1
 	github.com/sirupsen/logrus v1.9.0
 	github.com/vartanbeno/go-reddit/v2 v2.0.1
-	go.uber.org/atomic v1.10.0
+	go.uber.org/atomic v1.11.0
 )
 
 require (
