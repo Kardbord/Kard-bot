@@ -1,8 +1,8 @@
 cloud.google.com/go v0.34.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 github.com/TannerKvarfordt/gopenai v0.1.3-beta h1:KuzfR2zZUNnC+RKhN/9qRF/dJ8glPCX6Lm9pt3FJnAQ=
 github.com/TannerKvarfordt/gopenai v0.1.3-beta/go.mod h1:X42mdDQIih6TLzctpf8Wp/cIGpHaMiImMWZ+BQz7nT0=
-github.com/TannerKvarfordt/hfapigo v1.2.0 h1:naTLCsY1GlIsOlWowaS+SoW4pBpuPu/tj87Ajh+SHBI=
-github.com/TannerKvarfordt/hfapigo v1.2.0/go.mod h1:qhyMEDUaRDpi0L4urlhvuTaCF207PI3Al1USMvVffm8=
+github.com/TannerKvarfordt/hfapigo v1.2.1 h1:Izy1+Qtc8WsevKQHMAbkuju4jxaDbMMgKZ5wAg8CiM0=
+github.com/TannerKvarfordt/hfapigo v1.2.1/go.mod h1:qhyMEDUaRDpi0L4urlhvuTaCF207PI3Al1USMvVffm8=
 github.com/TannerKvarfordt/imgflipgo v1.0.6 h1:u7HRbGsTBE1VjrQuk2UUJTJEDf/jvbh0QVhGPF6m/zA=
 github.com/TannerKvarfordt/imgflipgo v1.0.6/go.mod h1:wLVihMPHZAVEfAzU047L6tIxdm1WZ8KvZc71DrOrseY=
 github.com/TannerKvarfordt/ubiquity v0.2.2 h1:SWbXc58MZjrdmJxk/WjdZKbfuHbWTAJ9ToxyDnhZAnQ=
