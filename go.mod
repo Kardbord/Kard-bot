@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/TannerKvarfordt/gopenai v0.1.3-beta
-	github.com/TannerKvarfordt/hfapigo v1.2.0
+	github.com/TannerKvarfordt/hfapigo v1.2.3
 	github.com/TannerKvarfordt/imgflipgo v1.0.6
 	github.com/TannerKvarfordt/ubiquity v0.2.2
 	github.com/bwmarrin/discordgo v0.27.1
