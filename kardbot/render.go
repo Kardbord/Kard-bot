@@ -24,11 +24,16 @@ import (
 const (
 	renderCmd = "render"
 
-	hfSubCmd         = "hugging-face"
-	hfPromptOpt      = "prompt"
-	hfModelOpt       = "model"
-	hfModelOptCustom = "custom-model"
-	hfModelsFilepath = "config/hugging-face-models.json"
+	hfSubCmd                    = "hugging-face"
+	hfPromptOpt                 = "prompt"
+	hfModelOpt                  = "model"
+	hfModelOptCustom            = "custom-model"
+	hfModelOptNegativePrompt    = "negative-prompt"
+	hfModelOptHeight            = "height-px"
+	hfModelOptWidth             = "width-px"
+	hfModelOptNumInferenceSteps = "num-inference-steps"
+	hfModelOptGuidanceScale     = "guidance-scale"
+	hfModelsFilepath            = "config/hugging-face-models.json"
 
 	dalle2SubCmd    = "dalle2"
 	dalle2PromptOpt = "prompt"
@@ -120,32 +125,84 @@ func hfOpts() []*discordgo.ApplicationCommandOption {
 			Description: "Any text-to-image model from huggingface.co",
 			Required:    false,
 		},
+		{
+			Type:        discordgo.ApplicationCommandOptionString,
+			Name:        hfModelOptNegativePrompt,
+			Description: "The prompt not to guide the image generation",
+			Required:    false,
+		},
+		{
+			Type:        discordgo.ApplicationCommandOptionInteger,
+			Name:        hfModelOptHeight,
+			Description: "Specify the height of the image, in pixels.",
+			Required:    false,
+		},
+		{
+			Type:        discordgo.ApplicationCommandOptionInteger,
+			Name:        hfModelOptWidth,
+			Description: "Specify the width of the image, in pixels.",
+			Required:    false,
+		},
+		{
+			Type:        discordgo.ApplicationCommandOptionInteger,
+			Name:        hfModelOptNumInferenceSteps,
+			Description: "Denoising steps. Higher number leads to a higher quality at the expense of performance. Default=50",
+			Required:    false,
+		},
+		{
+			Type:        discordgo.ApplicationCommandOptionNumber,
+			Name:        hfModelOptGuidanceScale,
+			Description: "Higher numbers produce images more closely linked to the prompt, but lowers quality. Default=7.5",
+			Required:    false,
+		},
 	}
 }
 
 func handleHfSubCmd(s *discordgo.Session, i *discordgo.InteractionCreate, opts []*discordgo.ApplicationCommandInteractionDataOption) {
-	prompt := opts[1].StringValue()
-	model := opts[0].StringValue()
+	t2imgRequest := hfapigo.TextToImageRequest{}
+	model := ""
+	customModel := ""
+	for _, opt := range opts {
+		switch opt.Name {
+		case hfPromptOpt:
+			t2imgRequest.Inputs = opt.StringValue()
+		case hfModelOptNegativePrompt:
+			t2imgRequest.Parameters.NegativePrompt = opt.StringValue()
+		case hfModelOptHeight:
+			t2imgRequest.Parameters.Height = opt.IntValue()
+		case hfModelOptWidth:
+			t2imgRequest.Parameters.Width = opt.IntValue()
+		case hfModelOptNumInferenceSteps:
+			t2imgRequest.Parameters.NumInferenceSteps = opt.IntValue()
+		case hfModelOptGuidanceScale:
+			t2imgRequest.Parameters.GuidanceScale = opt.FloatValue()
+		case hfModelOpt:
+			model = opt.StringValue()
+		case hfModelOptCustom:
+			customModel = opt.StringValue()
+		default:
+			log.Warn("Unknown option:", opt.Name)
+		}
+	}
+
 	if model == hfModelOptCustom {
-		if len(opts) < 3 {
+		if customModel == "" {
 			interactionFollowUpEphemeralError(s, i, false, fmt.Errorf(`you must specify a custom model to use when selecting the "%s" model`, hfModelOptCustom))
 			return
 		}
-		model = opts[2].StringValue()
+		model = customModel
 	}
 	modelKeyWords := hfModelKeyWords()[model]
 	if len(modelKeyWords) == 0 {
 		modelKeyWords = append(modelKeyWords, "")
 	}
+	unalteredInput := t2imgRequest.Inputs
+	t2imgRequest.Inputs = fmt.Sprintf("%s%s", modelKeyWords[rand.Intn(len(modelKeyWords))], t2imgRequest.Inputs)
 
-	img, imgFmt, err := hfapigo.SendTextToImageRequest(model, &hfapigo.TextToImageRequest{
-		Inputs:  fmt.Sprintf("%s%s", modelKeyWords[rand.Intn(len(modelKeyWords))], prompt),
-		Options: *hfapigo.NewOptions().SetWaitForModel(true).SetUseCache(false),
-	})
+	img, imgFmt, err := hfapigo.SendTextToImageRequest(model, &t2imgRequest)
 	if err != nil {
-		// TODO: detect if error is invalid model, and report to user instead of owner.
 		log.Error(err)
-		interactionFollowUpEphemeralError(s, i, true, err)
+		interactionFollowUpEphemeralError(s, i, false, err)
 		return
 	}
 
@@ -167,7 +224,7 @@ func handleHfSubCmd(s *discordgo.Session, i *discordgo.InteractionCreate, opts [
 		return
 	}
 
-	content := fmt.Sprintf("> %s\n\nImage generated using [%s](<https://huggingface.co/%s>).", prompt, model, model)
+	content := fmt.Sprintf("> %s\n\nImage generated using [%s](<https://huggingface.co/%s>).", unalteredInput, model, model)
 	_, err = s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
 		Content: &content,
 		Files: []*discordgo.File{
