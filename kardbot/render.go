@@ -160,6 +160,7 @@ func hfOpts() []*discordgo.ApplicationCommandOption {
 
 func handleHfSubCmd(s *discordgo.Session, i *discordgo.InteractionCreate, opts []*discordgo.ApplicationCommandInteractionDataOption) {
 	t2imgRequest := hfapigo.TextToImageRequest{}
+	t2imgRequest.Options = *hfapigo.NewOptions().SetUseCache(false).SetWaitForModel(true)
 	model := ""
 	customModel := ""
 	for _, opt := range opts {
