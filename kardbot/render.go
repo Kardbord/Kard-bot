@@ -196,6 +196,7 @@ func handleHfSubCmd(s *discordgo.Session, i *discordgo.InteractionCreate, opts [
 	if len(modelKeyWords) == 0 {
 		modelKeyWords = append(modelKeyWords, "")
 	}
+	unalteredInput := t2imgRequest.Inputs
 	t2imgRequest.Inputs = fmt.Sprintf("%s%s", modelKeyWords[rand.Intn(len(modelKeyWords))], t2imgRequest.Inputs)
 
 	img, imgFmt, err := hfapigo.SendTextToImageRequest(model, &t2imgRequest)
@@ -223,7 +224,7 @@ func handleHfSubCmd(s *discordgo.Session, i *discordgo.InteractionCreate, opts [
 		return
 	}
 
-	content := fmt.Sprintf("> %s\n\nImage generated using [%s](<https://huggingface.co/%s>).", t2imgRequest.Inputs, model, model)
+	content := fmt.Sprintf("> %s\n\nImage generated using [%s](<https://huggingface.co/%s>).", unalteredInput, model, model)
 	_, err = s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
 		Content: &content,
 		Files: []*discordgo.File{
