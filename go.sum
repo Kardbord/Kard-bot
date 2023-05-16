@@ -5,8 +5,8 @@ github.com/TannerKvarfordt/hfapigo v1.2.3 h1:sQ80IxgEGlNFYN+bGWJBWrlyllD+tW72g0G
 github.com/TannerKvarfordt/hfapigo v1.2.3/go.mod h1:qhyMEDUaRDpi0L4urlhvuTaCF207PI3Al1USMvVffm8=
 github.com/TannerKvarfordt/imgflipgo v1.0.6 h1:u7HRbGsTBE1VjrQuk2UUJTJEDf/jvbh0QVhGPF6m/zA=
 github.com/TannerKvarfordt/imgflipgo v1.0.6/go.mod h1:wLVihMPHZAVEfAzU047L6tIxdm1WZ8KvZc71DrOrseY=
-github.com/TannerKvarfordt/ubiquity v0.2.2 h1:SWbXc58MZjrdmJxk/WjdZKbfuHbWTAJ9ToxyDnhZAnQ=
-github.com/TannerKvarfordt/ubiquity v0.2.2/go.mod h1:6X6j49wHJuqLF1OBq5hfdo25SZnJDGl59RRvIpnxw4Q=
+github.com/TannerKvarfordt/ubiquity v0.2.3 h1:xsISBtAhTh8etaI7naE0FR+HvM7/2+j/CR+dKw6ABGI=
+github.com/TannerKvarfordt/ubiquity v0.2.3/go.mod h1:6X6j49wHJuqLF1OBq5hfdo25SZnJDGl59RRvIpnxw4Q=
 github.com/bwmarrin/discordgo v0.27.1 h1:ib9AIc/dom1E/fSIulrBwnez0CToJE113ZGt4HoliGY=
 github.com/bwmarrin/discordgo v0.27.1/go.mod h1:NJZpH+1AfhIcyQsPeuBKsUtYrRnjkyu0kIVMCHkZtRY=
 github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
