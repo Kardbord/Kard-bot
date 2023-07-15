@@ -2,6 +2,7 @@ package kardbot
 
 import (
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/TannerKvarfordt/ubiquity/mathutils"
@@ -80,23 +81,22 @@ func deleteBotDMs(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		return
 	}
 
-	msgs, err := s.ChannelMessages(ch.ID, mathutils.Min(msgsToDelete, msgLimit), ch.LastMessageID, "", "")
+	msgs, err := s.ChannelMessages(ch.ID, mathutils.Min(msgsToDelete, msgLimit), "", "", "")
 	if err != nil {
 		log.Error(err)
 		interactionFollowUpEphemeralError(s, i, true, err)
 		return
-	} else {
-		lastMsg, err := s.ChannelMessage(ch.ID, ch.LastMessageID)
-		if err != nil {
-			log.Error(err)
-			interactionFollowUpEphemeralError(s, i, true, err)
-			return
-		}
-		msgs = append(msgs, lastMsg)
 	}
 
+	// Ensure messages are sorted
+	sort.Slice(msgs, func(i, j int) bool {
+		return msgs[i].Timestamp.Before(msgs[j].Timestamp)
+	})
+
 	// No way to bulk delete messages in a DM channel
-	for _, msg := range msgs {
+	deletedCount := 0
+	for i := 0; i < len(msgs); i++ {
+		msg := msgs[i]
 		msgAuthorID := ""
 		if msg.Author != nil {
 			msgAuthorID = msg.Author.ID
@@ -104,21 +104,22 @@ func deleteBotDMs(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			msgAuthorID = msg.Member.User.ID
 		}
 		if msgAuthorID == "" {
-			log.Error("Could not ascertain msg author, skipping")
+			log.Errorf("Could not ascertain msg author, skipping msg:\n> %s", msg.Content)
 			continue
 		}
 
 		if msgAuthorID != s.State.User.ID {
-			log.Debug("Not deleting message not from self")
+			log.Tracef("Not deleting user message:\n> %s", msg.Content)
 			continue
 		}
 		err = s.ChannelMessageDelete(ch.ID, msg.ID)
 		if err != nil {
 			log.Error(err)
 		}
+		deletedCount++
 	}
 
-	errMsg := fmt.Sprintf("Deleted last %d bot DMs", mathutils.Min(msgsToDelete, msgLimit))
+	errMsg := fmt.Sprintf("Skipped %d user DMs. Deleted last %d bot DMs.", mathutils.Min(msgsToDelete, msgLimit)-deletedCount, deletedCount)
 	_, err = s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
 		Content: &errMsg,
 	})

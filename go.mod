@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/TannerKvarfordt/gopenai v0.1.4-beta
-	github.com/TannerKvarfordt/hfapigo v1.3.0
+	github.com/TannerKvarfordt/hfapigo v1.3.1
 	github.com/TannerKvarfordt/imgflipgo v1.0.8
 	github.com/TannerKvarfordt/ubiquity v0.2.3
 	github.com/bwmarrin/discordgo v0.27.1
@@ -23,17 +23,17 @@ require (
 
 require (
 	github.com/fatih/structtag v1.2.0 // indirect
-	github.com/golang/protobuf v1.5.2 // indirect
+	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/gorilla/schema v1.2.0 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect
 	github.com/robfig/cron/v3 v3.0.1 // indirect
-	golang.org/x/crypto v0.6.0 // indirect
-	golang.org/x/exp v0.0.0-20230213192124-5e25df0256eb // indirect
-	golang.org/x/net v0.8.0 // indirect
-	golang.org/x/oauth2 v0.5.0 // indirect
-	golang.org/x/sys v0.6.0 // indirect
+	golang.org/x/crypto v0.11.0 // indirect
+	golang.org/x/exp v0.0.0-20230713183714-613f0c0eb8a1 // indirect
+	golang.org/x/net v0.12.0 // indirect
+	golang.org/x/oauth2 v0.10.0 // indirect
+	golang.org/x/sys v0.10.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
-	google.golang.org/protobuf v1.28.1 // indirect
+	google.golang.org/protobuf v1.31.0 // indirect
 )
