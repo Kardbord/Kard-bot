@@ -2,6 +2,7 @@ package kardbot
 
 import (
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/TannerKvarfordt/ubiquity/mathutils"
@@ -80,23 +81,23 @@ func deleteBotDMs(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		return
 	}
 
-	msgs, err := s.ChannelMessages(ch.ID, mathutils.Min(msgsToDelete, msgLimit), ch.LastMessageID, "", "")
+	msgs, err := s.ChannelMessages(ch.ID, mathutils.Min(msgsToDelete, msgLimit), "", "", "")
 	if err != nil {
 		log.Error(err)
 		interactionFollowUpEphemeralError(s, i, true, err)
 		return
-	} else {
-		lastMsg, err := s.ChannelMessage(ch.ID, ch.LastMessageID)
-		if err != nil {
-			log.Error(err)
-			interactionFollowUpEphemeralError(s, i, true, err)
-			return
-		}
-		msgs = append(msgs, lastMsg)
 	}
 
+	// Ensure messages are sorted
+	sort.Slice(msgs, func(i, j int) bool {
+		return msgs[i].Timestamp.Before(msgs[j].Timestamp)
+	})
+
 	// No way to bulk delete messages in a DM channel
-	for _, msg := range msgs {
+	// For some reason, ChannelMessages seems to always
+	// give one more message than the limit we send, hence the len(msgs)-1.
+	for i := 0; i < len(msgs)-1; i++ {
+		msg := msgs[i]
 		msgAuthorID := ""
 		if msg.Author != nil {
 			msgAuthorID = msg.Author.ID
