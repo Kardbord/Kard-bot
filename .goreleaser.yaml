@@ -45,10 +45,7 @@ builds:
     mod_timestamp: "{{ .CommitTimestamp }}"
 
 archives:
-  - replacements:
-      386: i386
-      amd64: x86_64
-    wrap_in_directory: true
+  - wrap_in_directory: true
     format_overrides:
       - goos: windows
         format: zip
