@@ -94,9 +94,8 @@ func deleteBotDMs(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	})
 
 	// No way to bulk delete messages in a DM channel
-	// For some reason, ChannelMessages seems to always
-	// give one more message than the limit we send, hence the len(msgs)-1.
-	for i := 0; i < len(msgs)-1; i++ {
+	deletedCount := 0
+	for i := 0; i < len(msgs); i++ {
 		msg := msgs[i]
 		msgAuthorID := ""
 		if msg.Author != nil {
@@ -105,21 +104,22 @@ func deleteBotDMs(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			msgAuthorID = msg.Member.User.ID
 		}
 		if msgAuthorID == "" {
-			log.Error("Could not ascertain msg author, skipping")
+			log.Errorf("Could not ascertain msg author, skipping msg:\n> %s", msg.Content)
 			continue
 		}
 
 		if msgAuthorID != s.State.User.ID {
-			log.Debug("Not deleting message not from self")
+			log.Tracef("Not deleting user message:\n> %s", msg.Content)
 			continue
 		}
 		err = s.ChannelMessageDelete(ch.ID, msg.ID)
 		if err != nil {
 			log.Error(err)
 		}
+		deletedCount++
 	}
 
-	errMsg := fmt.Sprintf("Deleted last %d bot DMs", mathutils.Min(msgsToDelete, msgLimit))
+	errMsg := fmt.Sprintf("Skipped %d user DMs. Deleted last %d bot DMs.", mathutils.Min(msgsToDelete, msgLimit)-deletedCount, deletedCount)
 	_, err = s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
 		Content: &errMsg,
 	})

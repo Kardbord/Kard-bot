@@ -294,7 +294,7 @@ func getCommands() []*discordgo.ApplicationCommand {
 				{
 					Type:        discordgo.ApplicationCommandOptionInteger,
 					Name:        "msg-count",
-					Description: fmt.Sprintf("How many messages back should we delete? Up to %d.", msgLimit),
+					Description: fmt.Sprintf("Number of messages to delete. Messages from you will be skipped. Max of %d.", msgLimit),
 					Required:    true,
 				},
 			},
