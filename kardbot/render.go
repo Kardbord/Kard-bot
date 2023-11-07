@@ -38,6 +38,12 @@ const (
 	dalle2SubCmd    = "dalle2"
 	dalle2OptPrompt = "prompt"
 	dalle2OptSize   = "size"
+
+	dalle3SubCmd     = "dalle3"
+	dalle3OptPrompt  = "prompt"
+	dalle3OptSize    = "size"
+	dalle3OptQuality = "quality"
+	dalle3OptStyle   = "style"
 )
 
 func handleRenderCmd(s *discordgo.Session, i *discordgo.InteractionCreate) {
@@ -55,6 +61,8 @@ func handleRenderCmd(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		handleHfSubCmd(s, i, i.ApplicationCommandData().Options[0].Options)
 	case dalle2SubCmd:
 		handleDalle2SubCmd(s, i, i.ApplicationCommandData().Options[0].Options)
+	case dalle3SubCmd:
+		handleDalle3SubCmd(s, i, i.ApplicationCommandData().Options[0].Options)
 	default:
 		err = fmt.Errorf("reached unreachable case")
 		log.Error(err)
@@ -332,4 +340,71 @@ func handleDalle2SubCmd(s *discordgo.Session, i *discordgo.InteractionCreate, op
 		log.Error(err)
 		interactionFollowUpEphemeralError(s, i, true, err)
 	}
+}
+
+func dalle3Opts() []*discordgo.ApplicationCommandOption {
+	return []*discordgo.ApplicationCommandOption{
+		{
+			Type:        discordgo.ApplicationCommandOptionString,
+			Name:        dalle3OptPrompt,
+			Description: "A prompt to generate an image from. This can be very detailed.",
+			Required:    true,
+		},
+		{
+			Type:        discordgo.ApplicationCommandOptionString,
+			Name:        dalle3OptSize,
+			Description: "The size of the image to be generated.",
+			Required:    true,
+			Choices: []*discordgo.ApplicationCommandOptionChoice{
+				{
+					Name:  images.Dalle3SquareImage,
+					Value: images.Dalle3SquareImage,
+				},
+				{
+					Name:  images.Dalle3LandscapeImage,
+					Value: images.Dalle3LandscapeImage,
+				},
+				{
+					Name:  images.Dalle3PortraitImage,
+					Value: images.Dalle3PortraitImage,
+				},
+			},
+		},
+		{
+			Type:        discordgo.ApplicationCommandOptionString,
+			Name:        dalle3OptQuality,
+			Description: "The quality of the image that will be generated.",
+			Required:    false,
+			Choices: []*discordgo.ApplicationCommandOptionChoice{
+				{
+					Name:  images.QualityStandard,
+					Value: images.QualityStandard,
+				},
+				{
+					Name:  images.QualityHD,
+					Value: images.QualityHD,
+				},
+			},
+		},
+		{
+			Type:        discordgo.ApplicationCommandOptionString,
+			Name:        dalle3OptStyle,
+			Description: "Vivid produces more hyper-real images, natural produces less hyper-real images.",
+			Required:    false,
+			Choices: []*discordgo.ApplicationCommandOptionChoice{
+				{
+					Name:  images.StyleVivid,
+					Value: images.StyleVivid,
+				},
+				{
+					Name:  images.StyleNatural,
+					Value: images.StyleNatural,
+				},
+			},
+		},
+	}
+}
+
+func handleDalle3SubCmd(s *discordgo.Session, i *discordgo.InteractionCreate, opts []*discordgo.ApplicationCommandInteractionDataOption) {
+
 }
