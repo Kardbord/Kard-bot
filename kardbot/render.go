@@ -36,8 +36,8 @@ const (
 	hfModelsFilepath            = "config/hugging-face-models.json"
 
 	dalle2SubCmd    = "dalle2"
-	dalle2PromptOpt = "prompt"
-	dalle2SizeOpt   = "size"
+	dalle2OptPrompt = "prompt"
+	dalle2OptSize   = "size"
 )
 
 func handleRenderCmd(s *discordgo.Session, i *discordgo.InteractionCreate) {
@@ -246,13 +246,13 @@ func dalle2Opts() []*discordgo.ApplicationCommandOption {
 	return []*discordgo.ApplicationCommandOption{
 		{
 			Type:        discordgo.ApplicationCommandOptionString,
-			Name:        dalle2PromptOpt,
+			Name:        dalle2OptPrompt,
 			Description: "A prompt to generate an image from. This can be very specific.",
 			Required:    true,
 		},
 		{
 			Type:        discordgo.ApplicationCommandOptionString,
-			Name:        dalle2SizeOpt,
+			Name:        dalle2OptSize,
 			Description: "The size of the image to be generated",
 			Required:    true,
 			Choices: []*discordgo.ApplicationCommandOptionChoice{
