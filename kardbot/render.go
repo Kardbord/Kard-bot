@@ -265,16 +265,16 @@ func dalle2Opts() []*discordgo.ApplicationCommandOption {
 			Required:    true,
 			Choices: []*discordgo.ApplicationCommandOptionChoice{
 				{
-					Name:  images.SmallImage,
-					Value: images.SmallImage,
+					Name:  images.Dalle2SmallImage,
+					Value: images.Dalle2SmallImage,
 				},
 				{
-					Name:  images.MediumImage,
-					Value: images.MediumImage,
+					Name:  images.Dalle2MediumImage,
+					Value: images.Dalle2MediumImage,
 				},
 				{
-					Name:  images.LargeImage,
-					Value: images.LargeImage,
+					Name:  images.Dalle2LargeImage,
+					Value: images.Dalle2LargeImage,
 				},
 			},
 		},
