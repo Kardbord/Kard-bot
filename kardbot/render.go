@@ -308,6 +308,8 @@ func handleDalle2SubCmd(s *discordgo.Session, i *discordgo.InteractionCreate, op
 				contentFlags = []byte("Whoops, couldn't retrieve the details of your violation.")
 			}
 			interactionFollowUpEphemeralError(s, i, false, fmt.Errorf("sorry! Your prompt does not appear to conform to [Open AI's Usage Policies](<https://beta.openai.com/docs/usage-policies>)\n```JSON\n%s\n```", contentFlags))
+		} else if strings.Contains(err.Error(), "safety system") {
+			interactionFollowUpEphemeralError(s, i, false, err)
 		} else {
 			log.Error(err)
 			interactionFollowUpEphemeralError(s, i, true, err)
@@ -406,5 +408,77 @@ func dalle3Opts() []*discordgo.ApplicationCommandOption {
 }
 
 func handleDalle3SubCmd(s *discordgo.Session, i *discordgo.InteractionCreate, opts []*discordgo.ApplicationCommandInteractionDataOption) {
+	mdata, err := getInteractionMetaData(i)
+	if err != nil {
+		log.Error(err)
+		interactionFollowUpEphemeralError(s, i, true, err)
+		return
+	}
 
+	imageCount := uint64(1)
+	request := &images.CreationRequest{
+		Model:          images.ModelDalle3,
+		N:              &imageCount,
+		ResponseFormat: images.ResponseFormatB64JSON,
+		User:           mdata.AuthorID,
+	}
+	for _, opt := range opts {
+		switch opt.Name {
+		case dalle3OptPrompt:
+			request.Prompt = opt.StringValue()
+		case dalle3OptSize:
+			request.Size = opt.StringValue()
+		case dalle3OptQuality:
+			request.Quality = opt.StringValue()
+		case dalle3OptStyle:
+			request.Style = opt.StringValue()
+		default:
+			log.Warn("Unknown option:", opt.Name)
+		}
+	}
+
+	resp, modr, err := images.MakeModeratedCreationRequest(request, nil)
+	if err != nil {
+		targetErr := moderations.NewModerationFlagError()
+		if errors.As(err, &targetErr) {
+			contentFlags, err := json.MarshalIndent(modr.Results[0].Categories, "", "  ")
+			if err != nil {
+				log.Error(err)
+				contentFlags = []byte("Whoops, couldn't retrieve the details of your violation.")
+			}
+			interactionFollowUpEphemeralError(s, i, false, fmt.Errorf("sorry! Your prompt does not appear to conform to [Open AI's Usage Policies](<https://beta.openai.com/docs/usage-policies>)\n```JSON\n%s\n```", contentFlags))
+		} else if strings.Contains(err.Error(), "safety system") {
+			interactionFollowUpEphemeralError(s, i, false, err)
+		} else {
+			log.Error(err)
+			interactionFollowUpEphemeralError(s, i, true, err)
+		}
+		return
+	}
+
+	unbased, err := base64.StdEncoding.DecodeString(resp.Data[0].B64JSON)
+	if err != nil {
+		log.Error(err)
+		interactionFollowUpEphemeralError(s, i, true, err)
+		return
+	}
+
+	content := fmt.Sprintf("Prompt:\n> %s\n\nRevised Prompt:\n> %s\n\nImage generated using [DALL·E 3](<https://openai.com/dall-e-3/>).", request.Prompt, resp.Data[0].RevisedPrompt)
+	_, err = s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+		Content: &content,
+		Files: []*discordgo.File{
+			{
+				Name:        "Dalle-2-Output.png",
+				ContentType: "image/png",
+				Reader:      bytes.NewReader(unbased),
+			},
+		},
+		AllowedMentions: &discordgo.MessageAllowedMentions{
+			Users: []string{mdata.AuthorID},
+		},
+	})
+	if err != nil {
+		log.Error(err)
+		interactionFollowUpEphemeralError(s, i, true, err)
+	}
 }
