@@ -36,8 +36,14 @@ const (
 	hfModelsFilepath            = "config/hugging-face-models.json"
 
 	dalle2SubCmd    = "dalle2"
-	dalle2PromptOpt = "prompt"
-	dalle2SizeOpt   = "size"
+	dalle2OptPrompt = "prompt"
+	dalle2OptSize   = "size"
+
+	dalle3SubCmd     = "dalle3"
+	dalle3OptPrompt  = "prompt"
+	dalle3OptSize    = "size"
+	dalle3OptQuality = "quality"
+	dalle3OptStyle   = "style"
 )
 
 func handleRenderCmd(s *discordgo.Session, i *discordgo.InteractionCreate) {
@@ -55,6 +61,8 @@ func handleRenderCmd(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		handleHfSubCmd(s, i, i.ApplicationCommandData().Options[0].Options)
 	case dalle2SubCmd:
 		handleDalle2SubCmd(s, i, i.ApplicationCommandData().Options[0].Options)
+	case dalle3SubCmd:
+		handleDalle3SubCmd(s, i, i.ApplicationCommandData().Options[0].Options)
 	default:
 		err = fmt.Errorf("reached unreachable case")
 		log.Error(err)
@@ -246,27 +254,27 @@ func dalle2Opts() []*discordgo.ApplicationCommandOption {
 	return []*discordgo.ApplicationCommandOption{
 		{
 			Type:        discordgo.ApplicationCommandOptionString,
-			Name:        dalle2PromptOpt,
+			Name:        dalle2OptPrompt,
 			Description: "A prompt to generate an image from. This can be very specific.",
 			Required:    true,
 		},
 		{
 			Type:        discordgo.ApplicationCommandOptionString,
-			Name:        dalle2SizeOpt,
+			Name:        dalle2OptSize,
 			Description: "The size of the image to be generated",
 			Required:    true,
 			Choices: []*discordgo.ApplicationCommandOptionChoice{
 				{
-					Name:  images.SmallImage,
-					Value: images.SmallImage,
+					Name:  images.Dalle2SmallImage,
+					Value: images.Dalle2SmallImage,
 				},
 				{
-					Name:  images.MediumImage,
-					Value: images.MediumImage,
+					Name:  images.Dalle2MediumImage,
+					Value: images.Dalle2MediumImage,
 				},
 				{
-					Name:  images.LargeImage,
-					Value: images.LargeImage,
+					Name:  images.Dalle2LargeImage,
+					Value: images.Dalle2LargeImage,
 				},
 			},
 		},
@@ -300,6 +308,8 @@ func handleDalle2SubCmd(s *discordgo.Session, i *discordgo.InteractionCreate, op
 				contentFlags = []byte("Whoops, couldn't retrieve the details of your violation.")
 			}
 			interactionFollowUpEphemeralError(s, i, false, fmt.Errorf("sorry! Your prompt does not appear to conform to [Open AI's Usage Policies](<https://beta.openai.com/docs/usage-policies>)\n```JSON\n%s\n```", contentFlags))
+		} else if strings.Contains(err.Error(), "safety system") {
+			interactionFollowUpEphemeralError(s, i, false, err)
 		} else {
 			log.Error(err)
 			interactionFollowUpEphemeralError(s, i, true, err)
@@ -315,6 +325,145 @@ func handleDalle2SubCmd(s *discordgo.Session, i *discordgo.InteractionCreate, op
 	}
 
 	content := fmt.Sprintf("> %s\n\nImage generated using [DALL·E 2](<https://openai.com/dall-e-2/>).", prompt)
+	_, err = s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+		Content: &content,
+		Files: []*discordgo.File{
+			{
+				Name:        "Dalle-2-Output.png",
+				ContentType: "image/png",
+				Reader:      bytes.NewReader(unbased),
+			},
+		},
+		AllowedMentions: &discordgo.MessageAllowedMentions{
+			Users: []string{mdata.AuthorID},
+		},
+	})
+	if err != nil {
+		log.Error(err)
+		interactionFollowUpEphemeralError(s, i, true, err)
+	}
+}
+
+func dalle3Opts() []*discordgo.ApplicationCommandOption {
+	return []*discordgo.ApplicationCommandOption{
+		{
+			Type:        discordgo.ApplicationCommandOptionString,
+			Name:        dalle3OptPrompt,
+			Description: "A prompt to generate an image from. This can be very detailed.",
+			Required:    true,
+		},
+		{
+			Type:        discordgo.ApplicationCommandOptionString,
+			Name:        dalle3OptSize,
+			Description: "The size of the image to be generated.",
+			Required:    true,
+			Choices: []*discordgo.ApplicationCommandOptionChoice{
+				{
+					Name:  images.Dalle3SquareImage,
+					Value: images.Dalle3SquareImage,
+				},
+				{
+					Name:  images.Dalle3LandscapeImage,
+					Value: images.Dalle3LandscapeImage,
+				},
+				{
+					Name:  images.Dalle3PortraitImage,
+					Value: images.Dalle3PortraitImage,
+				},
+			},
+		},
+		{
+			Type:        discordgo.ApplicationCommandOptionString,
+			Name:        dalle3OptQuality,
+			Description: "The quality of the image that will be generated.",
+			Required:    false,
+			Choices: []*discordgo.ApplicationCommandOptionChoice{
+				{
+					Name:  images.QualityStandard,
+					Value: images.QualityStandard,
+				},
+				{
+					Name:  images.QualityHD,
+					Value: images.QualityHD,
+				},
+			},
+		},
+		{
+			Type:        discordgo.ApplicationCommandOptionString,
+			Name:        dalle3OptStyle,
+			Description: "Vivid produces more hyper-real images, natural produces less hyper-real images.",
+			Required:    false,
+			Choices: []*discordgo.ApplicationCommandOptionChoice{
+				{
+					Name:  images.StyleVivid,
+					Value: images.StyleVivid,
+				},
+				{
+					Name:  images.StyleNatural,
+					Value: images.StyleNatural,
+				},
+			},
+		},
+	}
+}
+
+func handleDalle3SubCmd(s *discordgo.Session, i *discordgo.InteractionCreate, opts []*discordgo.ApplicationCommandInteractionDataOption) {
+	mdata, err := getInteractionMetaData(i)
+	if err != nil {
+		log.Error(err)
+		interactionFollowUpEphemeralError(s, i, true, err)
+		return
+	}
+
+	imageCount := uint64(1)
+	request := &images.CreationRequest{
+		Model:          images.ModelDalle3,
+		N:              &imageCount,
+		ResponseFormat: images.ResponseFormatB64JSON,
+		User:           mdata.AuthorID,
+	}
+	for _, opt := range opts {
+		switch opt.Name {
+		case dalle3OptPrompt:
+			request.Prompt = opt.StringValue()
+		case dalle3OptSize:
+			request.Size = opt.StringValue()
+		case dalle3OptQuality:
+			request.Quality = opt.StringValue()
+		case dalle3OptStyle:
+			request.Style = opt.StringValue()
+		default:
+			log.Warn("Unknown option:", opt.Name)
+		}
+	}
+
+	resp, modr, err := images.MakeModeratedCreationRequest(request, nil)
+	if err != nil {
+		targetErr := moderations.NewModerationFlagError()
+		if errors.As(err, &targetErr) {
+			contentFlags, err := json.MarshalIndent(modr.Results[0].Categories, "", "  ")
+			if err != nil {
+				log.Error(err)
+				contentFlags = []byte("Whoops, couldn't retrieve the details of your violation.")
+			}
+			interactionFollowUpEphemeralError(s, i, false, fmt.Errorf("sorry! Your prompt does not appear to conform to [Open AI's Usage Policies](<https://beta.openai.com/docs/usage-policies>)\n```JSON\n%s\n```", contentFlags))
+		} else if strings.Contains(err.Error(), "safety system") {
+			interactionFollowUpEphemeralError(s, i, false, err)
+		} else {
+			log.Error(err)
+			interactionFollowUpEphemeralError(s, i, true, err)
+		}
+		return
+	}
+
+	unbased, err := base64.StdEncoding.DecodeString(resp.Data[0].B64JSON)
+	if err != nil {
+		log.Error(err)
+		interactionFollowUpEphemeralError(s, i, true, err)
+		return
+	}
+
+	content := fmt.Sprintf("Prompt:\n> %s\n\nRevised Prompt:\n> %s\n\nImage generated using [DALL·E 3](<https://openai.com/dall-e-3/>).", request.Prompt, resp.Data[0].RevisedPrompt)
 	_, err = s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
 		Content: &content,
 		Files: []*discordgo.File{

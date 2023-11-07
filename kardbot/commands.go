@@ -366,6 +366,12 @@ func getCommands() []*discordgo.ApplicationCommand {
 					Options:     dalle2Opts(),
 				},
 				{
+					Name:        dalle3SubCmd,
+					Description: "Ask Open AI's DALL·E 3 model to generate an image from a prompt.",
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Options:     dalle3Opts(),
+				},
+				{
 					Name:        hfSubCmd,
 					Description: "Ask a HuggingFace model to generate an image from a prompt.",
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
