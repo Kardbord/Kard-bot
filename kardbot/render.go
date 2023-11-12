@@ -293,6 +293,7 @@ func handleDalle2SubCmd(s *discordgo.Session, i *discordgo.InteractionCreate, op
 	size := opts[1].StringValue()
 	imageCount := uint64(1)
 	resp, modr, err := images.MakeModeratedCreationRequest(&images.CreationRequest{
+		Model:          images.ModelDalle2,
 		Prompt:         prompt,
 		N:              &imageCount,
 		Size:           size,
@@ -468,7 +469,7 @@ func handleDalle3SubCmd(s *discordgo.Session, i *discordgo.InteractionCreate, op
 		Content: &content,
 		Files: []*discordgo.File{
 			{
-				Name:        "Dalle-2-Output.png",
+				Name:        "Dalle-3-Output.png",
 				ContentType: "image/png",
 				Reader:      bytes.NewReader(unbased),
 			},
