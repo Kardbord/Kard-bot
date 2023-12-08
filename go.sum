@@ -1,6 +1,6 @@
 cloud.google.com/go v0.34.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
-github.com/TannerKvarfordt/gopenai v0.1.5-beta h1:7vbtwn3fqDrPUsjCz2SP0s+ivIeNbFAP6ACDfklARhc=
-github.com/TannerKvarfordt/gopenai v0.1.5-beta/go.mod h1:X42mdDQIih6TLzctpf8Wp/cIGpHaMiImMWZ+BQz7nT0=
+github.com/TannerKvarfordt/gopenai v0.1.7-beta h1:HG1wJt9i6imuCqDGoWifbAKlkSY/xqStKhRtw2HEo8A=
+github.com/TannerKvarfordt/gopenai v0.1.7-beta/go.mod h1:X42mdDQIih6TLzctpf8Wp/cIGpHaMiImMWZ+BQz7nT0=
 github.com/TannerKvarfordt/hfapigo v1.3.1 h1:Q0nGBLI3p6kbY/PHdjWFKsXN9HDulPQPSIlACtiZ0rE=
 github.com/TannerKvarfordt/hfapigo v1.3.1/go.mod h1:QvdRtU6q3i/VURfTwUu/akYX6HtdIGn25t62zFLoXX4=
 github.com/TannerKvarfordt/imgflipgo v1.0.8 h1:n6MPCZYGY51EL+H85UGV71LRiTiWIyoEprawYlu2Tr0=
