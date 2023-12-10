@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strconv"
 
-	"github.com/TannerKvarfordt/ubiquity/mathutils/random"
+	"github.com/Kardbord/ubiquity/mathutils/random"
 	"github.com/bwmarrin/discordgo"
 	cmap "github.com/orcaman/concurrent-map/v2"
 	log "github.com/sirupsen/logrus"

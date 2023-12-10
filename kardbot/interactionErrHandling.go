@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"runtime"
 
-	"github.com/TannerKvarfordt/Kard-bot/kardbot/dg_helpers"
+	"github.com/Kardbord/Kard-bot/kardbot/dg_helpers"
 	"github.com/bwmarrin/discordgo"
 	"github.com/google/uuid"
 	cmap "github.com/orcaman/concurrent-map/v2"

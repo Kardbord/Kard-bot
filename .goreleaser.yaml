@@ -67,7 +67,7 @@ dockers:
     use: buildx
     dockerfile: Dockerfile
     build_flag_templates:
-      - "--label=org.opencontainers.image.source=https://github.com/TannerKvarfordt/Kard-bot"
+      - "--label=org.opencontainers.image.source=https://github.com/Kardbord/Kard-bot"
       - "--label=org.opencontainers.image.licenses=AGPL-3.0"
       - "--label=org.opencontainers.image.created={{.Date}}"
       - "--label=org.opencontainers.image.title={{.ProjectName}}"
@@ -91,7 +91,7 @@ dockers:
     use: buildx
     dockerfile: Dockerfile
     build_flag_templates:
-      - "--label=org.opencontainers.image.source=https://github.com/TannerKvarfordt/Kard-bot"
+      - "--label=org.opencontainers.image.source=https://github.com/Kardbord/Kard-bot"
       - "--label=org.opencontainers.image.licenses=AGPL-3.0"
       - "--label=org.opencontainers.image.created={{.Date}}"
       - "--label=org.opencontainers.image.title={{.ProjectName}}"
@@ -116,7 +116,7 @@ dockers:
     use: buildx
     dockerfile: Dockerfile
     build_flag_templates:
-      - "--label=org.opencontainers.image.source=https://github.com/TannerKvarfordt/Kard-bot"
+      - "--label=org.opencontainers.image.source=https://github.com/Kardbord/Kard-bot"
       - "--label=org.opencontainers.image.licenses=AGPL-3.0"
       - "--label=org.opencontainers.image.created={{.Date}}"
       - "--label=org.opencontainers.image.title={{.ProjectName}}"
@@ -141,7 +141,7 @@ dockers:
     use: buildx
     dockerfile: Dockerfile
     build_flag_templates:
-      - "--label=org.opencontainers.image.source=https://github.com/TannerKvarfordt/Kard-bot"
+      - "--label=org.opencontainers.image.source=https://github.com/Kardbord/Kard-bot"
       - "--label=org.opencontainers.image.licenses=AGPL-3.0"
       - "--label=org.opencontainers.image.created={{.Date}}"
       - "--label=org.opencontainers.image.title={{.ProjectName}}"
@@ -200,7 +200,7 @@ release:
   extra_files:
     - glob: "./kardbot-*.tar.gz"
   header: |
-    **Full Changelog**: https://github.com/TannerKvarfordt/Kard-bot/compare/{{ .PreviousTag }}...{{ .Tag }}
+    **Full Changelog**: https://github.com/Kardbord/Kard-bot/compare/{{ .PreviousTag }}...{{ .Tag }}
   footer: |
     ## Quick Start
     To get started with hosting your own Kard-bot instance, download the precompiled binary for your architecture below. If you plan on using Docker to host Kard-bot, download kardbot-{{ .Tag }}.tar.gz. Then, follow the instructions included in the accompanying README.md.

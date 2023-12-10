@@ -7,9 +7,9 @@ import (
 	"regexp"
 	"strconv"
 
-	"github.com/TannerKvarfordt/Kard-bot/kardbot/dg_helpers"
-	"github.com/TannerKvarfordt/imgflipgo"
-	"github.com/TannerKvarfordt/ubiquity/mathutils"
+	"github.com/Kardbord/Kard-bot/kardbot/dg_helpers"
+	"github.com/Kardbord/imgflipgo/v2"
+	"github.com/Kardbord/ubiquity/mathutils"
 	"github.com/bwmarrin/discordgo"
 	log "github.com/sirupsen/logrus"
 )

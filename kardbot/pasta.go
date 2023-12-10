@@ -8,8 +8,8 @@ import (
 	"math/rand"
 	"os"
 
-	"github.com/TannerKvarfordt/Kard-bot/kardbot/config"
-	"github.com/TannerKvarfordt/ubiquity/stringutils"
+	"github.com/Kardbord/Kard-bot/kardbot/config"
+	"github.com/Kardbord/ubiquity/stringutils"
 	"github.com/bwmarrin/discordgo"
 	owoify_go "github.com/deadshot465/owoify-go"
 	log "github.com/sirupsen/logrus"

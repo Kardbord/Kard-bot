@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/TannerKvarfordt/Kard-bot/kardbot/config"
+	"github.com/Kardbord/Kard-bot/kardbot/config"
 	"github.com/bwmarrin/discordgo"
 
 	log "github.com/sirupsen/logrus"

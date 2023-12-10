@@ -5,11 +5,11 @@
 
 # Kard-bot
 
-[![Build](https://github.com/TannerKvarfordt/Kard-bot/actions/workflows/go.yml/badge.svg)](https://github.com/TannerKvarfordt/Kard-bot/actions/workflows/go.yml)
-[![CodeQL](https://github.com/TannerKvarfordt/Kard-bot/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/TannerKvarfordt/Kard-bot/actions/workflows/codeql-analysis.yml)
-[![Docker Image](https://github.com/TannerKvarfordt/Kard-bot/actions/workflows/release.yml/badge.svg)](https://github.com/TannerKvarfordt/Kard-bot/actions/workflows/release.yml)
-[![Image Efficiency](https://github.com/TannerKvarfordt/Kard-bot/actions/workflows/image-dive.yml/badge.svg)](https://github.com/TannerKvarfordt/Kard-bot/actions/workflows/image-dive.yml)
-[![Go Report Card](https://goreportcard.com/badge/github.com/TannerKvarfordt/Kard-bot)](https://goreportcard.com/report/github.com/TannerKvarfordt/Kard-bot)
+[![Build](https://github.com/Kardbord/Kard-bot/actions/workflows/go.yml/badge.svg)](https://github.com/Kardbord/Kard-bot/actions/workflows/go.yml)
+[![CodeQL](https://github.com/Kardbord/Kard-bot/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/Kardbord/Kard-bot/actions/workflows/codeql-analysis.yml)
+[![Docker Image](https://github.com/Kardbord/Kard-bot/actions/workflows/release.yml/badge.svg)](https://github.com/Kardbord/Kard-bot/actions/workflows/release.yml)
+[![Image Efficiency](https://github.com/Kardbord/Kard-bot/actions/workflows/image-dive.yml/badge.svg)](https://github.com/Kardbord/Kard-bot/actions/workflows/image-dive.yml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/Kardbord/Kard-bot)](https://goreportcard.com/report/github.com/Kardbord/Kard-bot)
 
 A discord bot destined for greatness.
 
@@ -92,13 +92,13 @@ TZ="Your time zone here ex: America/Boise"
 
 **Instructions**
 
-Head over to the [Releases](https://github.com/TannerKvarfordt/Kard-bot/releases) page and download the `kardbot-<TAG>.tar.gz` tarball for the desired release.
+Head over to the [Releases](https://github.com/Kardbord/Kard-bot/releases) page and download the `kardbot-<TAG>.tar.gz` tarball for the desired release.
 These tarballs contain everything needed to get an instance of the bot up and running, provided that the host machine has internet access.
 Untar it on the host machine.
 
 With your token in place and your config updated, you can simply run `docker-compose up -d` from the untarred directory to get your bot started!
 The Docker daemon will automatically download the needed docker image from [Docker Hub](https://hub.docker.com/r/tkvarfordt/kardbot/tags) or the
-[GitHub Container Registry](https://github.com/TannerKvarfordt/Kard-bot/pkgs/container/kard-bot).
+[GitHub Container Registry](https://github.com/Kardbord/Kard-bot/pkgs/container/kard-bot).
 To check the status of the docker container, you can use `docker ps -a` or `docker logs <CONTAINER-NAME>`.
 
 ### Precompiled Binaries
@@ -109,7 +109,7 @@ To check the status of the docker container, you can use `docker ps -a` or `dock
 
 **Instructions**
 
-Head over to the [Releases](https://github.com/TannerKvarfordt/Kard-bot/releases) page and download the appropriate tarball for your operating system and architecture.
+Head over to the [Releases](https://github.com/Kardbord/Kard-bot/releases) page and download the appropriate tarball for your operating system and architecture.
 Untar it on the host machine.
 
 With your token in place and your config updated, you can simply run the Kard-bot binary to bring it to life!
@@ -126,8 +126,8 @@ For a more robust running solution, consider creating a [systemd service](https:
 Assuming you have the [Go](https://golang.org/) runtime installed, you can install Kard-bot with a simple set of shell commands.
 
 ```shell
-go get github.com/TannerKvarfordt/Kard-bot
-cd $GOPATH/src/github.com/TannerKvarfordt/Kard-bot
+go get github.com/Kardbord/Kard-bot
+cd $GOPATH/src/github.com/Kardbord/Kard-bot
 go build
 ```
 

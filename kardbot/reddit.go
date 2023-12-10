@@ -7,8 +7,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/TannerKvarfordt/Kard-bot/kardbot/dg_helpers"
-	"github.com/TannerKvarfordt/ubiquity/httputils"
+	"github.com/Kardbord/Kard-bot/kardbot/dg_helpers"
+	"github.com/Kardbord/ubiquity/httputils"
 	"github.com/bwmarrin/discordgo"
 	"github.com/vartanbeno/go-reddit/v2/reddit"
 

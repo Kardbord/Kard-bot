@@ -7,8 +7,8 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/TannerKvarfordt/gopenai/authentication"
-	"github.com/TannerKvarfordt/hfapigo"
+	"github.com/Kardbord/gopenai/authentication"
+	"github.com/Kardbord/hfapigo/v2"
 	"github.com/bwmarrin/discordgo"
 	"github.com/joho/godotenv"
 )
@@ -92,7 +92,7 @@ func init() {
 	hfapigo.SetAPIKey(getHuggingFaceToken())
 
 	// TODO: Fix this properly. This has potential to cause race conditions.
-	// 			 See https://github.com/TannerKvarfordt/Kard-bot/issues/57.
+	// 			 See https://github.com/Kardbord/Kard-bot/issues/57.
 	tz, tzFound := os.LookupEnv(TimezoneEnv)
 	if !tzFound || tz == "" {
 		log.Warnf("%s not found in environment", TimezoneEnv)

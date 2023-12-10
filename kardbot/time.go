@@ -9,9 +9,9 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/TannerKvarfordt/Kard-bot/kardbot/config"
-	"github.com/TannerKvarfordt/Kard-bot/kardbot/dg_helpers"
-	"github.com/TannerKvarfordt/ubiquity/sliceutils"
+	"github.com/Kardbord/Kard-bot/kardbot/config"
+	"github.com/Kardbord/Kard-bot/kardbot/dg_helpers"
+	"github.com/Kardbord/ubiquity/sliceutils"
 	"github.com/bwmarrin/discordgo"
 	log "github.com/sirupsen/logrus"
 )

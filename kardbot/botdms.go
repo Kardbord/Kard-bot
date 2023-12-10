@@ -5,7 +5,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/TannerKvarfordt/ubiquity/mathutils"
+	"github.com/Kardbord/ubiquity/mathutils"
 	"github.com/bwmarrin/discordgo"
 	log "github.com/sirupsen/logrus"
 )

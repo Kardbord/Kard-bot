@@ -1,12 +1,12 @@
-module github.com/TannerKvarfordt/Kard-bot
+module github.com/Kardbord/Kard-bot
 
 go 1.18
 
 require (
-	github.com/TannerKvarfordt/gopenai v0.1.7-beta
-	github.com/TannerKvarfordt/hfapigo v1.3.1
-	github.com/TannerKvarfordt/imgflipgo v1.0.8
-	github.com/TannerKvarfordt/ubiquity v0.2.3
+	github.com/Kardbord/gopenai v0.2.0-beta
+	github.com/Kardbord/hfapigo/v2 v2.0.1
+	github.com/Kardbord/imgflipgo/v2 v2.0.1
+	github.com/Kardbord/ubiquity v0.3.0
 	github.com/bwmarrin/discordgo v0.27.1
 	github.com/deadshot465/owoify-go v1.0.1
 	github.com/forPelevin/gomoji v1.1.8
@@ -37,11 +37,3 @@ require (
 	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect
 )
-
-replace github.com/TannerKvarfordt/imgflipgo => github.com/Kardbord/imgflipgo v1.0.8
-
-replace github.com/TannerKvarfordt/gopenai => github.com/Kardbord/gopenai v0.1.7-beta
-
-replace github.com/TannerKvarfordt/hfapigo => github.com/Kardbord/hfapigo v1.3.1
-
-replace github.com/TannerKvarfordt/ubiquity => github.com/Kardbord/ubiquity v0.2.3

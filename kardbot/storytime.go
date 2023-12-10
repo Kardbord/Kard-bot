@@ -6,10 +6,10 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/TannerKvarfordt/Kard-bot/kardbot/config"
-	"github.com/TannerKvarfordt/Kard-bot/kardbot/dg_helpers"
-	"github.com/TannerKvarfordt/hfapigo"
-	"github.com/TannerKvarfordt/ubiquity/stringutils"
+	"github.com/Kardbord/Kard-bot/kardbot/config"
+	"github.com/Kardbord/Kard-bot/kardbot/dg_helpers"
+	"github.com/Kardbord/hfapigo/v2"
+	"github.com/Kardbord/ubiquity/stringutils"
 	"github.com/bwmarrin/discordgo"
 	log "github.com/sirupsen/logrus"
 )

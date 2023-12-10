@@ -12,10 +12,10 @@ import (
 	"mime"
 	"strings"
 
-	"github.com/TannerKvarfordt/Kard-bot/kardbot/config"
-	"github.com/TannerKvarfordt/gopenai/images"
-	"github.com/TannerKvarfordt/gopenai/moderations"
-	"github.com/TannerKvarfordt/hfapigo"
+	"github.com/Kardbord/Kard-bot/kardbot/config"
+	"github.com/Kardbord/gopenai/images"
+	"github.com/Kardbord/gopenai/moderations"
+	"github.com/Kardbord/hfapigo/v2"
 	"github.com/bwmarrin/discordgo"
 
 	log "github.com/sirupsen/logrus"

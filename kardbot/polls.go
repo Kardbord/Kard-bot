@@ -11,9 +11,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/TannerKvarfordt/Kard-bot/kardbot/config"
-	"github.com/TannerKvarfordt/Kard-bot/kardbot/dg_helpers"
-	"github.com/TannerKvarfordt/ubiquity/mathutils"
+	"github.com/Kardbord/Kard-bot/kardbot/config"
+	"github.com/Kardbord/Kard-bot/kardbot/dg_helpers"
+	"github.com/Kardbord/ubiquity/mathutils"
 	"github.com/bwmarrin/discordgo"
 	"github.com/forPelevin/gomoji"
 	cmap "github.com/orcaman/concurrent-map/v2"

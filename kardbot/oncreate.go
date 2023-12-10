@@ -6,8 +6,8 @@ import (
 	"math/rand"
 	"regexp"
 
-	"github.com/TannerKvarfordt/Kard-bot/kardbot/config"
-	"github.com/TannerKvarfordt/ubiquity/regexutils"
+	"github.com/Kardbord/Kard-bot/kardbot/config"
+	"github.com/Kardbord/ubiquity/regexutils"
 	"github.com/bwmarrin/discordgo"
 
 	log "github.com/sirupsen/logrus"

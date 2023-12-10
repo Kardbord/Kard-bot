@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/TannerKvarfordt/Kard-bot/kardbot/dg_helpers"
+	"github.com/Kardbord/Kard-bot/kardbot/dg_helpers"
 	"github.com/bwmarrin/discordgo"
 	"github.com/gabriel-vasile/mimetype"
 	"github.com/lucasb-eyer/go-colorful"
@@ -52,8 +52,8 @@ func botInfo(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	embed := dg_helpers.NewEmbed().
 		SetColor(int(hexColor)).
 		SetTitle(s.State.User.Username).
-		SetURL("https://github.com/TannerKvarfordt/Kard-bot").
-		SetDescription(fmt.Sprintf("Hello! I'm %s! You can find my code or submit an issue about my behavior on [GitHub](https://github.com/TannerKvarfordt/Kard-bot). Below is some information about the commands I offer.", s.State.User.Username)).
+		SetURL("https://github.com/Kardbord/Kard-bot").
+		SetDescription(fmt.Sprintf("Hello! I'm %s! You can find my code or submit an issue about my behavior on [GitHub](https://github.com/Kardbord/Kard-bot). Below is some information about the commands I offer.", s.State.User.Username)).
 		SetThumbnail("attachment://" + roboCatPng)
 
 	for _, cmd := range getCommands() {

@@ -8,7 +8,7 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/TannerKvarfordt/Kard-bot/kardbot/dg_helpers"
+	"github.com/Kardbord/Kard-bot/kardbot/dg_helpers"
 	"github.com/bwmarrin/discordgo"
 	"github.com/gabriel-vasile/mimetype"
 	"github.com/go-co-op/gocron"

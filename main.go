@@ -9,8 +9,8 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/TannerKvarfordt/Kard-bot/kardbot"
-	"github.com/TannerKvarfordt/Kard-bot/kardbot/config"
+	"github.com/Kardbord/Kard-bot/kardbot"
+	"github.com/Kardbord/Kard-bot/kardbot/config"
 
 	// For runtime profiling if enabled in config
 	"net/http"
