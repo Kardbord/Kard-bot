@@ -37,3 +37,11 @@ require (
 	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect
 )
+
+replace github.com/TannerKvarfordt/imgflipgo v1.0.8 => github.com/Kardbord/imgflipgo v1.0.8
+
+replace github.com/TannerKvarfordt/gopenai v0.1.7-beta => github.com/Kardbord/gopenai v0.1.7-beta
+
+replace github.com/TannerKvarfordt/hfapigo v1.3.1 => github.com/Kardbord/hfapigo v1.3.1
+
+replace github.com/TannerKvarfordt/ubiquity v0.2.3 => github.com/Kardbord/ubiquity v0.2.3
