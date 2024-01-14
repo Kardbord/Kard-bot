@@ -3,7 +3,7 @@ module github.com/Kardbord/Kard-bot
 go 1.18
 
 require (
-	github.com/Kardbord/gopenai v0.2.0-beta
+	github.com/Kardbord/gopenai v0.3.0-beta
 	github.com/Kardbord/hfapigo/v2 v2.0.1
 	github.com/Kardbord/imgflipgo/v2 v2.0.1
 	github.com/Kardbord/ubiquity v0.3.0
@@ -29,11 +29,11 @@ require (
 	github.com/gorilla/websocket v1.5.1 // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect
 	github.com/robfig/cron/v3 v3.0.1 // indirect
-	golang.org/x/crypto v0.17.0 // indirect
-	golang.org/x/exp v0.0.0-20231206192017-f3f8817b8deb // indirect
-	golang.org/x/net v0.19.0 // indirect
-	golang.org/x/oauth2 v0.15.0 // indirect
-	golang.org/x/sys v0.15.0 // indirect
+	golang.org/x/crypto v0.18.0 // indirect
+	golang.org/x/exp v0.0.0-20240112132812-db7319d0e0e3 // indirect
+	golang.org/x/net v0.20.0 // indirect
+	golang.org/x/oauth2 v0.16.0 // indirect
+	golang.org/x/sys v0.16.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
-	google.golang.org/protobuf v1.31.0 // indirect
+	google.golang.org/protobuf v1.32.0 // indirect
 )
