@@ -1,6 +1,4 @@
 cloud.google.com/go v0.34.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
-github.com/Kardbord/gopenai v0.2.0-beta h1:yR0D5dwyq3cfHO5IaEv7PvkEsHrXk8hmHQPXuKsdNlU=
-github.com/Kardbord/gopenai v0.2.0-beta/go.mod h1:KLopKAREJtH0MXtiHg+ENFYm1BPzdzm4vJc8TNnbPlk=
 github.com/Kardbord/gopenai v0.3.0-beta h1:EavYg8gJA/OTUmQaXXGw1RAPylsgABCOxHzrBCmxQEE=
 github.com/Kardbord/gopenai v0.3.0-beta/go.mod h1:KLopKAREJtH0MXtiHg+ENFYm1BPzdzm4vJc8TNnbPlk=
 github.com/Kardbord/hfapigo/v2 v2.0.1 h1:94eMl4DBb5wueYIS3rYhU4u6BHi01kgJRKoIT2xE8nM=
@@ -37,8 +35,8 @@ github.com/google/go-querystring v1.0.0/go.mod h1:odCYkC5MyYFN7vkCjXpyrEuKhc/BUO
 github.com/google/go-querystring v1.1.0 h1:AnCroh3fv4ZBgVIf1Iwtovgjaw/GiKJo8M8yD/fhyJ8=
 github.com/google/go-querystring v1.1.0/go.mod h1:Kcdr2DB4koayq7X8pmAG4sNG59So17icRSOU623lUBU=
 github.com/google/uuid v1.4.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
-github.com/google/uuid v1.5.0 h1:1p67kYwdtXjb0gL0BPiP1Av9wiZPo5A8z2cWkTZ+eyU=
-github.com/google/uuid v1.5.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
+github.com/google/uuid v1.6.0 h1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=
+github.com/google/uuid v1.6.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
 github.com/gorilla/schema v1.2.1 h1:tjDxcmdb+siIqkTNoV+qRH2mjYdr2hHe5MKXbp61ziM=
 github.com/gorilla/schema v1.2.1/go.mod h1:Dg5SSm5PV60mhF2NFaTV1xuYYj8tV8NOPRo4FggUMnM=
 github.com/gorilla/websocket v1.4.2/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
