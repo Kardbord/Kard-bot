@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/Kardbord/gopenai v0.3.0-beta
-	github.com/Kardbord/hfapigo/v2 v2.0.1
+	github.com/Kardbord/hfapigo/v2 v2.1.0
 	github.com/Kardbord/imgflipgo/v2 v2.0.1
 	github.com/Kardbord/ubiquity v0.3.0
 	github.com/bwmarrin/discordgo v0.27.1
