@@ -8,7 +8,7 @@ import (
 
 	"github.com/Kardbord/Kard-bot/kardbot/config"
 	"github.com/Kardbord/Kard-bot/kardbot/dg_helpers"
-	"github.com/Kardbord/hfapigo/v2"
+	"github.com/Kardbord/hfapigo/v3"
 	"github.com/Kardbord/ubiquity/stringutils"
 	"github.com/bwmarrin/discordgo"
 	log "github.com/sirupsen/logrus"
@@ -174,7 +174,7 @@ func storyTime(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	}
 
 	textResps, err := hfapigo.SendTextGenerationRequest(model, &hfapigo.TextGenerationRequest{
-		Inputs:  []string{input},
+		Input:   input,
 		Options: *hfapigo.NewOptions().SetWaitForModel(true).SetUseCache(false),
 		Parameters: *(&hfapigo.TextGenerationParameters{
 			TopK:              cfg.TopK,
@@ -182,7 +182,6 @@ func storyTime(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			Temperature:       cfg.Temperature,
 			RepetitionPenalty: cfg.RepetitionPenalty,
 			MaxNewTokens:      cfg.MaxNewTokens,
-			MaxTime:           cfg.MaxTime,
 		}).SetReturnFullText(true),
 	})
 	if err != nil {
@@ -190,14 +189,14 @@ func storyTime(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		interactionFollowUpEphemeralError(s, i, true, err)
 		return
 	}
-	if len(textResps) == 0 || len(textResps[0].GeneratedTexts) == 0 || textResps[0].GeneratedTexts[0] == "" {
+	if len(textResps) == 0 || len(textResps[0].GeneratedText) == 0 || textResps[0].GeneratedText == "" {
 		err = fmt.Errorf("received no text generation responses")
 		log.Error(err)
 		interactionFollowUpEphemeralError(s, i, true, err)
 		return
 	}
 
-	content := stringutils.FirstN(textResps[0].GeneratedTexts[0], MaxDiscordMsgLen)
+	content := stringutils.FirstN(textResps[0].GeneratedText, MaxDiscordMsgLen)
 	_, err = s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
 		Content: &content,
 		AllowedMentions: &discordgo.MessageAllowedMentions{

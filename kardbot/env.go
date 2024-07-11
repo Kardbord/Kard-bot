@@ -8,7 +8,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/Kardbord/gopenai/authentication"
-	"github.com/Kardbord/hfapigo/v2"
+	"github.com/Kardbord/hfapigo/v3"
 	"github.com/bwmarrin/discordgo"
 	"github.com/joho/godotenv"
 )

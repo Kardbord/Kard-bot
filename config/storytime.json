@@ -1,9 +1,8 @@
 {
-  "story-time-text-generation-model": "pranavpsv/gpt2-genre-story-generator",
+	"story-time-text-generation-model": "pranavpsv/gpt2-genre-story-generator",
 	"story-time-topK": null,
 	"story-time-topP": null,
 	"story-time-temperature": null,
 	"story-time-repetition-penalty": null,
-	"story-time-max-new-tokens": null,
-	"story-time-max-time-s": null
+	"story-time-max-new-tokens": null
 }

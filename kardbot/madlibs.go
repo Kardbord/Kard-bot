@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/Kardbord/Kard-bot/kardbot/config"
-	"github.com/Kardbord/hfapigo/v2"
+	"github.com/Kardbord/hfapigo/v3"
 	"github.com/bwmarrin/discordgo"
 	log "github.com/sirupsen/logrus"
 )
