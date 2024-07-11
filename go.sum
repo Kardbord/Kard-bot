@@ -1,8 +1,8 @@
 cloud.google.com/go v0.34.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 github.com/Kardbord/gopenai v0.3.0-beta h1:EavYg8gJA/OTUmQaXXGw1RAPylsgABCOxHzrBCmxQEE=
 github.com/Kardbord/gopenai v0.3.0-beta/go.mod h1:KLopKAREJtH0MXtiHg+ENFYm1BPzdzm4vJc8TNnbPlk=
-github.com/Kardbord/hfapigo/v2 v2.1.0 h1:SL13zSRs2rV2NNzfyYmYD6j5MJS6ggWRk3akntR3I+k=
-github.com/Kardbord/hfapigo/v2 v2.1.0/go.mod h1:b3lsGiXdK0OScDYeHEqRWD1EKNhaE1OMnJZrUe0Z8W8=
+github.com/Kardbord/hfapigo/v3 v3.0.0 h1:m9PjPMcKsCpH1FajjA0OuahKKJNgb9ShRd2ZBC69FTI=
+github.com/Kardbord/hfapigo/v3 v3.0.0/go.mod h1:1IqUHTJ802DRgXLxGCEdBLv23r4JkxXZ34TXvJhtopo=
 github.com/Kardbord/imgflipgo/v2 v2.0.1 h1:ZjtKftiOINCRdApqVW4zHNiC/RVeZByVeORUKJAjHwA=
 github.com/Kardbord/imgflipgo/v2 v2.0.1/go.mod h1:0Z/FulkpgsaORWgL3L2JuzqzpecIT+rX12DN3CEdp28=
 github.com/Kardbord/ubiquity v0.3.0 h1:UGA3vQ7ATPAhr8oyk16FGonjPiujqh614vc6e7goyn8=
