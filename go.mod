@@ -10,7 +10,7 @@ require (
 	github.com/bwmarrin/discordgo v0.27.1
 	github.com/deadshot465/owoify-go v1.0.1
 	github.com/forPelevin/gomoji v1.2.0
-	github.com/gabriel-vasile/mimetype v1.4.4
+	github.com/gabriel-vasile/mimetype v1.4.6
 	github.com/go-co-op/gocron v1.37.0
 	github.com/google/uuid v1.6.0
 	github.com/joho/godotenv v1.5.1
@@ -28,9 +28,9 @@ require (
 	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/robfig/cron/v3 v3.0.1 // indirect
-	golang.org/x/crypto v0.25.0 // indirect
+	golang.org/x/crypto v0.28.0 // indirect
 	golang.org/x/exp v0.0.0-20240707233637-46b078467d37 // indirect
-	golang.org/x/net v0.27.0 // indirect
+	golang.org/x/net v0.30.0 // indirect
 	golang.org/x/oauth2 v0.21.0 // indirect
-	golang.org/x/sys v0.22.0 // indirect
+	golang.org/x/sys v0.26.0 // indirect
 )
