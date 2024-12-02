@@ -1,6 +1,6 @@
 cloud.google.com/go v0.34.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
-github.com/Kardbord/gopenai v0.3.0-beta h1:EavYg8gJA/OTUmQaXXGw1RAPylsgABCOxHzrBCmxQEE=
-github.com/Kardbord/gopenai v0.3.0-beta/go.mod h1:KLopKAREJtH0MXtiHg+ENFYm1BPzdzm4vJc8TNnbPlk=
+github.com/Kardbord/gopenai v0.3.1-beta h1:O1ITbL7v8ynjCKnFIfrru3ZMiLGOWlY1F13CCCHOzdQ=
+github.com/Kardbord/gopenai v0.3.1-beta/go.mod h1:KLopKAREJtH0MXtiHg+ENFYm1BPzdzm4vJc8TNnbPlk=
 github.com/Kardbord/hfapigo/v3 v3.1.0 h1:IngWVyYqwYPHNB2qqBjtKFTzpjFenXpIa/9wQboK+NQ=
 github.com/Kardbord/hfapigo/v3 v3.1.0/go.mod h1:Etti9fKY9ioeDTGd+A1CTHDb6EkPAWghSkilbTIaK3I=
 github.com/Kardbord/imgflipgo/v2 v2.0.1 h1:ZjtKftiOINCRdApqVW4zHNiC/RVeZByVeORUKJAjHwA=
