@@ -3,7 +3,7 @@ module github.com/Kardbord/Kard-bot
 go 1.18
 
 require (
-	github.com/Kardbord/gopenai v0.3.0-beta
+	github.com/Kardbord/gopenai v0.3.1-beta
 	github.com/Kardbord/hfapigo/v3 v3.1.0
 	github.com/Kardbord/imgflipgo/v2 v2.0.1
 	github.com/Kardbord/ubiquity v0.3.0
