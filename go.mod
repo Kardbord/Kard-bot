@@ -1,15 +1,13 @@
 module github.com/Kardbord/Kard-bot
 
-go 1.22.0
-
-toolchain go1.23.4
+go 1.23
 
 require (
 	github.com/Kardbord/gopenai v0.3.1-beta
 	github.com/Kardbord/hfapigo/v3 v3.1.0
 	github.com/Kardbord/imgflipgo/v2 v2.0.1
 	github.com/Kardbord/ubiquity v0.3.0
-	github.com/bwmarrin/discordgo v0.28.1
+	github.com/bwmarrin/discordgo v0.27.1
 	github.com/deadshot465/owoify-go v1.0.1
 	github.com/forPelevin/gomoji v1.2.0
 	github.com/gabriel-vasile/mimetype v1.4.7
